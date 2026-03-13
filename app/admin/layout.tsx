@@ -9,6 +9,8 @@ import AdminForbidden from './forbidden';
 import { logAdminBlock } from '@/lib/admin-logger';
 import { AdminShell } from '@/components/admin/admin-shell';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   let tokenValue: string | null = null;
 
