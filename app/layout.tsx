@@ -9,6 +9,8 @@ import { Footer } from "@/components/footer";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Toaster } from "sonner";
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const alice = Alice({ 
   weight: "400",
@@ -115,6 +117,8 @@ export default function RootLayout({
         {!isAuthPage && <Footer />}
         
         <Toaster richColors position="top-right" />
+        <Analytics />
+        <SpeedInsights />
         
       </body>
     </html>
