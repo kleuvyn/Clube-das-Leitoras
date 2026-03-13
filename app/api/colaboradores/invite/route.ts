@@ -5,10 +5,10 @@ import { db } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'Clube das Leitoras <no-reply@clubedasleitoras.com.br>';
 
 export async function POST(req: Request) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
     const body = await req.json();
     const email = body.email?.toLowerCase().trim();
