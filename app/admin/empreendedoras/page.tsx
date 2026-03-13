@@ -22,6 +22,7 @@ const FORM_VAZIO = { negocio: '', nome: '', frase: '', categoria: 'Bordado', ins
 export default function EmpreendedorasAdmin() {
   const [lista, setLista] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,9 +42,22 @@ export default function EmpreendedorasAdmin() {
   const uploadFoto = async (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-    const data = await res.json();
-    return data.url ?? null;
+    setIsUploading(true);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || 'Erro ao fazer upload da foto.');
+        return null;
+      }
+      const data = await res.json();
+      return data.url ?? null;
+    } catch {
+      toast.error('Erro de conexão ao fazer upload.');
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -162,9 +176,11 @@ export default function EmpreendedorasAdmin() {
         <aside className="space-y-6">
           <div className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm space-y-6 text-center">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Foto / Logo</h3>
-            <div onClick={() => fileInputRef.current?.click()} className="relative group mx-auto w-32 h-32 cursor-pointer">
+            <div onClick={() => !isUploading && fileInputRef.current?.click()} className={`relative group mx-auto w-32 h-32 ${isUploading ? 'cursor-wait' : 'cursor-pointer'}`}>
                 <div className="absolute inset-0 border-2 border-dashed border-slate-100 rounded-full group-hover:border-(--page-color) transition-all flex items-center justify-center overflow-hidden bg-slate-50 shadow-inner">
-                {formData.fotoUrl ? (
+                {isUploading ? (
+                  <Loader2 className="animate-spin text-slate-300" size={28} />
+                ) : formData.fotoUrl ? (
                   <img src={formData.fotoUrl} className="w-full h-full object-cover" alt="Preview" />
                 ) : (
                   <ImageIcon className="text-slate-200 group-hover:scale-110 transition-transform" size={28} />
@@ -174,12 +190,15 @@ export default function EmpreendedorasAdmin() {
                 const file = e.target.files?.[0];
                 if (!file) return;
                 const url = await uploadFoto(file);
-                if (url) setFormData(prev => ({ ...prev, fotoUrl: url }));
-                else toast.error('Erro ao fazer upload da foto.');
+                if (url) {
+                  setFormData(prev => ({ ...prev, fotoUrl: url }));
+                  toast.success('Foto carregada com sucesso!');
+                }
+                if (fileInputRef.current) fileInputRef.current.value = '';
               }} />
             </div>
 
-            <Button onClick={handleSave} disabled={loading} className="w-full h-16 rounded-4xl text-white font-bold uppercase text-[10px] tracking-[0.3em] shadow-xl hover:scale-105 transition-all border-none" style={{ backgroundColor: lavandaPrincipal }}>
+            <Button onClick={handleSave} disabled={loading || isUploading} className="w-full h-16 rounded-4xl text-white font-bold uppercase text-[10px] tracking-[0.3em] shadow-xl hover:scale-105 transition-all border-none" style={{ backgroundColor: lavandaPrincipal }}>
               {loading ? <Loader2 className="animate-spin" /> : editingId ? <><Save size={16} className="mr-2" /> Salvar Alterações</> : <><Heart size={16} className="mr-2" /> Cadastrar Marca</>}
             </Button>
 

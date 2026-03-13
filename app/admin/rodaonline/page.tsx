@@ -171,8 +171,8 @@ export default function RodaOnlineAdmin() {
               link: ativa.link || '',
               videoUrl: ativa.videoUrl || '',
               linkDrive: ativa.linkDrive || '',
-              date: dt ? dt.toISOString().split('T')[0] : '',
-              time: dt ? dt.toTimeString().slice(0, 5) : '',
+              date: dt ? dt.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-') : '',
+              time: dt ? dt.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
               imageUrl: ativa.imageUrl || '',
               status: ativa.status || 'ativo'
             });
@@ -199,7 +199,7 @@ export default function RodaOnlineAdmin() {
       const url = rodaAtivaId ? `/api/rodaonline?id=${rodaAtivaId}` : '/api/rodaonline';
       const method = rodaAtivaId ? 'PATCH' : 'POST';
       const dateValue = formData.date
-        ? (formData.time ? `${formData.date}T${formData.time}:00` : formData.date)
+        ? (formData.time ? `${formData.date}T${formData.time}:00-03:00` : `${formData.date}T00:00:00-03:00`)
         : null;
       const res = await fetch(url, {
         method,
@@ -264,8 +264,8 @@ export default function RodaOnlineAdmin() {
         link: '',
         videoUrl: '',
         linkDrive: '',
-        date: roda.date ? new Date(roda.date).toISOString().split('T')[0] : '',
-        time: roda.date ? new Date(roda.date).toTimeString().slice(0, 5) : '',
+        date: roda.date ? new Date(roda.date).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-') : '',
+        time: roda.date ? new Date(roda.date).toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', hour12: false }) : '',
         imageUrl: roda.imageUrl || '',
         status: 'ativo',
       });
