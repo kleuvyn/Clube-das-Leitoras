@@ -1,215 +1,235 @@
-import { Lightbulb, BookOpen, Film, Tv, Coffee, Heart, Sparkles } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+"use client";
 
-const dicasRecentes = [
-  {
-    id: 1,
-    tipo: "livro",
-    titulo: "Para quem amou Evelyn Hugo",
-    conteudo:
-      "Se você se emocionou com a história da Evelyn, recomendo muito 'Daisy Jones & The Six' da mesma autora! É sobre uma banda de rock dos anos 70 e tem a mesma pegada envolvente e personagens complexos. 🎸✨",
-    categoria: "Recomendação Literária",
-    data: "2025-01-30",
-    curtidas: 34,
-  },
-  {
-    id: 2,
-    tipo: "habito",
-    titulo: "Ritual de Leitura Matinal",
-    conteudo:
-      "Meninas, descobri que ler 15 minutinhos toda manhã com um chá quentinho mudou completamente meu dia! Comecei com esse hábito em janeiro e já li 2 livros a mais do que o normal. A dica é escolher um cantinho especial e deixar o livro sempre à vista. ☕📚",
-    categoria: "Hábitos de Leitura",
-    data: "2025-01-28",
-    curtidas: 28,
-  },
-  {
-    id: 3,
-    tipo: "serie",
-    titulo: "Adaptação Imperdível",
-    conteudo:
-      "Quem leu 'O Conto da Aia' precisa assistir a série! A adaptação é fiel ao livro e expande a história de forma brilhante. Elisabeth Moss está perfeita como June. Preparem os lencinhos! 📺💔",
-    categoria: "Filme & Série",
-    data: "2025-01-26",
-    curtidas: 19,
-  },
-  {
-    id: 4,
-    tipo: "livro",
-    titulo: "Leitura Leve para o Verão",
-    conteudo:
-      "Para quem quer algo mais descontraído neste calor, 'Beach Read' da Emily Henry é perfeito! Romance contemporâneo, divertido e com uma protagonista escritora que é muito cativante. Ideal para ler na praia ou na rede! 🏖️💕",
-    categoria: "Recomendação Literária",
-    data: "2025-01-24",
-    curtidas: 42,
-  },
-  {
-    id: 5,
-    tipo: "dica",
-    titulo: "Organizando a TBR",
-    conteudo:
-      "Dica de organização: criei uma planilha colorida com minha TBR (To Be Read) dividida por gêneros e humor. Verde para quando quero algo leve, azul para reflexivo, rosa para romance... Assim sempre sei o que ler dependendo do meu estado de espírito! 🌈",
-    categoria: "Organização",
-    data: "2025-01-22",
-    curtidas: 31,
-  },
-  {
-    id: 6,
-    tipo: "filme",
-    titulo: "Clássico Redescoberto",
-    conteudo:
-      "Assistam 'Pequenas Mulheres' (2019) da Greta Gerwig! A direção é sensível e a fotografia é de tirar o fôlego. Mesmo quem já conhece a história vai se emocionar. Saoirse Ronan como Jo é simplesmente perfeita! 🎬✨",
-    categoria: "Filme & Série",
-    data: "2025-01-20",
-    curtidas: 25,
-  },
-]
+import React, { useEffect, useState } from 'react';
+import { 
+  ArrowRight, BookMarked, Feather, Star, X, Clock,
+  BookOpen, Coffee, Heart, Sparkles, Lightbulb,
+  Sun, Moon, Music, Flower2, Leaf, PenLine, Glasses, Bookmark
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-const categorias = [
-  { nome: "Recomendação Literária", cor: "bg-rose-100 text-rose-600", icon: BookOpen },
-  { nome: "Hábitos de Leitura", cor: "bg-purple-100 text-purple-600", icon: Coffee },
-  { nome: "Filme & Série", cor: "bg-blue-100 text-blue-600", icon: Film },
-  { nome: "Organização", cor: "bg-green-100 text-green-600", icon: Sparkles },
-]
+const azulSereno = "#5B7C99";
 
-function getIconForTipo(tipo: string) {
-  switch (tipo) {
-    case "livro":
-      return BookOpen
-    case "filme":
-      return Film
-    case "serie":
-      return Tv
-    case "habito":
-      return Coffee
-    case "dica":
-      return Lightbulb
-    default:
-      return Heart
-  }
+const iconMap: Record<string, any> = {
+  BookOpen, Coffee, Heart, Sparkles, Lightbulb,
+  Sun, Moon, Music, Flower2, Leaf,
+  Star, BookMarked, PenLine, Glasses, Bookmark, Feather
+};
+
+interface Dica {
+  id: string;
+  categoria: string;
+  titulo: string;
+  descricao: string;
+  iconName?: string;
+  textoCompleto?: string | null;
 }
 
 export default function DicasPage() {
+  const [dicas, setDicas] = useState<Dica[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dicaAberta, setDicaAberta] = useState<Dica | null>(null);
+
+  useEffect(() => {
+    async function carregarDicas() {
+      try {
+        const res = await fetch('/api/dicas');
+        const data = await res.json();
+        setDicas(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Erro ao carregar dicas:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    carregarDicas();
+  }, []);
+
+  
+  useEffect(() => {
+    if (dicaAberta) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [dicaAberta]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-purple-50 to-blue-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">💡 Dicas da Gabi</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Recomendações especiais, dicas de leitura e descobertas literárias para enriquecer nossa jornada juntas.
-          </p>
+    <div className="min-h-screen font-alice pb-40 relative overflow-hidden"
+         style={{ background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}>
+
+      
+      <header className="max-w-5xl mx-auto pt-32 pb-24 px-6 text-center border-b border-black/5">
+        <div className="flex items-center justify-center gap-4 mb-8 opacity-40">
+          <div className="h-px w-10 bg-black" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-black italic">Brasília • Coluna Mensal</span>
+          <div className="h-px w-10 bg-black" />
         </div>
 
-        {/* Perfil da Gabi */}
-        <section className="mb-16">
-          <Card className="max-w-4xl mx-auto bg-gradient-to-r from-rose-100 via-purple-100 to-blue-100 border-0 shadow-lg rounded-3xl">
-            <CardContent className="p-8">
-              <div className="flex items-center space-x-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-rose-300 to-purple-300 rounded-full flex items-center justify-center">
-                  <Heart className="h-10 w-10 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Olá, leitoras! 👋</h2>
-                  <p className="text-gray-700 leading-relaxed">
-                    Sou a Mariana, fundadora do Clube das Leitoras! Aqui compartilho minhas descobertas literárias,
-                    dicas de organização e tudo que pode tornar nossa experiência de leitura ainda mais especial. Sempre
-                    com muito carinho para vocês! 💕
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+        <h1 className="text-7xl md:text-[100px] text-[#2C3E50] tracking-tighter leading-[0.8] mb-10">
+          Dicas da <span style={{ color: azulSereno }} className="italic font-light">Gabi</span>
+        </h1>
 
-        {/* Filtros por Categoria */}
-        <section className="mb-12">
-          <div className="flex flex-wrap justify-center gap-4">
-            <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-full cursor-pointer">
-              Todas as Dicas
-            </Badge>
-            {categorias.map((categoria) => {
-              const Icon = categoria.icon
-              return (
-                <Badge
-                  key={categoria.nome}
-                  className={`${categoria.cor} hover:opacity-80 px-4 py-2 rounded-full cursor-pointer flex items-center space-x-2`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{categoria.nome}</span>
-                </Badge>
-              )
-            })}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto border-t border-black/10 pt-10">
+          <p className="text-base leading-relaxed opacity-60 text-black italic">
+            "Pequenos gestos para transformar sua jornada literária em um ritual de puro autocuidado e presença."
+          </p>
+          <div className="flex flex-col justify-end items-start md:items-end">
+            <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] font-sans font-bold" style={{ color: azulSereno }}>
+              <Feather size={14} /> Guia Prático de Leitura
+            </div>
           </div>
-        </section>
+        </div>
+      </header>
 
-        {/* Dicas Recentes */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-            <Sparkles className="mr-3 h-6 w-6 text-yellow-400" />
-            Dicas Recentes
-          </h2>
+      <main className="max-w-6xl mx-auto px-6 mt-24 space-y-48">
 
-          <div className="grid gap-8">
-            {dicasRecentes.map((dica) => {
-              const Icon = getIconForTipo(dica.tipo)
-              const categoria = categorias.find((c) => c.nome === dica.categoria)
+        
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {loading ? (
+            <p className="col-span-full text-center italic opacity-40 text-black animate-pulse">Sintonizando inspirações...</p>
+          ) : dicas.length > 0 ? (
+            dicas.map((item, idx) => {
+              const Icon = iconMap[item.iconName || ''] || Lightbulb;
+              const temTexto = !!item.textoCompleto;
+              const tempoLeitura = temTexto
+                ? Math.max(1, Math.ceil(item.textoCompleto!.split(' ').length / 200))
+                : null;
 
               return (
-                <Card
-                  key={dica.id}
-                  className="max-w-4xl mx-auto bg-white/70 backdrop-blur-sm border-0 shadow-lg rounded-3xl hover:shadow-xl transition-all duration-300"
+                <article
+                  key={item.id || idx}
+                  className="group flex flex-col gap-5 bg-white border border-black/5 rounded-3xl p-8 hover:shadow-lg transition-all"
                 >
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-rose-200 to-purple-200 rounded-full flex items-center justify-center">
-                          <Icon className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-xl text-gray-800 mb-2">{dica.titulo}</CardTitle>
-                          <div className="flex items-center space-x-3">
-                            {categoria && (
-                              <Badge className={`${categoria.cor} rounded-full text-xs`}>{dica.categoria}</Badge>
-                            )}
-                            <span className="text-sm text-gray-500">
-                              {new Date(dica.data).toLocaleDateString("pt-BR")}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2 text-gray-500">
-                        <Heart className="h-5 w-5" />
-                        <span className="text-sm">{dica.curtidas}</span>
-                      </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 rounded-full border bg-[#F7F9FB]" style={{ borderColor: 'rgba(0,0,0,0.05)' }}>
+                      <Icon className="w-4 h-4" style={{ color: azulSereno }} />
                     </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 leading-relaxed text-lg">{dica.conteudo}</p>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.3em]" style={{ color: azulSereno }}>
+                      {item.categoria}
+                    </span>
+                    {tempoLeitura && (
+                      <span className="ml-auto flex items-center gap-1 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                        <Clock size={10} /> {tempoLeitura} min
+                      </span>
+                    )}
+                  </div>
+
+                  
+                  <h3 className="text-2xl leading-tight tracking-tighter border-l-2 pl-5 py-1 text-[#2C3E50] group-hover:italic transition-all"
+                      style={{ borderColor: `${azulSereno}40` }}>
+                    {item.titulo}
+                  </h3>
+
+                  
+                  <p className="text-sm leading-relaxed italic opacity-60 text-black pl-5 flex-1">
+                    {item.descricao}
+                  </p>
+
+                  
+                  {temTexto ? (
+                    <button
+                      onClick={() => setDicaAberta(item)}
+                      className="mt-2 self-start flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.25em] transition-all hover:gap-3"
+                      style={{ color: azulSereno }}
+                    >
+                      Ler coluna <ArrowRight size={12} />
+                    </button>
+                  ) : (
+                    <div className="mt-2 h-px w-12 opacity-20" style={{ background: azulSereno }} />
+                  )}
+                </article>
+              );
+            })
+          ) : (
+            <p className="col-span-full text-center italic opacity-40 text-black">Nenhuma dica publicada ainda.</p>
+          )}
         </section>
 
-        {/* Call to Action */}
-        <section className="mt-16">
-          <Card className="max-w-4xl mx-auto bg-gradient-to-r from-rose-100 to-purple-100 border-0 shadow-lg rounded-3xl">
-            <CardContent className="p-8 text-center">
-              <h3 className="text-2xl font-bold text-gray-800 mb-4">Tem alguma sugestão? 💌</h3>
-              <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
-                Adoraria saber que tipo de dicas vocês gostariam de ver por aqui! Mandem suas sugestões e vou preparar
-                conteúdos especiais para vocês.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <div className="bg-white/70 rounded-2xl px-6 py-3 text-gray-700">📧 clubedasleitoras2025@email.com</div>
-                <div className="bg-white/70 rounded-2xl px-6 py-3 text-gray-700">💬 Comentem nos posts!</div>
+        
+        <section className="bg-white border border-black/5 p-12 md:p-20 space-y-16 shadow-sm relative rounded-[3rem]">
+          <div className="flex flex-col items-center text-center space-y-4">
+            <Star className="w-5 h-5 mb-2 opacity-40" style={{ color: azulSereno }} />
+            <h2 className="text-5xl text-[#2C3E50] tracking-tight">Manifesto da <span className="italic font-light" style={{ color: azulSereno }}>Leitora</span></h2>
+            <div className="h-px w-24 bg-black/10" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-8 max-w-4xl mx-auto">
+            {[
+              "Use marcadores que tragam memórias",
+              "O livro é um diálogo: sublinhe",
+              "Metas realistas: um capítulo",
+              "Carregue sempre um livro",
+              "Visite sebos locais",
+              "Respeite seu ritmo"
+            ].map((manifesto, index) => (
+              <div key={index} className="flex items-center gap-4 border-b border-black/5 pb-4 group">
+                <BookMarked className="w-4 h-4 opacity-20 group-hover:opacity-100 transition-opacity" style={{ color: azulSereno }} />
+                <span className="text-lg italic opacity-60 text-black group-hover:opacity-100 transition-opacity">{manifesto}</span>
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
         </section>
-      </div>
+      </main>
+
+      
+      {dicaAberta && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6"
+          style={{ background: 'rgba(30,40,55,0.6)', backdropFilter: 'blur(6px)' }}
+          onClick={() => setDicaAberta(null)}
+        >
+          <div
+            className="relative bg-white w-full md:max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] md:rounded-[2.5rem] p-10 md:p-14 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            
+            <button
+              onClick={() => setDicaAberta(null)}
+              className="absolute top-6 right-6 p-2 rounded-full bg-slate-100 hover:bg-slate-200 transition"
+              aria-label="Fechar"
+            >
+              <X size={18} className="text-slate-500" />
+            </button>
+
+            
+            <div className="flex items-center gap-2 mb-8">
+              {React.createElement(iconMap[dicaAberta.iconName || ''] || Lightbulb, { size: 16, style: { color: azulSereno } })}
+              <span className="text-[9px] font-bold uppercase tracking-[0.35em]" style={{ color: azulSereno }}>
+                {dicaAberta.categoria}
+              </span>
+              {dicaAberta.textoCompleto && (
+                <span className="ml-auto flex items-center gap-1 text-[9px] text-slate-400 font-bold">
+                  <Clock size={10} /> {Math.max(1, Math.ceil(dicaAberta.textoCompleto.split(' ').length / 200))} min de leitura
+                </span>
+              )}
+            </div>
+
+            
+            <h2 className="text-4xl leading-tight tracking-tighter text-[#2C3E50] mb-3 font-serif italic">
+              {dicaAberta.titulo}
+            </h2>
+            <p className="text-sm italic text-slate-400 mb-8 leading-relaxed">
+              {dicaAberta.descricao}
+            </p>
+
+            <div className="h-px w-full bg-black/5 mb-8" />
+
+            
+            <div className="space-y-5 text-[15px] leading-[1.85] text-slate-700">
+              {dicaAberta.textoCompleto!.split(/\n\n+/).map((paragrafo, i) => (
+                <p key={i}>{paragrafo.trim()}</p>
+              ))}
+            </div>
+
+            <div className="mt-10 pt-6 border-t border-black/5 flex items-center gap-3">
+              <Feather size={14} style={{ color: azulSereno }} />
+              <span className="text-[10px] text-slate-400 uppercase tracking-widest italic">Coluna da Gabi • Clube das Leitoras</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
 }

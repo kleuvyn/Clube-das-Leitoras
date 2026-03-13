@@ -1,335 +1,424 @@
-import { Heart, Star, MessageCircle, Award, ThumbsUp } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
+"use client";
 
-const resenhas = [
-  {
-    id: 1,
-    nome: "Carolina Mendes",
-    avatar: "CM",
-    livro: "As Sete Maridas de Evelyn Hugo",
-    autor: "Taylor Jenkins Reid",
-    nota: 5,
-    resenha:
-      "Que livro incrível! A narrativa é envolvente do início ao fim. Evelyn é uma personagem complexa e fascinante, e a forma como a autora constrói os relacionamentos é magistral. Me emocionei várias vezes e não conseguia parar de ler. Recomendo demais! 💕",
-    data: "2025-01-29",
-    curtidas: 23,
-    comentarios: 8,
-    reacoes: {
-      coracao: 15,
-      choque: 3,
-      risada: 2,
-      lagrima: 12,
-    },
-    destaque: true,
-  },
-  {
-    id: 2,
-    nome: "Beatriz Santos",
-    avatar: "BS",
-    livro: "Circe",
-    autor: "Madeline Miller",
-    nota: 4,
-    resenha:
-      "Uma releitura linda da mitologia grega! Madeline Miller tem um talento especial para humanizar os deuses e criar conexões emocionais profundas. Circe é uma protagonista forte e inspiradora. Algumas partes ficaram um pouco lentas para mim, mas no geral foi uma leitura muito prazerosa.",
-    data: "2025-01-27",
-    curtidas: 18,
-    comentarios: 5,
-    reacoes: {
-      coracao: 12,
-      choque: 1,
-      risada: 0,
-      lagrima: 8,
-    },
-    destaque: false,
-  },
-  {
-    id: 3,
-    nome: "Ana Luiza",
-    avatar: "AL",
-    livro: "A Biblioteca da Meia-Noite",
-    autor: "Matt Haig",
-    nota: 5,
-    resenha:
-      "Este livro chegou na hora certa na minha vida! A premissa é fascinante e a mensagem sobre segundas chances e arrependimentos é muito tocante. Me fez refletir sobre minhas próprias escolhas. Uma leitura que fica na alma! 🌟",
-    data: "2025-01-25",
-    curtidas: 31,
-    comentarios: 12,
-    reacoes: {
-      coracao: 20,
-      choque: 4,
-      risada: 1,
-      lagrima: 15,
-    },
-    destaque: false,
-  },
-  {
-    id: 4,
-    nome: "Fernanda Costa",
-    avatar: "FC",
-    livro: "Torto Arado",
-    autor: "Itamar Vieira Junior",
-    nota: 4,
-    resenha:
-      "Uma obra poderosa sobre identidade, terra e resistência. A linguagem é poética e envolvente. Aprendi muito sobre a cultura afro-brasileira e me emocionei com a força das personagens femininas. Leitura essencial!",
-    data: "2025-01-23",
-    curtidas: 16,
-    comentarios: 7,
-    reacoes: {
-      coracao: 11,
-      choque: 2,
-      risada: 0,
-      lagrima: 9,
-    },
-    destaque: false,
-  },
-]
+import React, { useEffect, useState } from 'react';
+import { Quote, Star, BookOpen, ChevronDown, MessageCircle, Send, Loader2 } from "lucide-react";
+import { toast } from 'sonner';
 
-export default function ResenhasPage() {
+const papelEditorial = "#FDFCFB";
+const amareloVintage = "#E9C46A";
+const azulPetroleo = "#2C3E50";
+
+interface Resenha {
+  id: string;
+  title: string;
+  book: string | null;
+  author: string | null;
+  content: string | null;
+  rating: number | null;
+  imageUrl: string | null;
+  publishedAt: string | null;
+  createdAt: string;
+}
+
+interface Comentario {
+  id: string;
+  autoraNome: string;
+  texto: string;
+  createdAt: string;
+}
+
+const MESES_PT: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, março: 3, abril: 4, maio: 5, junho: 6,
+  julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+
+function extrairAnoMes(r: Resenha): { ano: number; mes: number } {
+  if (r.publishedAt) {
+    const partes = r.publishedAt.split('/');
+    if (partes.length === 2) {
+      const anoNum = parseInt(partes[1].trim(), 10);
+      const mesParte = partes[0].trim().toLowerCase();
+      const mesNum = MESES_PT[mesParte] ?? parseInt(mesParte, 10);
+      if (!isNaN(anoNum)) return { ano: anoNum, mes: isNaN(mesNum) ? 1 : mesNum };
+    }
+    const apenasAno = parseInt(r.publishedAt, 10);
+    if (!isNaN(apenasAno)) return { ano: apenasAno, mes: 1 };
+  }
+  const d = new Date(r.createdAt);
+  return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
+}
+
+function labelMes(r: Resenha): string {
+  if (r.publishedAt) {
+    const partes = r.publishedAt.split('/');
+    if (partes.length >= 1) return partes[0].trim();
+    return r.publishedAt;
+  }
+  return new Date(r.createdAt).toLocaleDateString('pt-BR', { month: 'long' });
+}
+
+function MiniChat({ resenhaId, tituloResenha }: { resenhaId: string; tituloResenha: string }) {
+  const [aberto, setAberto] = useState(false);
+  const [comentarios, setComentarios] = useState<Comentario[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [nome, setNome] = useState('');
+  const [texto, setTexto] = useState('');
+
+  const carregar = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/comentarios?resenhaId=${resenhaId}`);
+      const data = await res.json();
+      setComentarios(Array.isArray(data) ? data : []);
+    } catch {}
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { if (aberto) carregar(); }, [aberto, resenhaId]);
+
+  const enviar = async () => {
+    if (!nome.trim() || !texto.trim()) return toast.error('Preencha seu nome e seu comentário.');
+    setEnviando(true);
+    try {
+      const res = await fetch('/api/comentarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resenhaId, autoraNome: nome.trim(), texto: texto.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) toast.error(data.error || 'Erro ao enviar.');
+      else { toast.success('Comentário publicado!'); setTexto(''); carregar(); }
+    } catch { toast.error('Erro de conexão.'); }
+    finally { setEnviando(false); }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-purple-50 to-blue-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">💕 Resenhas e Opiniões</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Compartilhe suas impressões e descubra novas perspectivas sobre os livros que amamos.
+    <div className="border-t border-black/5 pt-10 mt-10">
+      <button
+        onClick={() => setAberto(!aberto)}
+        className="flex items-center gap-4 w-full text-left group"
+      >
+        <div
+          className="w-9 h-9 rounded-full border border-black/10 flex items-center justify-center shrink-0 group-hover:border-black/20 transition-colors"
+          style={{ color: azulPetroleo }}
+        >
+          <MessageCircle size={14}/>
+        </div>
+        <div className="flex-1">
+          <p className="text-[9px] font-bold uppercase tracking-[0.5em] opacity-30 text-[#2C3E50] group-hover:opacity-50 transition-opacity">
+            {comentarios.length > 0 && !aberto ? `${comentarios.length} comentário${comentarios.length > 1 ? 's' : ''}` : 'Comentários'}
+          </p>
+          <p className="text-lg italic font-light text-[#2C3E50]/50 group-hover:text-[#2C3E50]/70 transition-colors leading-tight">
+            {aberto ? 'Fechar comentários' : 'Ver comentários das leitoras'}
           </p>
         </div>
+        <ChevronDown size={14} className={`opacity-20 group-hover:opacity-40 transition-all duration-300 ${aberto ? 'rotate-180' : ''}`}/>
+      </button>
 
-        {/* Formulário para Nova Resenha */}
-        <section className="mb-16">
-          <Card className="max-w-4xl mx-auto bg-white/70 backdrop-blur-sm border-0 shadow-lg rounded-3xl">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl text-gray-800 mb-2">✍️ Escreva sua Resenha</CardTitle>
-              <CardDescription className="text-gray-600">
-                Conte para as outras leitoras o que você achou do livro!
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
-              <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Título do Livro</label>
-                  <Input
-                    placeholder="Digite o título do livro"
-                    className="rounded-2xl border-gray-200 focus:border-rose-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Autor(a)</label>
-                  <Input
-                    placeholder="Nome do autor ou autora"
-                    className="rounded-2xl border-gray-200 focus:border-rose-300"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sua Avaliação</label>
-                <div className="flex items-center space-x-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button key={star} className="text-gray-300 hover:text-yellow-400 transition-colors">
-                      <Star className="h-8 w-8 fill-current" />
-                    </button>
-                  ))}
-                  <span className="ml-4 text-gray-600">Clique nas estrelas para avaliar</span>
-                </div>
-              </div>
-
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Sua Resenha</label>
-                <Textarea
-                  placeholder="Compartilhe suas impressões sobre o livro... O que mais gostou? O que chamou sua atenção? Recomendaria para outras leitoras?"
-                  className="rounded-2xl border-gray-200 focus:border-rose-300"
-                  rows={5}
-                />
-              </div>
-
-              <div className="flex justify-center">
-                <Button className="bg-gradient-to-r from-rose-300 to-purple-300 hover:from-rose-400 hover:to-purple-400 text-white rounded-full px-8">
-                  Publicar Resenha
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
-        {/* Resenha da Semana */}
-        <section className="mb-16">
-          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-            <Award className="mr-3 h-6 w-6 text-yellow-400" />
-            Resenha da Semana
-          </h2>
-
-          {resenhas
-            .filter((r) => r.destaque)
-            .map((resenha) => (
-              <Card
-                key={resenha.id}
-                className="max-w-4xl mx-auto bg-gradient-to-r from-yellow-50 to-rose-50 border-2 border-yellow-200 shadow-lg rounded-3xl"
-              >
-                <CardContent className="p-8">
-                  <div className="flex items-start space-x-6">
-                    <Avatar className="bg-gradient-to-br from-yellow-200 to-rose-200 w-16 h-16">
-                      <AvatarFallback className="text-white font-bold text-lg">{resenha.avatar}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        <h3 className="font-bold text-gray-800 text-lg">{resenha.nome}</h3>
-                        <Badge className="bg-yellow-200 text-yellow-800 rounded-full">⭐ Resenha da Semana</Badge>
-                      </div>
-
-                      <div className="mb-4">
-                        <h4 className="font-semibold text-gray-800 text-lg">{resenha.livro}</h4>
-                        <p className="text-gray-600">{resenha.autor}</p>
-                        <div className="flex items-center space-x-1 mt-2">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              className={`h-5 w-5 ${star <= resenha.nota ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                            />
-                          ))}
-                          <span className="ml-2 text-gray-600 font-medium">{resenha.nota}/5</span>
-                        </div>
-                      </div>
-
-                      <p className="text-gray-700 leading-relaxed mb-6">{resenha.resenha}</p>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-6">
-                          <div className="flex items-center space-x-4">
-                            <button className="flex items-center space-x-1 text-rose-500 hover:text-rose-600">
-                              <span className="text-lg">💧</span>
-                              <span className="text-sm">{resenha.reacoes.lagrima}</span>
-                            </button>
-                            <button className="flex items-center space-x-1 text-blue-500 hover:text-blue-600">
-                              <span className="text-lg">🤯</span>
-                              <span className="text-sm">{resenha.reacoes.choque}</span>
-                            </button>
-                            <button className="flex items-center space-x-1 text-yellow-500 hover:text-yellow-600">
-                              <span className="text-lg">😂</span>
-                              <span className="text-sm">{resenha.reacoes.risada}</span>
-                            </button>
-                            <button className="flex items-center space-x-1 text-pink-500 hover:text-pink-600">
-                              <span className="text-lg">💕</span>
-                              <span className="text-sm">{resenha.reacoes.coracao}</span>
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4 text-gray-500 text-sm">
-                          <span className="flex items-center">
-                            <ThumbsUp className="mr-1 h-4 w-4" />
-                            {resenha.curtidas}
-                          </span>
-                          <span className="flex items-center">
-                            <MessageCircle className="mr-1 h-4 w-4" />
-                            {resenha.comentarios}
-                          </span>
-                          <span>{new Date(resenha.data).toLocaleDateString("pt-BR")}</span>
-                        </div>
-                      </div>
-                    </div>
+      {aberto && (
+        <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin opacity-20"/></div>
+          ) : comentarios.length === 0 ? (
+            <p className="text-center italic text-sm opacity-30 text-[#2C3E50] py-8">
+              Seja a primeira a comentar sobre <em>{tituloResenha}</em>.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {comentarios.map(c => (
+                <div key={c.id} className="bg-white/60 border border-black/5 rounded-3xl p-6 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: amareloVintage }}>{c.autoraNome}</span>
+                    <span className="text-[9px] opacity-30 text-[#2C3E50]">{new Date(c.createdAt).toLocaleDateString('pt-BR')}</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-        </section>
-
-        {/* Todas as Resenhas */}
-        <section>
-          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-            <Heart className="mr-3 h-6 w-6 text-rose-400" />
-            Todas as Resenhas
-          </h2>
-
-          <div className="space-y-6">
-            {resenhas
-              .filter((r) => !r.destaque)
-              .map((resenha) => (
-                <Card
-                  key={resenha.id}
-                  className="max-w-4xl mx-auto bg-white/70 backdrop-blur-sm border-0 shadow-lg rounded-3xl hover:shadow-xl transition-all duration-300"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <Avatar className="bg-gradient-to-br from-rose-200 to-purple-200">
-                        <AvatarFallback className="text-white font-semibold">{resenha.avatar}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="font-semibold text-gray-800">{resenha.nome}</h3>
-                          <span className="text-sm text-gray-500">
-                            {new Date(resenha.data).toLocaleDateString("pt-BR")}
-                          </span>
-                        </div>
-
-                        <div className="mb-3">
-                          <h4 className="font-medium text-gray-800">{resenha.livro}</h4>
-                          <p className="text-gray-600 text-sm">{resenha.autor}</p>
-                          <div className="flex items-center space-x-1 mt-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                className={`h-4 w-4 ${star <= resenha.nota ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
-                              />
-                            ))}
-                            <span className="ml-1 text-gray-600 text-sm">{resenha.nota}/5</span>
-                          </div>
-                        </div>
-
-                        <p className="text-gray-700 leading-relaxed mb-4">{resenha.resenha}</p>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <button className="flex items-center space-x-1 text-rose-500 hover:text-rose-600 transition-colors">
-                              <span className="text-sm">💧</span>
-                              <span className="text-xs">{resenha.reacoes.lagrima}</span>
-                            </button>
-                            <button className="flex items-center space-x-1 text-blue-500 hover:text-blue-600 transition-colors">
-                              <span className="text-sm">🤯</span>
-                              <span className="text-xs">{resenha.reacoes.choque}</span>
-                            </button>
-                            <button className="flex items-center space-x-1 text-yellow-500 hover:text-yellow-600 transition-colors">
-                              <span className="text-sm">😂</span>
-                              <span className="text-xs">{resenha.reacoes.risada}</span>
-                            </button>
-                            <button className="flex items-center space-x-1 text-pink-500 hover:text-pink-600 transition-colors">
-                              <span className="text-sm">💕</span>
-                              <span className="text-xs">{resenha.reacoes.coracao}</span>
-                            </button>
-                          </div>
-                          <div className="flex items-center space-x-3 text-gray-500 text-sm">
-                            <button className="flex items-center hover:text-rose-500 transition-colors">
-                              <ThumbsUp className="mr-1 h-4 w-4" />
-                              {resenha.curtidas}
-                            </button>
-                            <button className="flex items-center hover:text-purple-500 transition-colors">
-                              <MessageCircle className="mr-1 h-4 w-4" />
-                              {resenha.comentarios}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <p className="text-sm italic leading-relaxed text-[#2C3E50]/70">"{c.texto}"</p>
+                </div>
               ))}
-          </div>
+            </div>
+          )}
 
-          <div className="text-center mt-8">
-            <Button
-              variant="outline"
-              className="border-purple-300 text-purple-600 hover:bg-purple-50 rounded-full bg-transparent"
+          <div className="space-y-3 bg-white/40 rounded-3xl p-6 border border-black/5">
+            <input
+              value={nome}
+              onChange={e => setNome(e.target.value)}
+              placeholder="Seu nome"
+              className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-black/5 font-alice text-[#2C3E50]"
+            />
+            <textarea
+              value={texto}
+              onChange={e => setTexto(e.target.value)}
+              placeholder="Compartilhe sua opinião sobre esta resenha..."
+              rows={3}
+              className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-black/5 resize-none font-alice text-[#2C3E50]"
+            />
+            <button
+              onClick={enviar}
+              disabled={enviando}
+              className="flex items-center gap-2 px-5 py-2.5 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl disabled:opacity-40 transition-opacity"
+              style={{ backgroundColor: azulPetroleo }}
             >
-              Carregar Mais Resenhas
-            </Button>
+              {enviando ? <Loader2 size={12} className="animate-spin"/> : <Send size={12}/>}
+              Publicar Comentário
+            </button>
           </div>
-        </section>
-      </div>
+        </div>
+      )}
     </div>
-  )
+  );
+}
+
+export default function ResenhasPage() {
+  const [resenhas, setResenhas] = useState<Resenha[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [abertas, setAbertas] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch('/api/resenhas')
+      .then(r => r.json())
+      .then(data => setResenhas(Array.isArray(data) ? data : []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggleAberta = (id: string) =>
+    setAbertas(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  
+  const agrupado = resenhas.reduce<Record<number, Resenha[]>>((acc, r) => {
+    const { ano } = extrairAnoMes(r);
+    if (!acc[ano]) acc[ano] = [];
+    acc[ano].push(r);
+    return acc;
+  }, {});
+
+  const anos = Object.keys(agrupado)
+    .map(Number)
+    .sort((a, b) => b - a); 
+
+  
+  for (const ano of anos) {
+    agrupado[ano].sort((a, b) => extrairAnoMes(b).mes - extrairAnoMes(a).mes);
+  }
+
+  return (
+    <div
+      className="min-h-screen pb-32 relative overflow-hidden font-alice selection:bg-[#FDE68A]"
+      style={{ background: `${papelEditorial} url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}
+    >
+      
+      <header className="max-w-5xl mx-auto pt-32 pb-24 px-6 relative z-10 text-center border-b border-black/5">
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="h-px w-12 bg-[#2C3E50]/20" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-[0.7em] text-[#2C3E50] opacity-60">
+            Crônicas de um Ano Literário
+          </span>
+          <div className="h-px w-12 bg-[#2C3E50]/20" />
+        </div>
+
+        <h1 className="text-7xl md:text-[100px] text-[#2C3E50] tracking-tighter leading-[0.8] mb-10">
+          Diário de <span style={{ color: amareloVintage }} className="italic font-light">Leituras</span>
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto border-t border-black/10 pt-10">
+          <p className="text-base leading-relaxed opacity-60 text-black italic">
+            &ldquo;Este é o nosso espaço de registro. Onde as palavras lidas encontram nossas vozes e se transformam em memórias de papel.&rdquo;
+          </p>
+          <div className="flex flex-col justify-end items-start md:items-end">
+            <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] font-sans font-bold" style={{ color: amareloVintage }}>
+              <Quote size={14} /> Crônicas de um Ano Literário
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 relative z-10 mt-24 space-y-32">
+
+        {loading ? (
+          <div className="text-center italic opacity-30 text-[#2C3E50] py-20">
+            Abrindo os arquivos do diário...
+          </div>
+        ) : resenhas.length === 0 ? (
+          <div className="text-center py-24 space-y-4 opacity-40">
+            <BookOpen size={40} className="mx-auto" style={{ color: azulPetroleo }} />
+            <p className="italic text-[#2C3E50]">Ainda não há resenhas publicadas.</p>
+          </div>
+        ) : (
+          anos.map(ano => (
+            <section key={ano}>
+              
+              <div className="flex items-end gap-6 mb-20 select-none">
+                <span
+                  className="text-[100px] md:text-[140px] font-light tracking-tighter leading-none"
+                  style={{ color: `${azulPetroleo}10` }}
+                >
+                  {ano}
+                </span>
+                <div className="flex-1 mb-6">
+                  <div className="h-px w-full bg-black/10" />
+                  <p className="mt-3 text-[10px] font-bold uppercase tracking-[0.5em] opacity-30 text-[#2C3E50]">
+                    {agrupado[ano].length} leitura{agrupado[ano].length !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              
+              <div className="space-y-0">
+                {agrupado[ano].map(r => (
+                  <ResenhaCard
+                    key={r.id}
+                    resenha={r}
+                    periodo={labelMes(r)}
+                    aberta={abertas.has(r.id)}
+                    onToggle={() => toggleAberta(r.id)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))
+        )}
+      </main>
+    </div>
+  );
+}
+
+function ResenhaCard({ resenha: r, periodo, aberta, onToggle }: {
+  resenha: Resenha; periodo: string; aberta: boolean; onToggle: () => void;
+}) {
+  const preview = r.content ? r.content.slice(0, 300) + (r.content.length > 300 ? '...' : '') : '';
+
+  return (
+    <article className="group grid grid-cols-1 md:grid-cols-12 gap-12 items-start border-b border-black/5 pb-20">
+
+      
+      <div className="md:col-span-8 space-y-6">
+
+        
+        <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.3em]" style={{ color: amareloVintage }}>
+          <span>{periodo}</span>
+          {r.rating && (
+            <>
+              <span className="opacity-20 text-black">|</span>
+              <span className="flex gap-0.5 items-center">
+                {[1,2,3,4,5].map(n => (
+                  <Star key={n} size={11} fill={n <= r.rating! ? amareloVintage : 'none'} stroke={amareloVintage} strokeWidth={1.5} />
+                ))}
+              </span>
+            </>
+          )}
+        </div>
+
+        
+        <div className="space-y-4">
+          <h2 className="text-4xl md:text-5xl text-[#2C3E50] tracking-tight group-hover:italic transition-all duration-500">
+            {r.title}
+          </h2>
+          {(r.book || r.author) && (
+            <p className="text-lg italic opacity-50 text-black leading-relaxed">
+              {r.book && <span>{r.book}</span>}
+              {r.book && r.author && <span> · </span>}
+              {r.author && <span>por {r.author}</span>}
+            </p>
+          )}
+        </div>
+
+        
+        {r.content && (
+          <div className="relative pl-5 border-l-2" style={{ borderColor: `${amareloVintage}60` }}>
+            <p className="text-base italic leading-relaxed text-[#2C3E50]/70 font-light">
+              &ldquo;{aberta ? r.content : preview}&rdquo;
+            </p>
+          </div>
+        )}
+
+        {r.content && r.content.length > 300 && (
+          <button
+            onClick={onToggle}
+            className="flex items-center gap-2 text-[9px] font-mono font-bold uppercase tracking-[0.3em] opacity-40 hover:opacity-80 transition-opacity text-[#2C3E50]"
+          >
+            <ChevronDown size={14} className={`transition-transform duration-500 ${aberta ? 'rotate-180' : ''}`} />
+            {aberta ? 'Fechar' : 'Ler Resenha Completa'}
+          </button>
+        )}
+
+        <MiniChat resenhaId={r.id} tituloResenha={r.title} />
+      </div>
+
+      
+      <div className="md:col-span-4 flex justify-end">
+        {r.imageUrl ? (
+          <div className="p-3 bg-white shadow-xl -rotate-2 group-hover:rotate-0 transition-all duration-700 border border-black/3 w-full max-w-70">
+            <div className="aspect-4/5 overflow-hidden relative transition-all duration-1000">
+              <img
+                src={r.imageUrl}
+                alt={r.book ?? r.title}
+                className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-1000"
+              />
+            </div>
+            <div className="mt-3 py-2 border-t border-black/5">
+              <span className="text-[8px] font-bold uppercase tracking-[0.3em] opacity-30 block text-center italic">
+                {r.author ?? ''}
+              </span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+    </article>
+  );
+}
+
+function ResenhaCardCompacto({ resenha: r, periodo }: { resenha: Resenha; periodo: string }) {
+  return (
+    <div className="group grid grid-cols-1 md:grid-cols-12 gap-8 items-start border-b border-black/5 pb-12">
+
+      
+      <div className="md:col-span-8 space-y-4">
+        <div className="flex items-center gap-4 text-[11px] font-bold uppercase tracking-[0.3em]" style={{ color: amareloVintage }}>
+          <span>{periodo}</span>
+          {r.rating && (
+            <>
+              <span className="opacity-20 text-black">|</span>
+              <span className="flex gap-0.5 items-center">
+                {[1,2,3,4,5].map(n => (
+                  <Star key={n} size={10} fill={n <= r.rating! ? amareloVintage : 'none'} stroke={amareloVintage} strokeWidth={1.5} />
+                ))}
+              </span>
+            </>
+          )}
+        </div>
+        <h4 className="text-3xl text-[#2C3E50] tracking-tight group-hover:italic transition-all duration-500">{r.title}</h4>
+        {(r.book || r.author) && (
+          <p className="text-base italic opacity-40 text-black">{r.book}{r.author ? ` · por ${r.author}` : ''}</p>
+        )}
+        {r.content && (
+          <div className="relative pl-4 border-l-2" style={{ borderColor: `${amareloVintage}60` }}>
+            <p className="text-sm italic leading-relaxed text-[#2C3E50]/60">
+              &ldquo;{r.content.slice(0, 220)}{r.content.length > 220 ? '...' : ''}&rdquo;
+            </p>
+          </div>
+        )}
+        <MiniChat resenhaId={r.id} tituloResenha={r.title} />
+      </div>
+
+      
+      <div className="md:col-span-4 flex justify-end">
+        {r.imageUrl ? (
+          <div className="p-2 bg-white shadow-lg -rotate-1 group-hover:rotate-0 transition-all duration-700 border border-black/3 w-full max-w-50">
+            <div className="aspect-4/5 overflow-hidden transition-all duration-700">
+              <img src={r.imageUrl} alt={r.book ?? r.title} className="w-full h-full object-cover" />
+            </div>
+            <div className="mt-2 py-1 border-t border-black/5">
+              <span className="text-[7px] font-bold uppercase tracking-[0.3em] opacity-20 block text-center italic">{r.author ?? ''}</span>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+    </div>
+  );
 }

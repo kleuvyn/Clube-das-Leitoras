@@ -1,206 +1,330 @@
-import { BookOpen, Star, MessageCircle, Heart } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+"use client";
 
-const comentarios = [
-  {
-    id: 1,
-    nome: "Ana Clara",
-    avatar: "AC",
-    comentario:
-      "Estou amando a narrativa! A Evelyn é uma personagem tão complexa e fascinante. Mal posso esperar para discutirmos sobre os relacionamentos dela.",
-    data: "2025-01-28",
-    curtidas: 12,
-  },
-  {
-    id: 2,
-    nome: "Mariana S.",
-    avatar: "MS",
-    comentario:
-      "Já estou na metade e que reviravolta! Não esperava por essa revelação. Taylor Jenkins Reid realmente sabe como prender o leitor.",
-    data: "2025-01-27",
-    curtidas: 8,
-  },
-  {
-    id: 3,
-    nome: "Júlia Mendes",
-    avatar: "JM",
-    comentario:
-      "Alguém mais está se emocionando com a história? Estou completamente envolvida com os personagens. Que escolha perfeita para janeiro! 💕",
-    data: "2025-01-26",
-    curtidas: 15,
-  },
-]
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Quote, ArrowRight, Heart, MapPin, Calendar, PenTool, ChevronDown } from "lucide-react";
 
-export default function LivroDoMesPage() {
+const marromPapel = "#8C7A66";
+const azulPetroleo = "#2C3E50";
+
+const MESES_NUM: Record<string, number> = {
+  janeiro: 1, fevereiro: 2, março: 3, abril: 4,
+  maio: 5, junho: 6, julho: 7, agosto: 8,
+  setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
+};
+
+interface RodaLiteraria {
+  id: string;
+  mes: string;
+  num: number | null;
+  ano: number | null;
+  livro: string;
+  autora: string;
+  foto: string | null;
+  sinopse: string;
+  tag: string;
+  confirmado: boolean;
+}
+
+function mesNum(r: RodaLiteraria): number {
+  if (r.num) return r.num;
+  return MESES_NUM[r.mes?.toLowerCase?.() ?? ''] ?? 0;
+}
+
+export default function CalendarioJornal() {
+  const [todas, setTodas] = useState<RodaLiteraria[]>([]);
+  const [ativo, setAtivo] = useState<RodaLiteraria | null>(null);
+  const [anosExpandidos, setAnosExpandidos] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  const anoAtual = new Date().getFullYear();
+  const mesAtual = new Date().getMonth() + 1;
+
+  useEffect(() => {
+    async function carregar() {
+      try {
+        const res = await fetch('/api/livro-do-mes');
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const lista: RodaLiteraria[] = data.map((r: any) => ({
+            id: r.id,
+            mes: r.mes || '',
+            num: r.num ?? null,
+            ano: r.ano ?? null,
+            livro: r.livro || '',
+            autora: r.autora || '',
+            foto: r.foto || null,
+            sinopse: r.sinopse || '',
+            tag: r.tag || 'Leitura do Mês',
+            confirmado: r.confirmado ?? false,
+          }));
+          setTodas(lista);
+
+          
+          const anos = [...new Set(lista.map(r => r.ano ?? anoAtual))];
+          setAnosExpandidos(new Set(anos.filter(a => a >= anoAtual)));
+
+          
+          const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long' });
+          const doAnoAtual = lista.filter(r => r.ano === anoAtual).sort((a, b) => mesNum(a) - mesNum(b));
+          const current = doAnoAtual.find(r => r.mes?.toLowerCase() === mesAtualNome.toLowerCase()) || doAnoAtual[0] || lista[0];
+          setAtivo(current || null);
+        }
+      } catch (err) {
+        console.error("Erro ao carregar calendário:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    carregar();
+  }, []);
+
+  function statusMes(r: RodaLiteraria): 'passado' | 'atual' | 'futuro' {
+    const ano = r.ano ?? anoAtual;
+    if (ano < anoAtual) return 'passado';
+    if (ano > anoAtual) return 'futuro';
+    const n = mesNum(r);
+    if (n < mesAtual) return 'passado';
+    if (n === mesAtual) return 'atual';
+    return 'futuro';
+  }
+
+  function toggleAno(ano: number) {
+    setAnosExpandidos(prev => {
+      const next = new Set(prev);
+      next.has(ano) ? next.delete(ano) : next.add(ano);
+      return next;
+    });
+  }
+
+  const anos = [...new Set(todas.map(r => r.ano ?? anoAtual))].sort((a, b) => b - a);
+  const ativoAno = ativo?.ano ?? anoAtual;
+  const isPastAtivo = ativoAno < anoAtual;
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center italic opacity-30 bg-[#FDFCFB]">
+      Folheando o diretório de afeto...
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-purple-50 to-blue-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">📖 Livro do Mês</h1>
-          <p className="text-lg text-gray-600">Janeiro 2025</p>
+    <div className="min-h-screen font-alice pb-40 relative overflow-hidden"
+         style={{ background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}>
+
+      
+      <header className="max-w-5xl mx-auto pt-32 pb-16 px-6 text-center border-b border-black/5">
+        <div className="flex items-center justify-center gap-4 mb-8 opacity-40">
+          <div className="h-px w-10 bg-black" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-black italic">Diretório de Afeto • Planalto Central</span>
+          <div className="h-px w-10 bg-black" />
         </div>
+        <h1 className="text-7xl md:text-[100px] text-[#2C3E50] tracking-tighter leading-[0.8] mb-10">
+          A Próxima <span style={{ color: marromPapel }} className="italic font-light">Página</span>
+        </h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto border-t border-black/10 pt-10">
+          <p className="text-base leading-relaxed opacity-60 text-black italic">
+            &ldquo;Um calendário de afeto, onde cada mês reserva uma nova história para nos transformar.&rdquo;
+          </p>
+          <div className="flex flex-col justify-end items-start md:items-end">
+            <div className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] font-sans font-bold" style={{ color: marromPapel }}>
+              <PenTool size={14} /> Calendário Literário {anoAtual}
+            </div>
+          </div>
+        </div>
+      </header>
 
-        {/* Livro Principal */}
-        <div className="max-w-6xl mx-auto mb-16">
-          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg rounded-3xl overflow-hidden">
-            <CardContent className="p-8">
-              <div className="grid lg:grid-cols-2 gap-12 items-start">
-                {/* Capa do Livro */}
-                <div className="text-center">
-                  <div className="w-80 h-96 mx-auto bg-gradient-to-br from-blue-200 via-purple-200 to-rose-200 rounded-3xl shadow-2xl flex items-center justify-center mb-6 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-300/20 to-purple-300/20"></div>
-                    <BookOpen className="h-24 w-24 text-white relative z-10" />
-                  </div>
+      <main className="max-w-7xl mx-auto px-6 pt-24">
+        {todas.length === 0 ? (
+          <div className="text-center italic opacity-30 py-20">Nenhum livro cadastrado ainda.</div>
+        ) : (
+          <div className="grid lg:grid-cols-12 gap-16 items-start">
 
-                  {/* Avaliação */}
-                  <div className="flex justify-center items-center space-x-2 mb-4">
-                    <div className="flex space-x-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className="h-6 w-6 fill-yellow-300 text-yellow-300" />
-                      ))}
-                    </div>
-                    <span className="text-gray-600 font-medium">4.8/5</span>
-                    <span className="text-gray-500">(47 avaliações)</span>
-                  </div>
-                </div>
+            
+            <aside className="lg:col-span-3 border-r border-black/5 pr-8 space-y-8">
+              {anos.map(ano => {
+                const doAno = todas.filter(r => (r.ano ?? anoAtual) === ano).sort((a, b) => mesNum(a) - mesNum(b));
+                const isExpanded = anosExpandidos.has(ano);
+                const isCurrentYear = ano === anoAtual;
+                const isPast = ano < anoAtual;
+                const isFuture = ano > anoAtual;
 
-                {/* Informações do Livro */}
-                <div>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">As Sete Maridas de Evelyn Hugo</h2>
-                  <p className="text-xl text-purple-600 mb-6">Taylor Jenkins Reid</p>
-
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    <span className="bg-rose-100 text-rose-600 px-3 py-1 rounded-full text-sm">Romance</span>
-                    <span className="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm">Drama</span>
-                    <span className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">LGBTQ+</span>
-                    <span className="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-sm">Hollywood</span>
-                  </div>
-
-                  <div className="mb-8">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Sinopse</h3>
-                    <p className="text-gray-600 leading-relaxed mb-4">
-                      Evelyn Hugo é uma lenda de Hollywood que finalmente decide contar sua história. Mas quando escolhe
-                      uma jornalista desconhecida para escrever sua biografia, ninguém consegue entender os motivos.
-                    </p>
-                    <p className="text-gray-600 leading-relaxed">
-                      Ao longo de uma semana, Evelyn revela sua vida ambiciosa, repleta de amores proibidos, segredos
-                      devastadores e uma amizade que definiu sua existência. Uma história sobre o preço da fama e o
-                      poder da verdade.
-                    </p>
-                  </div>
-
-                  <div className="mb-8">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Por que foi escolhido?</h3>
-                    <div className="bg-gradient-to-r from-rose-100 to-purple-100 rounded-2xl p-6">
-                      <p className="text-gray-700 leading-relaxed">
-                        "Escolhemos este livro para começar 2025 porque ele nos convida a refletir sobre autenticidade,
-                        coragem e o poder de sermos verdadeiras conosco mesmas. A narrativa envolvente e os temas
-                        profundos prometem discussões ricas e significativas."
-                        <br />
-                        <br />
-                        <span className="text-purple-600 font-medium">- Coordenação do Clube</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Button className="bg-gradient-to-r from-rose-300 to-purple-300 hover:from-rose-400 hover:to-purple-400 text-white rounded-full flex-1">
-                      📚 Baixar PDF
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="border-purple-300 text-purple-600 hover:bg-purple-50 rounded-full flex-1 bg-transparent"
+                return (
+                  <div key={ano}>
+                    
+                    <button
+                      onClick={() => toggleAno(ano)}
+                      className="w-full flex items-center justify-between mb-4 group"
                     >
-                      📱 Baixar ePub
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Seção de Comentários */}
-        <section className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-            <MessageCircle className="mr-3 h-6 w-6 text-rose-400" />
-            Comentários das Leitoras
-          </h2>
-
-          {/* Formulário para Novo Comentário */}
-          <Card className="bg-white/70 backdrop-blur-sm border-0 shadow-lg rounded-3xl mb-8">
-            <CardHeader>
-              <CardTitle className="text-lg text-gray-800">Compartilhe sua opinião</CardTitle>
-              <CardDescription>Como está sendo sua experiência com o livro?</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                placeholder="Escreva aqui seus pensamentos sobre o livro... (sem spoilers, por favor! 😊)"
-                className="mb-4 rounded-2xl border-gray-200 focus:border-rose-300"
-                rows={4}
-              />
-              <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
-                    <span className="text-sm text-gray-600">Contém spoilers</span>
-                  </label>
-                </div>
-                <Button className="bg-gradient-to-r from-rose-300 to-purple-300 hover:from-rose-400 hover:to-purple-400 text-white rounded-full">
-                  Publicar Comentário
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Lista de Comentários */}
-          <div className="space-y-6">
-            {comentarios.map((comentario) => (
-              <Card key={comentario.id} className="bg-white/70 backdrop-blur-sm border-0 shadow-lg rounded-3xl">
-                <CardContent className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <Avatar className="bg-gradient-to-br from-rose-200 to-purple-200">
-                      <AvatarFallback className="text-white font-semibold">{comentario.avatar}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className="font-semibold text-gray-800">{comentario.nome}</h4>
-                        <span className="text-sm text-gray-500">
-                          {new Date(comentario.data).toLocaleDateString("pt-BR")}
+                      <div className="flex items-baseline gap-3">
+                        <span
+                          className="text-2xl font-bold tracking-tight"
+                          style={{ color: isCurrentYear ? marromPapel : '#2C3E5080' }}
+                        >
+                          {ano}
+                        </span>
+                        <span className="text-[8px] uppercase tracking-widest font-bold" style={{ color: isCurrentYear ? marromPapel : '#2C3E5070' }}>
+                          {isPast && '✓ Encerrado'}
+                          {isCurrentYear && '· Em curso'}
+                          {isFuture && '· Em breve'}
                         </span>
                       </div>
-                      <p className="text-gray-600 leading-relaxed mb-4">{comentario.comentario}</p>
-                      <div className="flex items-center space-x-4">
-                        <button className="flex items-center space-x-2 text-gray-500 hover:text-rose-500 transition-colors">
-                          <Heart className="h-4 w-4" />
-                          <span className="text-sm">{comentario.curtidas}</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-gray-500 hover:text-purple-500 transition-colors">
-                          <MessageCircle className="h-4 w-4" />
-                          <span className="text-sm">Responder</span>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <ChevronDown
+                        size={14}
+                        className={`opacity-30 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+                      />
+                    </button>
 
-          <div className="text-center mt-8">
-            <Button
-              variant="outline"
-              className="border-purple-300 text-purple-600 hover:bg-purple-50 rounded-full bg-transparent"
-            >
-              Ver Mais Comentários
-            </Button>
+                    
+                    {isExpanded && (
+                      <div className="flex flex-col gap-5 pl-2 border-l border-black/5 ml-1">
+                        {doAno.map(item => {
+                          const status = statusMes(item);
+                          const isAtivo = ativo?.id === item.id;
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => setAtivo(item)}
+                              className={`text-left transition-all duration-300 ${
+                                isAtivo
+                                  ? 'opacity-100 translate-x-1'
+                                  : status === 'passado'
+                                    ? 'opacity-25 hover:opacity-50'
+                                    : 'opacity-40 hover:opacity-70'
+                              }`}
+                            >
+                              <span className="flex items-center gap-1 text-[8px] uppercase font-bold tracking-widest text-black mb-0.5">
+                                {item.mes}
+                                {status === 'passado' && !isAtivo && <span className="opacity-40">✓</span>}
+                                {status === 'atual' && !isAtivo && <span style={{ color: marromPapel }}>●</span>}
+                              </span>
+                              <span
+                                className="text-base italic block leading-tight"
+                                style={{ color: isAtivo ? marromPapel : 'black' }}
+                              >
+                                {item.livro}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    
+                    <div className="mt-6 h-px bg-black/5" />
+                  </div>
+                );
+              })}
+            </aside>
+
+            
+            {ativo && (
+              <article className="lg:col-span-6 space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <div className="space-y-4 text-center md:text-left">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="text-[9px] font-bold uppercase tracking-[0.4em] px-3 py-1 border border-black/10 rounded-full" style={{ color: marromPapel }}>
+                      {ativo.tag}
+                    </span>
+                    {ativo.ano && (
+                      <span className="text-[9px] font-bold uppercase tracking-[0.4em] px-3 py-1 border border-black/20 rounded-full text-slate-500">
+                        {ativo.mes} {ativo.ano}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-6xl md:text-8xl text-[#2C3E50] tracking-tighter leading-[0.9]">
+                    {ativo.livro}
+                  </h2>
+                  <p className="text-xl italic opacity-40 text-black">Por {ativo.autora}</p>
+                </div>
+
+                
+                <div className="relative group max-w-sm mx-auto md:mx-0">
+                  <div className={`aspect-3/4 bg-white p-6 shadow-xl relative z-10 border border-black/5 transition-transform group-hover:rotate-0 duration-700 -rotate-1 ${isPastAtivo ? 'opacity-70' : ''}`}>
+                    {ativo.foto ? (
+                      <div className="relative w-full h-full">
+                        <Image src={ativo.foto} alt={ativo.livro} fill className="object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-[#FDFCFB] border border-dashed border-black/10 gap-4">
+                        <PenTool size={32} className="opacity-10" />
+                        <span className="text-[9px] uppercase font-bold tracking-widest opacity-20">Em Curadoria</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-8 pt-4 border-t border-black/5">
+                  <Quote style={{ color: marromPapel }} size={32} className="opacity-20" />
+                  <p className="text-2xl italic leading-relaxed opacity-60 text-black">
+                    &ldquo;{ativo.sinopse}&rdquo;
+                  </p>
+                  <div className="pt-8">
+                    <Link href="/resenhas" className="p-0 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2 hover:opacity-70 transition-opacity" style={{ color: marromPapel }}>
+                      Detalhes da Roda <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                </div>
+              </article>
+            )}
+
+            
+            <aside className="lg:col-span-3 space-y-12">
+              <section className="bg-white p-10 border border-black/5 shadow-sm rounded-2xl">
+                <h4 className="text-[9px] font-bold uppercase tracking-widest mb-8 opacity-30 text-black">Logística do Encontro</h4>
+                <div className="space-y-8 text-sm italic opacity-60 text-black">
+                  <div className="flex items-center gap-4">
+                    <MapPin size={16} style={{ color: marromPapel }} className="opacity-40" />
+                    <span>Biblioteca Nacional de Brasília</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Calendar size={16} style={{ color: marromPapel }} className="opacity-40" />
+                    <span>Último Domingo, 10h</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Heart size={16} style={{ color: marromPapel }} className="opacity-40" />
+                    <span>Encontro Gratuito e Aberto</span>
+                  </div>
+                </div>
+              </section>
+
+              
+              {todas.some(r => r.ano === anoAtual) && (
+                <section className="p-6 border border-black/5">
+                  <p className="text-[9px] uppercase tracking-widest font-bold mb-3" style={{ color: marromPapel }}>
+                    Progresso {anoAtual}
+                  </p>
+                  <p className="text-sm text-black">
+                    {todas.filter(r => (r.ano ?? anoAtual) === anoAtual && (statusMes(r) === 'passado' || statusMes(r) === 'atual')).length} de{' '}
+                    {todas.filter(r => (r.ano ?? anoAtual) === anoAtual).length} livros lidos
+                  </p>
+                </section>
+              )}
+
+              
+              {anos.filter(a => a < anoAtual).map(ano => {
+                const count = todas.filter(r => r.ano === ano).length;
+                return (
+                  <section key={ano} className="p-6 border border-black/10">
+                    <p className="text-[9px] uppercase tracking-widest font-bold mb-1 text-slate-500">✓ {ano} Encerrado</p>
+                    <p className="text-sm text-black">{count} livros lidos</p>
+                  </section>
+                );
+              })}
+
+              
+              {anos.filter(a => a > anoAtual).map(ano => {
+                const count = todas.filter(r => r.ano === ano).length;
+                return (
+                  <section key={ano} className="p-6 border border-black/10">
+                    <p className="text-[9px] uppercase tracking-widest font-bold mb-1 text-slate-500">· {ano} Em Breve</p>
+                    <p className="text-sm text-black">{count} livros previstos</p>
+                  </section>
+                );
+              })}
+            </aside>
           </div>
-        </section>
-      </div>
+        )}
+      </main>
     </div>
-  )
+  );
 }

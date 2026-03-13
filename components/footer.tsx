@@ -1,68 +1,109 @@
-import Link from "next/link"
-import { Heart, BookOpen, Users } from "lucide-react"
+"use client";
+
+import Link from "next/link";
+import Image from "next/image";
+import { Heart, Instagram, MapPin, Sparkles, Star, ArrowUpRight, Mail, Coffee } from "lucide-react";
+
+const rosaGabi = "#B04A5A";
+const pretoJornal = "#000000";
+const cinzaSeda = "#F4F1EE";
+
+const ANO_FUNDACAO = 2025;
+const ROMANOS = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV'];
 
 export function Footer() {
+  const anoAtual = new Date().getFullYear();
+  const anoRomano = ROMANOS[anoAtual - ANO_FUNDACAO] ?? `${anoAtual - ANO_FUNDACAO + 1}`;
+
   return (
-    <footer className="bg-gradient-to-r from-rose-100 via-purple-100 to-blue-100 py-12">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Logo e Descrição */}
-          <div className="text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start space-x-2 mb-4">
-              <div className="flex items-end space-x-0.5">
-                 <img src="/logo.png" alt="Clube das Leitoras" className="h-10 w-auto" />
-              </div>
-              <span className="font-bold text-lg text-gray-800">Clube das Leitoras</span>
+    <footer className="py-24 relative overflow-hidden font-alice bg-[#F4F1EE] border-t border-black/10">
+      
+      <div className="max-w-7xl mx-auto px-8 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-16 md:gap-12">
+          
+          
+          <div className="md:col-span-1 space-y-6">
+            <div className="flex items-center space-x-4 group">
+               <div className="relative w-16 h-16">
+                  <Image
+                    src="/logo-clube-leitoras.png" 
+                    alt="Logo Clube das Leitoras"
+                    fill
+                    className="object-contain drop-shadow-sm group-hover:rotate-12 transition-transform duration-500"
+                  />
+               </div>
+               <div className="flex flex-col">
+                 <span className="text-2xl leading-none text-black">
+                    Clube das <span className="italic" style={{ color: rosaGabi }}>Leitoras</span>
+                 </span>
+               </div>
             </div>
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Uma comunidade apaixonada por livros, onde cada página vira uma nova amizade. 📚✨
+            <p className="text-sm italic leading-relaxed max-w-xs text-black/60">
+              "Uma comunidade feminina em Brasília, ocupando espaços e cafés com o poder das páginas."
             </p>
           </div>
 
-          {/* Links Rápidos */}
-          <div className="text-center">
-            <h3 className="font-semibold text-gray-800 mb-4">Links Rápidos</h3>
-            <div className="space-y-2">
-              <Link href="/encontros" className="block text-gray-600 hover:text-rose-600 text-sm transition-colors">
-                Próximos Encontros
+          
+          <div className="md:col-span-1">
+            <h3 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 flex items-center gap-2 text-black/40">
+              <MapPin className="w-3 h-3" style={{ color: rosaGabi }} /> Nossa Sede
+            </h3>
+            <div className="text-sm space-y-2 font-medium italic text-black/70">
+              <p className="not-italic font-bold text-black">Biblioteca Nacional de Brasília</p>
+              <p>Setor Cultural Sul, Lote 2</p>
+              <p>Brasília - DF</p>
+            </div>
+          </div>
+
+          
+          <div className="md:col-span-1">
+            <h3 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-black/40">Explorar</h3>
+            <div className="flex flex-col space-y-3">
+              <Link href="/livro-do-mes" className="text-sm hover:translate-x-1 transition-all flex items-center group font-medium italic text-black">
+                Livros do Mês <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 ml-1 transition-all" />
               </Link>
-              <Link
-                href="/livro-do-mes"
-                className="block text-gray-600 hover:text-purple-600 text-sm transition-colors"
-              >
-                Livro do Mês
+              <Link href="/dicas" className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">
+                Dicas da Gabi
               </Link>
-              <Link href="/sorteios" className="block text-gray-600 hover:text-blue-600 text-sm transition-colors">
-                Sorteios Ativos
+              <Link href="/parcerias" className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">
+                Nossas Parcerias
               </Link>
-              <Link href="/biblioteca" className="block text-gray-600 hover:text-green-600 text-sm transition-colors">
-                Biblioteca Digital
+              <Link href="/empreendedoras" className="text-sm font-bold hover:opacity-70 transition-all flex items-center gap-2 uppercase tracking-widest text-[10px] pt-2" style={{ color: rosaGabi }}>
+                <Sparkles className="w-3 h-3" /> Empreendedoras
               </Link>
             </div>
           </div>
 
-          {/* Contato */}
-          <div className="text-center md:text-right">
-            <h3 className="font-semibold text-gray-800 mb-4">Conecte-se</h3>
-            <div className="flex justify-center md:justify-end space-x-4 mb-4">
-              <div className="w-10 h-10 bg-rose-200 rounded-full flex items-center justify-center">
-                <BookOpen className="h-5 w-5 text-rose-600" />
-              </div>
-              <div className="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center">
-                <Users className="h-5 w-5 text-purple-600" />
-              </div>
-              <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center">
-                <Heart className="h-5 w-5 text-blue-600" />
-              </div>
+          
+          <div className="md:col-span-1">
+            <h3 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-black/40">Social Club</h3>
+            <div className="flex space-x-3 mb-8">
+              <a href="https://instagram.com/elaeasviagens" target="_blank" className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-sm border border-black/5" style={{ color: rosaGabi }}>
+                <Instagram className="h-5 w-5" />
+              </a>
+              <a href="mailto:clubedasleitorasbsb@gmail.com" className="w-12 h-12 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-all shadow-sm border border-black/5" style={{ color: rosaGabi }}>
+                <Mail className="h-5 w-5" />
+              </a>
             </div>
-            <p className="text-gray-600 text-sm">clubedasleitoras2025@email.com</p>
+            <div className="flex items-center gap-2">
+               <Coffee size={12} style={{ color: rosaGabi }} />
+               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-black">
+                 Brasília, {anoAtual} • Ano {anoRomano}
+               </p>
+            </div>
           </div>
         </div>
 
-        <div className="border-t border-white/50 mt-8 pt-8 text-center">
-          <p className="text-gray-600 text-sm">© 2025 Clube das Leitoras. Feito com 💕 para leitoras apaixonadas.</p>
+        
+        <div className="mt-20 pt-10 flex flex-col md:flex-row justify-between items-center gap-6 border-t border-black/10">
+          <p className="text-[10px] font-bold uppercase tracking-[0.3em] flex items-center gap-3 text-black/30">
+            © {anoAtual} Clube das Leitoras <Star className="w-3 h-3" style={{ color: rosaGabi }} /> Brasília • DF
+          </p>
+          <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
+            Feito com <Heart className="h-3 w-3 mx-1" style={{ color: rosaGabi, fill: rosaGabi }} /> para leitoras apaixonadas
+          </div>
         </div>
       </div>
     </footer>
-  )
+  );
 }
