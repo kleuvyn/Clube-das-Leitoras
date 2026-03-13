@@ -6,23 +6,28 @@ type DrizzleDb = ReturnType<typeof drizzle<typeof schema>>;
 
 const globalForDb = globalThis as unknown as {
   conn: postgres.Sql | undefined;
+  db: DrizzleDb | undefined;
 };
 
-let _db: DrizzleDb | null = null;
-
 function getDb(): DrizzleDb {
-  if (_db) return _db;
+  if (globalForDb.db) return globalForDb.db;
 
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
     throw new Error('DATABASE_URL não encontrada no arquivo .env');
   }
 
-  const client = globalForDb.conn ?? postgres(connectionString);
-  if (process.env.NODE_ENV !== 'production') globalForDb.conn = client;
+  const client = postgres(connectionString, {
+    max: 1,
+    idle_timeout: 20,
+    max_lifetime: 60 * 30,
+    ssl: 'require',
+    prepare: false,
+  });
 
-  _db = drizzle(client, { schema });
-  return _db;
+  const db = drizzle(client, { schema });
+  globalForDb.db = db;
+  return db;
 }
 
 export const db = new Proxy({} as DrizzleDb, {
