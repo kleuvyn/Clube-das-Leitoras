@@ -214,7 +214,7 @@ export default function PodcastAdmin() {
                     ? <><Loader2 size={14} className="animate-spin" /> Enviando...</>
                     : <><FileAudio size={14} /> Subir Arquivo de Áudio (MP3, WAV, M4A)</>}
                 </button>
-                {formData.audioUrl && formData.audioUrl.startsWith('/uploads/') && (
+                {formData.audioUrl && (formData.audioUrl.startsWith('/uploads/') || formData.audioUrl.startsWith('https://')) && (
                   <p className="text-[10px] text-emerald-500 italic flex items-center gap-1 mt-1">
                     <FileAudio size={11} /> {formData.audioUrl.split('/').pop()}
                   </p>

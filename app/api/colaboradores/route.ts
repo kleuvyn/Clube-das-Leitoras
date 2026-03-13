@@ -5,6 +5,8 @@ import { colaboradoras } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const allLeitoras = await db
