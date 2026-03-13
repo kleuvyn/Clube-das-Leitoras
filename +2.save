@@ -1,0 +1,10 @@
+os } from './lib/db/schema.ts'; const rows = await 
+db.select().from(livros); console.log('Total livros:', rows.length); 
+console.log(JSON.stringify(rows.map(r => ({titulo: r.titulo, mes: r.mes, 
+ano: r.ano})), null, 2)); process.exit(0); " 2>&1 | tail -30
+ export DATABASE_URL="postgresql://neondb_owner:npg_mtFwn3PT2svG@ep-fancy-wildflower-ai76h1no-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require" && psql "$DATABASE_URL" -t -c "SELECT COUNT(*) FROM livros;" 2>&1 && psql "$DATABASE_URL" -c "SELECT titulo, mes, ano FROM livros LIMIT 20;" 2>&1
+ export DATABASE_URL="postgresql://neondb_owner:npg_mtFwn3PT2svG@ep-fancy-wildflower-ai76h1no-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require" && PAGER=cat psql "$DATABASE_URL" -A -t -c "SELECT titulo||'|'||mes||'|'||ano::text FROM livros LIMIT 20;" 2>&1
+ PAGER='' psql postgresql://neondb_owner:npg_mtFwn3PT2svG@ep-fancy-wildflower-ai76h1no-pooler.c-4.us-east-1.aws.neon.tech/neondb -A -t -c "SELECT titulo,mes,ano FROM livros LIMIT 20;" 2>&1 | cat
+ q
+ echo "test"
+

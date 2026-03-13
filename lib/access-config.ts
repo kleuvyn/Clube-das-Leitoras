@@ -28,7 +28,6 @@ export const CONVIDADA_EXTRA_NAV_ITEMS: NavAccessItem[] = [
 ];
 
 export const CONVIDADA_PROTECTED_ROUTES = [
-  '/livro-do-mes',
   '/clube',
   '/leitura',
   '/resenhas',
