@@ -242,7 +242,7 @@ export default function CalendarioJornal() {
                   <div className={`aspect-3/4 bg-white p-6 shadow-xl relative z-10 border border-black/5 transition-transform group-hover:rotate-0 duration-700 -rotate-1 ${isPastAtivo ? 'opacity-70' : ''}`}>
                     {ativo.foto ? (
                       <div className="relative w-full h-full">
-                        <Image src={ativo.foto} alt={ativo.livro} fill className="object-contain" />
+                        <Image src={ativo.foto} alt={ativo.livro} fill className="object-cover" style={{ filter: 'none' }} />
                       </div>
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center bg-[#FDFCFB] border border-dashed border-black/10 gap-4">
@@ -294,15 +294,23 @@ export default function CalendarioJornal() {
                     Progresso {anoAtual}
                   </p>
                   <p className="text-sm text-black">
-                    {todas.filter(r => (r.ano ?? anoAtual) === anoAtual && (statusMes(r) === 'passado' || statusMes(r) === 'atual')).length} de{' '}
-                    {todas.filter(r => (r.ano ?? anoAtual) === anoAtual).length} livros lidos
+                    {(() => {
+                      const lidos = todas.filter(r => (r.ano ?? anoAtual) === anoAtual && (statusMes(r) === 'passado' || statusMes(r) === 'atual'));
+                      const unicos = Array.from(new Set(lidos.map(r => r.livro)));
+                      return unicos.length;
+                    })()} de{' '}
+                    {(() => {
+                      const doAno = todas.filter(r => (r.ano ?? anoAtual) === anoAtual);
+                      const unicos = Array.from(new Set(doAno.map(r => r.livro)));
+                      return unicos.length;
+                    })()} livros lidos
                   </p>
                 </section>
               )}
 
               
               {anos.filter(a => a < anoAtual).map(ano => {
-                const count = todas.filter(r => r.ano === ano).length;
+                const count = Array.from(new Set(todas.filter(r => r.ano === ano).map(r => r.livro))).length;
                 return (
                   <section key={ano} className="p-6 border border-black/10">
                     <p className="text-[9px] uppercase tracking-widest font-bold mb-1 text-slate-500">✓ {ano} Encerrado</p>
@@ -313,7 +321,7 @@ export default function CalendarioJornal() {
 
               
               {anos.filter(a => a > anoAtual).map(ano => {
-                const count = todas.filter(r => r.ano === ano).length;
+                const count = Array.from(new Set(todas.filter(r => r.ano === ano).map(r => r.livro))).length;
                 return (
                   <section key={ano} className="p-6 border border-black/10">
                     <p className="text-[9px] uppercase tracking-widest font-bold mb-1 text-slate-500">· {ano} Em Breve</p>
