@@ -6,6 +6,7 @@ export async function POST() {
   response.cookies.set('clube-admin-token', '', { path: '/', expires: new Date(0) });
   response.cookies.set('clube-sessao', '', { path: '/', expires: new Date(0) });
   response.cookies.set('clube-user-email', '', { path: '/', expires: new Date(0) });
+  response.cookies.set('clube-user-name', '', { path: '/', expires: new Date(0) });
 
   return response;
 }

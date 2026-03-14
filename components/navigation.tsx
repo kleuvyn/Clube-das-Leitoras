@@ -16,6 +16,7 @@ export function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isLogged, setIsLogged] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -27,7 +28,14 @@ export function Navigation() {
   
   
   useEffect(() => {
-    setIsLogged(document.cookie.includes("clube-user-email="));
+    const getCookie = (name: string) => {
+      const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : null;
+    };
+    const email = getCookie('clube-user-email');
+    setIsLogged(!!email);
+    const nome = getCookie('clube-user-name');
+    setUserName(nome ? nome.split(' ')[0] : null);
   }, [pathname]);
 
   const handleLogout = async () => {
@@ -144,13 +152,20 @@ export function Navigation() {
           <div className="h-8 w-px bg-[#E8E2DE] mx-2" />
           
           {isLogged ? (
-            <button
-              onClick={handleLogout}
-              className="font-inter flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white px-8 py-3.5 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all"
-              style={{ backgroundColor: terracotaDoLivro }}
-            >
-              <LogOut size={14} /> Sair
-            </button>
+            <div className="flex items-center gap-3">
+              {userName && (
+                <span className="font-alice italic text-sm" style={{ color: marromTerra }}>
+                  Olá, {userName}!
+                </span>
+              )}
+              <button
+                onClick={handleLogout}
+                className="font-inter flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white px-8 py-3.5 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all"
+                style={{ backgroundColor: terracotaDoLivro }}
+              >
+                <LogOut size={14} /> Sair
+              </button>
+            </div>
           ) : (
             <Link 
               href="/login" 
@@ -204,13 +219,20 @@ export function Navigation() {
 
             <div className="pt-4">
               {isLogged ? (
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-lg"
-                  style={{ backgroundColor: terracotaDoLivro }}
-                >
-                  <LogOut size={14} /> Sair da Conta
-                </button>
+                <div className="space-y-3">
+                  {userName && (
+                    <p className="text-center font-alice italic text-sm" style={{ color: marromTerra }}>
+                      Olá, {userName}!
+                    </p>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-lg"
+                    style={{ backgroundColor: terracotaDoLivro }}
+                  >
+                    <LogOut size={14} /> Sair da Conta
+                  </button>
+                </div>
               ) : (
                 <Link 
                   href="/login"

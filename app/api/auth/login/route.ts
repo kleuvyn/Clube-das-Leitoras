@@ -49,6 +49,13 @@ export async function POST(request: Request) {
       path: '/',
     });
 
+    cookieStore.set('clube-user-name', user.nome, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
     try {
       await db
         .update(colaboradoras)
