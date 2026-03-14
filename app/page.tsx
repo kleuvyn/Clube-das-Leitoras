@@ -138,6 +138,7 @@ export default function HomeJornalClubeLeitoras() {
                     alt={livroDoMes.titulo} 
                     fill 
                     className="object-cover" 
+                    style={{ filter: 'none', opacity: 1 }}
                   />
                </div>
                <div className="space-y-8">
