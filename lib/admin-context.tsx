@@ -1,5 +1,4 @@
 'use client';
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 interface User {
@@ -209,4 +208,9 @@ export function useAdmin() {
     throw new Error('useAdmin deve ser usado dentro de AdminProvider');
   }
   return context;
+}
+
+// Expor globalmente para evitar ReferenceError em builds antigos/caches
+if (typeof window !== 'undefined') {
+  (window as any).useAdmin = useAdmin;
 }
