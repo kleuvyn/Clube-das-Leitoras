@@ -8,6 +8,32 @@ import {
 const lavandaPrincipal = "#967BB6";
 const azulPetroleo = "#2C3E50";
 
+// Lista de categorias atualizada
+export const categoriasEmpreendedoras = [
+  "Bordado",
+  "Tecido",
+  "Crochê",
+  "Macramê",
+  "Saúde",
+  "Bem-Estar",
+  "Literatura",
+  "Escrita",
+  "Arte",
+  "Papelaria",
+  "Presentes",
+  "Beleza",
+  "Estilo",
+  "Serviços Profissionais",
+  "Gestão",
+  "Fotografia",
+  "Arquitetura",
+  "Design",
+  "Gastronomia",
+  "Viagens",
+  "Pets",
+  "Outros"
+];
+
 interface Empreendedora {
   id: number;
   nome: string;
