@@ -204,6 +204,9 @@ export default function VotacaoPage() {
         
         {dados?.livros && dados.livros.length > 0 ? (
           <section className="space-y-10">
+            <div className="mb-8 text-center text-[12px] font-bold uppercase tracking-widest opacity-60 text-black">
+              Clique em um livro para votar ou indique um novo abaixo.
+            </div>
             
             {totalVotos > 0 && vencedor && (
               <div className="relative overflow-hidden rounded-[3rem] p-10 md:p-14 border-2"
