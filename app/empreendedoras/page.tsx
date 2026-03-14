@@ -8,7 +8,6 @@ import {
 const lavandaPrincipal = "#967BB6";
 const azulPetroleo = "#2C3E50";
 
-
 interface Empreendedora {
   id: number;
   nome: string;
