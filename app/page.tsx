@@ -50,19 +50,34 @@ export default function HomeJornalClubeLeitoras() {
     buscarMemoria();
   }, []);
 
+  const MESES_PT = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+  ];
+
   useEffect(() => {
     async function buscarLivroAtual() {
       try {
         const res = await fetch(`/api/livro-do-mes?ano=${new Date().getFullYear()}`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          const r = data[0];
+          const mesAtual = new Date().getMonth() + 1;
+          const mesAtualNome = MESES_PT[mesAtual - 1];
+
+          // Prioriza o livro cujo número do mês corresponde ao mês atual.
+          // Se não houver, tenta casar pelo nome do mês. Se ainda não, pega o primeiro registrado.
+          const match = data.find((item: any) => {
+            const num = typeof item.num === 'number' ? item.num : Number(item.num);
+            const mes = String(item.mes || '').toLowerCase();
+            return num === mesAtual || mes === mesAtualNome.toLowerCase();
+          }) ?? data[0];
+
           setLivroDoMes({
-            titulo: r.livro || '',
-            autor: r.autora || '',
-            mes: r.mes || '',
-            capa: r.foto || '',
-            descricao_curta: r.sinopse || '',
+            titulo: match.livro || '',
+            autor: match.autora || '',
+            mes: match.mes || '',
+            capa: match.foto || '',
+            descricao_curta: match.sinopse || '',
           });
         }
       } catch (err) {
