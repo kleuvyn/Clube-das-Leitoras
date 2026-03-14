@@ -82,46 +82,18 @@ export async function PATCH(request: Request) {
 
     const body = await request.json();
 
-    if (body.encerrar) {
-      const allLivros = await db.select().from(livros);
-      const allVotacoes = await db.select().from(votacoes);
-
-      if (allLivros.length > 0 && allVotacoes.length > 0) {
-        const votosPorLivro = new Map<string, number>();
-        allVotacoes.forEach(v => {
-          votosPorLivro.set(v.livro_id, (votosPorLivro.get(v.livro_id) || 0) + 1);
-        });
-
-        const sorted = allLivros
-          .map(l => ({ ...l, votos: votosPorLivro.get(l.id) || 0 }))
-          .sort((a, b) => b.votos - a.votos);
-
-        const vencedor = sorted[0];
-        const totalVotos = allVotacoes.length;
-        const porcentagem = vencedor ? Math.round((vencedor.votos / totalVotos) * 100) : 0;
-        const periodo = body.periodo || new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-
-        await db.insert(votacoesHistorico).values({
-          periodo,
-          vencedorTitulo: vencedor?.titulo || '',
-          vencedorAutor: vencedor?.autor || '',
-          vencedorVotos: vencedor?.votos || 0,
-          totalVotos,
-          porcentagem,
-        });
-      }
-
+    // Nova votação: zera votos e reabre
+    if (body.novaVotacao) {
       await db.delete(votacoes);
-
       const existing = await db.select().from(votacaoConfig).limit(1);
       if (existing.length > 0) {
-        await db.update(votacaoConfig).set({ ativa: false });
+        await db.update(votacaoConfig).set({ ativa: true });
       } else {
-        await db.insert(votacaoConfig).values({ ativa: false, prazo: '' });
+        await db.insert(votacaoConfig).values({ ativa: true, prazo: '' });
       }
-
       return NextResponse.json({ success: true }, { status: 200 });
     }
+    // ...existing code...
 
     const ativa = Boolean(body.ativa);
     const prazo = body.prazo ?? '';

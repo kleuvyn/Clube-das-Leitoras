@@ -259,6 +259,26 @@ export default function VotacoesAdmin() {
 
   if (loading) return <div className="p-20 text-center italic text-slate-400">Carregando...</div>;
 
+  // Função para iniciar nova votação: reabrir e zerar votos
+  const handleNovaVotacao = async () => {
+    if (!confirm('Iniciar nova votação? Os votos serão zerados e a votação será reaberta.')) return;
+    setSalvando(true);
+    try {
+      // Zera votos dos livros
+      await fetch('/api/votacao', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ novaVotacao: true }),
+      });
+      toast.success('Nova votação iniciada!');
+      loadDados();
+    } catch {
+      toast.error('Erro ao iniciar nova votação.');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-20 p-6 font-alice">
 
@@ -272,7 +292,7 @@ export default function VotacoesAdmin() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          
+          {/* Botão alternar votação */}
           <button
             onClick={handleToggleAtiva}
             disabled={salvando}
@@ -282,7 +302,7 @@ export default function VotacoesAdmin() {
                 : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100'
             }`}
           >
-            {ativa ? <ToggleRight size={16}/> : <ToggleLeft size={16}/>}
+            {ativa ? <ToggleRight size={16}/> : <ToggleLeft size={16}/>} 
             {ativa ? 'Votação Aberta' : 'Votação Fechada'}
           </button>
 
@@ -295,6 +315,18 @@ export default function VotacoesAdmin() {
             >
               {encerrando ? <Loader2 size={14} className="animate-spin mr-1"/> : <XCircle size={14} className="mr-1"/>}
               Encerrar Rodada
+            </Button>
+          )}
+
+          {/* Botão Nova Votação: só aparece quando votação está fechada */}
+          {!ativa && (
+            <Button
+              onClick={handleNovaVotacao}
+              disabled={salvando}
+              variant="outline"
+              className="rounded-full px-5 h-10 text-[10px] font-bold uppercase tracking-widest text-green-700 border-green-200 hover:bg-green-50"
+            >
+              <Plus size={14} className="mr-1"/> Nova Votação
             </Button>
           )}
 
