@@ -68,8 +68,8 @@ export default function LeitorasAdmin() {
     if (!confirm(`Remover o acesso de "${u.name}"? Esta ação não pode ser desfeita.`)) return;
     try {
       const res = await fetch(`/api/colaboradores?id=${u.id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Erro ao remover');
       toast.success(`${u.name} removida do clube.`);
       load();
     } catch (err: any) {

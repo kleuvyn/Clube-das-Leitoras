@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { put } from '@vercel/blob';
 import { requireAdminOrColaboradora } from '@/lib/auth';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,12 +40,23 @@ export async function POST(request: Request) {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    const blob = await put(safeName, file, {
-      access: 'public',
-      contentType: file.type,
-    });
+    // Usar Vercel Blob se configurado, senão salvar localmente
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const { put } = await import('@vercel/blob');
+      const blob = await put(safeName, file, {
+        access: 'public',
+        contentType: file.type,
+      });
+      return NextResponse.json({ url: blob.url }, { status: 201 });
+    }
 
-    return NextResponse.json({ url: blob.url }, { status: 201 });
+    // Fallback: salvar no sistema de arquivos local (public/uploads/)
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    await mkdir(uploadsDir, { recursive: true });
+    const buffer = Buffer.from(await file.arrayBuffer());
+    await writeFile(path.join(uploadsDir, safeName), buffer);
+
+    return NextResponse.json({ url: `/uploads/${safeName}` }, { status: 201 });
   } catch (err: any) {
     console.error('Erro POST /api/upload:', err);
     return NextResponse.json({ error: 'Erro ao salvar arquivo' }, { status: 500 });
