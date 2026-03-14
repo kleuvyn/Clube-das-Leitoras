@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
-  Heart, Sparkles, Loader2, Coffee, BookOpen, PenTool, Music, ArrowRight, ShieldCheck
+  Heart, Loader2, Coffee, BookOpen, PenTool, Music, ArrowRight, ShieldCheck, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -14,12 +14,13 @@ function NovaSenhaForm() {
   const router = useRouter();
   const [senha, setSenha] = useState('');
   const [confirma, setConfirma] = useState('');
+  const [verSenha, setVerSenha] = useState(false);
+  const [verConfirma, setVerConfirma] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSalvar = async () => {
     setErro('');
 
     if (senha.length < 6) {
@@ -27,7 +28,7 @@ function NovaSenhaForm() {
       return;
     }
     if (senha !== confirma) {
-      setErro('As senhas não coincidem.');
+      setErro('As senhas não coincidem. Verifique e tente novamente.');
       return;
     }
 
@@ -42,7 +43,7 @@ function NovaSenhaForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErro(data.error || 'Erro ao salvar a senha.');
+        setErro(data.error || 'Erro ao salvar a senha. Tente novamente.');
         return;
       }
 
@@ -119,36 +120,55 @@ function NovaSenhaForm() {
                   <p className="text-base italic" style={{ color: rosaGabi }}>Senha criada! Entrando no clube...</p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="space-y-8">
                   <div className="space-y-1">
-                    <input
-                      type="password"
-                      value={senha}
-                      onChange={(e) => setSenha(e.target.value)}
-                      required
-                      className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-t-3xl py-6 px-8 outline-none text-sm italic text-[#2C3E50] focus:border-[#B04D4A] transition-all placeholder:text-[#8C7A66]/30"
-                      placeholder="Nova senha (mín. 6 caracteres)"
-                      disabled={loading}
-                    />
-                    <input
-                      type="password"
-                      value={confirma}
-                      onChange={(e) => setConfirma(e.target.value)}
-                      required
-                      className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-b-3xl py-6 px-8 outline-none text-sm text-[#2C3E50] focus:border-[#B04D4A] transition-all placeholder:text-[#8C7A66]/30"
-                      placeholder="Confirme a senha"
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <input
+                        type={verSenha ? 'text' : 'password'}
+                        value={senha}
+                        onChange={(e) => setSenha(e.target.value)}
+                        className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-t-3xl py-6 pl-8 pr-14 outline-none text-sm italic text-[#2C3E50] focus:border-[#B04D4A] transition-all placeholder:text-[#8C7A66]/30"
+                        placeholder="Nova senha (mín. 6 caracteres)"
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setVerSenha(v => !v)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C7A66]/40 hover:text-[#8C7A66] transition-colors"
+                        tabIndex={-1}
+                      >
+                        {verSenha ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={verConfirma ? 'text' : 'password'}
+                        value={confirma}
+                        onChange={(e) => setConfirma(e.target.value)}
+                        className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-b-3xl py-6 pl-8 pr-14 outline-none text-sm text-[#2C3E50] focus:border-[#B04D4A] transition-all placeholder:text-[#8C7A66]/30"
+                        placeholder="Confirme a senha"
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setVerConfirma(v => !v)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-[#8C7A66]/40 hover:text-[#8C7A66] transition-colors"
+                        tabIndex={-1}
+                      >
+                        {verConfirma ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
 
                   {erro && (
-                    <p className="text-[10px] text-center italic text-[#B04D4A] animate-pulse">
+                    <div className="bg-rose-50 border border-rose-200 rounded-2xl px-6 py-4 text-[12px] italic text-rose-600 text-center">
                       {erro}
-                    </p>
+                    </div>
                   )}
 
                   <Button
-                    type="submit"
+                    type="button"
+                    onClick={handleSalvar}
                     disabled={loading}
                     className="w-full rounded-[2.5rem] h-24 text-[10px] font-mono font-bold uppercase tracking-[0.4em] transition-all shadow-2xl text-white hover:brightness-110 active:scale-95 disabled:opacity-50"
                     style={{ backgroundColor: rosaGabi }}
@@ -165,7 +185,7 @@ function NovaSenhaForm() {
                   <p className="text-center text-[8px] font-mono uppercase tracking-[0.5em] opacity-30 text-[#8C7A66]">
                     Brasília • Curadoria de Afeto
                   </p>
-                </form>
+                </div>
               )}
             </div>
           </div>

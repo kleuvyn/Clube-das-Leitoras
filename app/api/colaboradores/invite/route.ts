@@ -64,11 +64,14 @@ export async function POST(req: Request) {
           subject: '💜 Seu acesso ao Clube das Leitoras chegou!',
           html: `
             <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #2C3E50;">
-              <div style="background: #967BB6; padding: 40px; text-align: center; border-radius: 16px 16px 0 0;">
-                <h1 style="color: #fff; font-size: 28px; font-weight: normal; font-style: italic; margin: 0;">
-                  Clube das Leitoras
-                </h1>
-                <p style="color: #e8d5f5; font-size: 13px; margin: 8px 0 0; letter-spacing: 0.2em; text-transform: uppercase;">
+              <div style="background: linear-gradient(135deg, #7C5EA0 0%, #967BB6 60%, #B08BC8 100%); padding: 48px 40px 40px; text-align: center; border-radius: 16px 16px 0 0;">
+                <img
+                  src="${siteUrl}/logo-clube-leitoras.png"
+                  alt="Clube das Leitoras"
+                  width="160"
+                  style="display: block; margin: 0 auto 20px; max-width: 160px; height: auto;"
+                />
+                <p style="color: #e8d5f5; font-size: 12px; margin: 0; letter-spacing: 0.25em; text-transform: uppercase;">
                   Brasília · BSB
                 </p>
               </div>
