@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 
