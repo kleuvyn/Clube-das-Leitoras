@@ -52,7 +52,7 @@ export default function LoginCafeFuncional() {
         window.location.href = '/nova-senha';
       } else if (role === 'admin') {
         window.location.href = '/admin';
-      } else if (role === 'colaboradora' || role === 'convidada') {
+      } else if (role === 'colaboradora' || role === 'convidada' || !role) {
         window.location.href = '/cronograma';
       } else {
         throw new Error('Acesso não autorizado.');

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const [user] = await db
       .select()
       .from(colaboradoras)
-      .where(eq(colaboradoras.email, email))
+      .where(sql`LOWER(${colaboradoras.email}) = ${email}`)
       .limit(1);
 
     if (!user || user.active === false) {

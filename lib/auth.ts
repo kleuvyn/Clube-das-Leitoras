@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { db } from './db';
 import { colaboradoras } from './db/schema';
-import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 type AuthError = { status: number; message: string };
 
@@ -17,7 +17,7 @@ export async function requireAdminOrColaboradora() {
     throw { status: 401, message: 'Token inválido' } as AuthError;
   }
 
-  const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, tokenData.email));
+  const [user] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${tokenData.email})`);
   if (!user || user.active === false) throw { status: 401, message: 'Não autorizado' } as AuthError;
   if (user.role !== 'admin' && user.role !== 'colaboradora') throw { status: 403, message: 'Permissão insuficiente' } as AuthError;
 
@@ -36,7 +36,7 @@ export async function requireMember() {
     throw { status: 401, message: 'Token inválido' } as AuthError;
   }
 
-  const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, tokenData.email));
+  const [user] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${tokenData.email})`);
   if (!user || user.active === false) throw { status: 401, message: 'Não autorizado' } as AuthError;
 
   return user;
@@ -54,7 +54,7 @@ export async function requireAdmin() {
     throw { status: 401, message: 'Token inválido' } as AuthError;
   }
 
-  const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, tokenData.email));
+  const [user] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${tokenData.email})`);
   if (!user || user.active === false) throw { status: 401, message: 'Não autorizado' } as AuthError;
   if (user.role !== 'admin') throw { status: 403, message: 'Permissão insuficiente' } as AuthError;
 
