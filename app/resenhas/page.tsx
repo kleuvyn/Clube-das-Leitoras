@@ -361,7 +361,13 @@ function ResenhaCard({ resenha: r, periodo, aberta, onToggle }: {
             </div>
             <div className="mt-3 py-2 border-t border-black/5">
               <span className="text-[8px] font-bold uppercase tracking-[0.3em] opacity-30 block text-center italic">
-                {r.author ?? ''}
+                {/* Legenda mais escura para melhor leitura */}
+                <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-black block text-center italic">
+                  {/* Legenda com cinza escuro para melhor leitura */}
+                  <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-[#222] block text-center italic">
+                    {r.author ?? ''}
+                  </span>
+                </span>
               </span>
             </div>
           </div>

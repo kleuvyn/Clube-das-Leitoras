@@ -46,8 +46,8 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen p-8 font-alice selection:bg-[#B04D4A10]" 
-         style={{ background: '#FDFCFB url("https://www.transparenttextures.com/patterns/cream-paper.png")' }}>
+    {/* Tema escuro para rosagabi */}
+    <div className="min-h-screen p-8 font-alice selection:bg-[#B04D4A10] bg-[#232323] text-white" style={{ background: 'none' }}>
       
       <div className="max-w-6xl mx-auto animate-in fade-in duration-1000">
         
