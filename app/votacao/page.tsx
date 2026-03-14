@@ -384,21 +384,21 @@ export default function VotacaoPage() {
 
         
         {dados?.historico && dados.historico.length > 0 && (
-          {(!dados.ativa && dados?.historico && dados.historico.length > 0) && (
-            <section className="space-y-10 border-t border-black/5 pt-16">
-              <div className="flex items-center gap-6">
-                <History size={18} style={{ color: ocre }} className="opacity-50"/>
-                <h3 className="text-3xl italic font-light" style={{ color: azulPetroleo }}>Escolhas Anteriores</h3>
-                <div className="h-px flex-1 bg-black/5"/>
-              </div>
+        {!dados.ativa && dados?.historico && dados.historico.length > 0 && (
+          <section className="space-y-10 border-t border-black/5 pt-16">
+            <div className="flex items-center gap-6">
+              <History size={18} style={{ color: ocre }} className="opacity-50"/>
+              <h3 className="text-3xl italic font-light" style={{ color: azulPetroleo }}>Escolhas Anteriores</h3>
+              <div className="h-px flex-1 bg-black/5"/>
+            </div>
 
-              <div className="grid md:grid-cols-2 gap-8">
-                {dados.historico.map(h => (
-                  <div key={h.id} className="flex gap-6 group items-center">
-                    <div className="w-20 h-24 rounded-2xl flex flex-col items-center justify-center shrink-0 transition-all group-hover:shadow-xl"
-                         style={{ background: `${ocre}15` }}>
-                      <span className="text-sm font-mono font-bold" style={{ color: ocre }}>{h.porcentagem}%</span>
-                      <span className="text-[8px] font-mono font-bold opacity-30 uppercase">{h.totalVotos} v.</span>
+            <div className="grid md:grid-cols-2 gap-8">
+              {dados.historico.map(h => (
+                <div key={h.id} className="flex gap-6 group items-center">
+                  <div className="w-20 h-24 rounded-2xl flex flex-col items-center justify-center shrink-0 transition-all group-hover:shadow-xl"
+                       style={{ background: `${ocre}15` }}>
+                    <span className="text-sm font-mono font-bold" style={{ color: ocre }}>{h.porcentagem}%</span>
+                    <span className="text-[8px] font-mono font-bold opacity-30 uppercase">{h.totalVotos} v.</span>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[9px] font-mono font-bold uppercase tracking-widest opacity-30" style={{ color: azulPetroleo }}>{h.periodo}</p>
