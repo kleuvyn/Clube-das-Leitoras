@@ -479,7 +479,7 @@ export default function VotacoesAdmin() {
                         <p className="text-[10px] opacity-40 text-slate-500">{livro.votos} v.</p>
                       </div>
                       {isAdmin && (
-                      <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <div className="flex gap-0.5 shrink-0">
                         <button onClick={() => abrirEdicao(livro)}
                                 className="p-2.5 text-slate-300 hover:text-slate-600 transition-colors" title="Editar">
                           <Pencil size={15}/>

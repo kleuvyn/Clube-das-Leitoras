@@ -347,7 +347,7 @@ export default function AdminEventos() {
 
                 
                 {isAdmin && (
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <div className="flex gap-1 shrink-0">
                   <button
                     onClick={() => handleEditar(evento)}
                     className="p-2.5 text-slate-300 hover:text-blue-400 transition-colors"

@@ -297,7 +297,7 @@ export default function PodcastAdmin() {
                 {isAdmin && (
                 <button
                   onClick={() => handleDelete(ep.id)}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl"
+                  className="transition-opacity p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl"
                   title="Remover episódio"
                 >
                   <Trash2 size={18} />

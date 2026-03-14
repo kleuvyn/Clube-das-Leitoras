@@ -135,7 +135,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
         </header>
 
-        <div id="admin-scroll" className="flex-1 animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-y-auto">
+        <div id="admin-scroll" className="flex-1 overflow-y-auto">
           {children}
         </div>
       </main>
