@@ -267,13 +267,22 @@ export default function HomeJornalClubeLeitoras() {
                 <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-black">Memória {anoAtual - 1}</h4>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                {curadoriaMemoria.length > 0 ? curadoriaMemoria.map((item, idx) => (
-                  <div key={idx} className="group pb-3 border-b border-black/5">
-                    <span className="text-[9px] font-bold uppercase text-[#B04D4A]">{item.mes}</span>
-                    <p className="text-base md:text-lg leading-tight group-hover:italic transition-all text-black">{item.livro}</p>
-                    <p className="text-[10px] uppercase opacity-40 text-black font-bold">{item.autor}</p>
-                  </div>
-                )) : (
+                {curadoriaMemoria.length > 0 ? curadoriaMemoria
+                  .slice()
+                  .sort((a, b) => {
+                    const meses = [
+                      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                    ];
+                    return meses.indexOf(a.mes) - meses.indexOf(b.mes);
+                  })
+                  .map((item, idx) => (
+                    <div key={idx} className="group pb-3 border-b border-black/5">
+                      <span className="text-[9px] font-bold uppercase text-[#B04D4A]">{item.mes}</span>
+                      <p className="text-base md:text-lg leading-tight group-hover:italic transition-all text-black">{item.livro}</p>
+                      <p className="text-[10px] uppercase opacity-40 text-black font-bold">{item.autor}</p>
+                    </div>
+                  )) : (
                   <p className="text-sm italic opacity-40 text-black col-span-2">Os livros de {anoAtual - 1} ainda serão registrados aqui.</p>
                 )}
               </div>
