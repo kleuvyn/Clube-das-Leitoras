@@ -45,13 +45,10 @@ export default async function DashboardPage() {
     { label: 'Comunidade', value: stats.leitoras, color: 'border-l-[#967BB6]', icon: Users, href: '/admin/colaboradores' },
   ];
 
+  // Tema escuro para rosagabi
   return (
-    {/* Tema escuro para rosagabi */}
     <div className="min-h-screen p-8 font-alice selection:bg-[#B04D4A10] bg-[#232323] text-white" style={{ background: 'none' }}>
-      
       <div className="max-w-6xl mx-auto animate-in fade-in duration-1000">
-        
-        
         <header className="mb-16 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 border-b border-black/5 pb-10">
           <div>
             <div className="flex items-center gap-3 mb-4 opacity-40 text-[#2C3E50]">
