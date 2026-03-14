@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   try {
     const userData = typeof tokenValue === 'string' ? JSON.parse(tokenValue) : tokenValue;
     const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, userData.email));
-    if (!user || !user.active) {
+    if (!user || user.active === false) {
       redirect('/admin/login');
     }
 

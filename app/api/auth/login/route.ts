@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       path: '/',
     });
 
-    cookieStore.set('clube-user-name', user.nome, {
+    cookieStore.set('clube-user-name', user.name ?? '', {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

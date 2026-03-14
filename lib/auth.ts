@@ -18,7 +18,7 @@ export async function requireAdminOrColaboradora() {
   }
 
   const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, tokenData.email));
-  if (!user || !user.active) throw { status: 401, message: 'Não autorizado' } as AuthError;
+  if (!user || user.active === false) throw { status: 401, message: 'Não autorizado' } as AuthError;
   if (user.role !== 'admin' && user.role !== 'colaboradora') throw { status: 403, message: 'Permissão insuficiente' } as AuthError;
 
   return user;
@@ -37,7 +37,7 @@ export async function requireMember() {
   }
 
   const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, tokenData.email));
-  if (!user || !user.active) throw { status: 401, message: 'Não autorizado' } as AuthError;
+  if (!user || user.active === false) throw { status: 401, message: 'Não autorizado' } as AuthError;
 
   return user;
 }
@@ -55,7 +55,7 @@ export async function requireAdmin() {
   }
 
   const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, tokenData.email));
-  if (!user || !user.active) throw { status: 401, message: 'Não autorizado' } as AuthError;
+  if (!user || user.active === false) throw { status: 401, message: 'Não autorizado' } as AuthError;
   if (user.role !== 'admin') throw { status: 403, message: 'Permissão insuficiente' } as AuthError;
 
   return user;
