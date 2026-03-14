@@ -40,8 +40,8 @@ export function AdminLogin() {
 
       
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-float" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] animate-float" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-[-10%] right-[-5%] w-125 h-125 bg-purple-600/20 rounded-full blur-[120px] animate-float" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-125 h-125 bg-indigo-600/20 rounded-full blur-[120px] animate-float" style={{ animationDelay: '3s' }} />
       </div>
 
       <div className="w-full max-w-md z-10 space-y-8">
@@ -56,7 +56,7 @@ export function AdminLogin() {
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[2rem] p-10 shadow-2xl space-y-6"
+          className="bg-white/3 backdrop-blur-2xl border border-white/10 rounded-4xl p-10 shadow-2xl space-y-6"
         >
           <div className="space-y-4">
             
@@ -101,7 +101,7 @@ export function AdminLogin() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-14 bg-gradient-to-r from-purple-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2"
+            className="w-full h-14 bg-linear-to-r from-purple-600 to-indigo-600 hover:scale-[1.02] active:scale-[0.98] text-white font-bold uppercase tracking-widest rounded-2xl transition-all shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2"
           >
             {loading ? 'Validando...' : (
               <>
