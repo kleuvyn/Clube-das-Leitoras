@@ -50,9 +50,9 @@ export default function LoginCafeFuncional() {
       const role = data?.user?.role;
       if (data?.user?.mustChangePassword) {
         window.location.href = '/nova-senha';
-      } else if (role === 'admin') {
+      } else if (role === 'admin' || role === 'colaboradora') {
         window.location.href = '/admin';
-      } else if (role === 'colaboradora' || role === 'convidada' || !role) {
+      } else if (role === 'convidada' || !role) {
         window.location.href = '/cronograma';
       } else {
         throw new Error('Acesso não autorizado.');

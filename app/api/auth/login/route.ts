@@ -33,9 +33,9 @@ export async function POST(request: Request) {
     const { password: _, ...userWithoutPassword } = user;
 
     const cookieStore = await cookies();
-    const isAdmin = user.role === 'admin';
+    const isAdminOrColaboradora = user.role === 'admin' || user.role === 'colaboradora';
 
-    cookieStore.set(isAdmin ? 'clube-admin-token' : 'clube-sessao', JSON.stringify(userWithoutPassword), {
+    cookieStore.set(isAdminOrColaboradora ? 'clube-admin-token' : 'clube-sessao', JSON.stringify(userWithoutPassword), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -35,9 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       redirect('/admin/login');
     }
 
-    
-    // Qualquer usuária ativa pode acessar o painel
-    // Permissões específicas (editar/apagar) são verificadas nas APIs
+    if (user.role !== 'admin' && user.role !== 'colaboradora') {
+      redirect('/');
+    }
   } catch (err) {
     redirect('/admin/login');
   }

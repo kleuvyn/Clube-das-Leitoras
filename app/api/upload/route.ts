@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireMember } from '@/lib/auth';
+import { requireAdminOrColaboradora } from '@/lib/auth';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 
@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   const contentType = request.headers.get('content-type') || '';
   if (process.env.BLOB_READ_WRITE_TOKEN && contentType.includes('application/json')) {
     try {
-      await requireMember();
+      await requireAdminOrColaboradora();
     } catch {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   // Upload por FormData: local dev (sem Blob) ou fallback server-side
   try {
-    await requireMember();
+    await requireAdminOrColaboradora();
   } catch {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }

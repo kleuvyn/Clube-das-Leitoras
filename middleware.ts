@@ -21,8 +21,7 @@ export function middleware(request: NextRequest) {
   // Proteger rotas admin
   if (isAdminRoute) {
     const adminToken = request.cookies.get('clube-admin-token')?.value;
-    const sessaoToken = request.cookies.get('clube-sessao')?.value;
-    if (!adminToken && !sessaoToken) {
+    if (!adminToken) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }

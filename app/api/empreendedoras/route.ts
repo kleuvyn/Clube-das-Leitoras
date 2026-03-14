@@ -30,7 +30,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireMember();
+    await requireAdminOrColaboradora();
     const body = await request.json();
 
     

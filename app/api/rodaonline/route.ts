@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     try {
-      await requireMember();
+      await requireAdminOrColaboradora();
     } catch (err: any) {
       return NextResponse.json({ error: err?.message || 'Não autorizado' }, { status: err?.status || 401 });
     }

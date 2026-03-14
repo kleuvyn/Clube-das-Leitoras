@@ -62,7 +62,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     
-    try { await requireMember(); } 
+    try { await requireAdminOrColaboradora(); } 
     catch { return NextResponse.json({ error: 'Sessão expirada ou sem permissão.' }, { status: 401 }); }
 
     const body = await req.json();
