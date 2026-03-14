@@ -7,6 +7,7 @@ import {
   Plus, Trash2, MapPin, Calendar, 
   Loader2, Save, Image as ImageIcon, X, Clock, Edit3, DollarSign, Phone, Link
 } from 'lucide-react';
+import { uploadFile } from '@/lib/upload-client';
 
 const ocreDestaque = "var(--page-color)";
 
@@ -90,14 +91,10 @@ export default function AdminEventos() {
     if (!file) return;
     setIsUploading(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setForm(prev => ({ ...prev, imagem: data.url }));
-    } catch {
-      toast.error('Erro ao enviar imagem.');
+      const url = await uploadFile(file);
+      setForm(prev => ({ ...prev, imagem: url }));
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao enviar imagem.');
     } finally {
       setIsUploading(false);
     }

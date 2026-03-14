@@ -8,6 +8,7 @@ import {
   UploadCloud, Loader2, Save, 
   Image as ImageIcon, Check, RotateCcw, BookOpen, Upload
 } from 'lucide-react';
+import { uploadFile } from '@/lib/upload-client';
 
 const lavandaPrincipal = "var(--page-color)";
 const roxoEscuro = "var(--page-color)";
@@ -90,24 +91,13 @@ function AdminContent() {
     if (!selectedFile) return toast.error("Selecione uma imagem primeiro.");
     
     setIsUploading(true);
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
     try {
-      
-      const res = await fetch('/api/upload', { 
-        method: 'POST',
-        body: formData
-      });
-
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      
-      setConfigGeral(prev => ({ ...prev, calendarioImagem: data.url }));
+      const url = await uploadFile(selectedFile);
+      setConfigGeral(prev => ({ ...prev, calendarioImagem: url }));
       setSelectedFile(null);
       toast.success("Imagem salva com sucesso!");
-    } catch (e) {
-      toast.error("Erro ao fazer upload da imagem.");
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao fazer upload da imagem.");
     } finally {
       setIsUploading(false);
     }
@@ -135,17 +125,12 @@ function AdminContent() {
     
     if (selectedFile) {
       setIsUploading(true);
-      const formData = new FormData();
-      formData.append('file', selectedFile);
       try {
-        const upRes = await fetch('/api/upload', { method: 'POST', body: formData });
-        if (!upRes.ok) throw new Error();
-        const upData = await upRes.json();
-        imageUrl = upData.url;
-        setConfigGeral(prev => ({ ...prev, calendarioImagem: upData.url }));
+        imageUrl = await uploadFile(selectedFile);
+        setConfigGeral(prev => ({ ...prev, calendarioImagem: imageUrl }));
         setSelectedFile(null);
-      } catch {
-        toast.error("Erro ao fazer upload da imagem.");
+      } catch (err: any) {
+        toast.error(err.message || "Erro ao fazer upload da imagem.");
         setIsSaving(false);
         setIsUploading(false);
         return;

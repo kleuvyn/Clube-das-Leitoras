@@ -7,13 +7,44 @@ export const dynamic = 'force-dynamic';
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
 const ALLOWED_AUDIO_TYPES = ['audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/x-wav', 'audio/x-m4a', 'audio/aac'];
+const ALL_ALLOWED_TYPES = [...ALLOWED_IMAGE_TYPES, ...ALLOWED_AUDIO_TYPES];
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const MAX_AUDIO_SIZE = 150 * 1024 * 1024;
 
 export async function POST(request: Request) {
+  // Vercel Blob client-side upload: o cliente envia JSON com eventos de handshake/conclusão
+  const contentType = request.headers.get('content-type') || '';
+  if (process.env.BLOB_READ_WRITE_TOKEN && contentType.includes('application/json')) {
+    try {
+      await requireAdminOrColaboradora();
+    } catch {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    }
+    try {
+      const { handleUpload } = await import('@vercel/blob/client');
+      const body = await request.json();
+      const response = await handleUpload({
+        body,
+        request,
+        onBeforeGenerateToken: async (_pathname) => ({
+          allowedContentTypes: ALL_ALLOWED_TYPES,
+          maximumSizeInBytes: MAX_AUDIO_SIZE,
+        }),
+        onUploadCompleted: async ({ blob }) => {
+          console.log('Upload concluído:', blob.url);
+        },
+      });
+      return NextResponse.json(response);
+    } catch (err: any) {
+      console.error('Erro handleUpload Blob:', err);
+      return NextResponse.json({ error: 'Erro no upload (Blob)' }, { status: 500 });
+    }
+  }
+
+  // Upload por FormData: local dev (sem Blob) ou fallback server-side
   try {
     await requireAdminOrColaboradora();
-  } catch (err: any) {
+  } catch {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 
@@ -40,7 +71,7 @@ export async function POST(request: Request) {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    // Usar Vercel Blob se configurado, senão salvar localmente
+    // Vercel Blob server-side (para arquivos menores via FormData, quando o token está disponível)
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       const { put } = await import('@vercel/blob');
       const blob = await put(safeName, file, {
@@ -50,7 +81,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ url: blob.url }, { status: 201 });
     }
 
-    // Fallback: salvar no sistema de arquivos local (public/uploads/)
+    // Fallback: sistema de arquivos local (apenas em desenvolvimento)
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
     await mkdir(uploadsDir, { recursive: true });
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -59,6 +90,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: `/uploads/${safeName}` }, { status: 201 });
   } catch (err: any) {
     console.error('Erro POST /api/upload:', err);
-    return NextResponse.json({ error: 'Erro ao salvar arquivo' }, { status: 500 });
+    const msg = process.env.BLOB_READ_WRITE_TOKEN
+      ? 'Erro ao salvar arquivo no Blob Storage.'
+      : 'Erro ao salvar arquivo. Configure o Vercel Blob Storage (BLOB_READ_WRITE_TOKEN) para uploads em produção.';
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

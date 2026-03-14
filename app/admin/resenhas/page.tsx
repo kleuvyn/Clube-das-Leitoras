@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { uploadFile } from '@/lib/upload-client';
 import {
   Trash2, ShieldCheck, MessageCircle, AlertCircle,
   BookMarked, Loader2, CheckCircle2, ShieldAlert, Save,
@@ -114,14 +115,13 @@ export default function ResenhasAdmin() {
     if (!file) return;
     setUploadingImg(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
+      const url = await uploadFile(file);
       setForm(prev => ({ ...prev, imageUrl: url }));
-    } catch { toast.error('Erro ao subir imagem.'); }
-    finally { setUploadingImg(false); }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao subir imagem.');
+    } finally {
+      setUploadingImg(false);
+    }
   };
 
   

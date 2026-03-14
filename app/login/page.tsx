@@ -48,7 +48,9 @@ export default function LoginCafeFuncional() {
       }
 
       const role = data?.user?.role;
-      if (role === 'admin') {
+      if (data?.user?.mustChangePassword) {
+        window.location.href = '/nova-senha';
+      } else if (role === 'admin') {
         window.location.href = '/admin';
       } else if (role === 'colaboradora' || role === 'convidada') {
         window.location.href = '/cronograma';

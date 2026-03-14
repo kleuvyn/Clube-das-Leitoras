@@ -26,6 +26,15 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Proteger /nova-senha: precisa de sessão ativa
+  if (pathname === '/nova-senha') {
+    const adminToken = request.cookies.get('clube-admin-token')?.value;
+    const convidadaToken = request.cookies.get('clube-sessao')?.value;
+    if (!adminToken && !convidadaToken) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+  }
+
   // Proteger rotas privadas para convidada/admin
   if (isConvidadaProtectedRoute) {
     const adminToken = request.cookies.get('clube-admin-token')?.value;

@@ -9,6 +9,7 @@ import {
   Headphones, CassetteTape, UploadCloud, X,
   FileAudio, Disc, Laptop, Trash2, Plus
 } from 'lucide-react';
+import { uploadFile, uploadAudio } from '@/lib/upload-client';
 
 const rosaRetro = "var(--page-color)";
 
@@ -53,14 +54,10 @@ export default function PodcastAdmin() {
     if (!file) return;
     setUploadingImg(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
+      const url = await uploadFile(file);
       setFormData(prev => ({ ...prev, imageUrl: url }));
-    } catch {
-      toast.error('Erro ao subir imagem.');
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao subir imagem.');
     } finally {
       setUploadingImg(false);
     }
@@ -71,11 +68,7 @@ export default function PodcastAdmin() {
     if (!file) return;
     setUploadingAudio(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) { const err = await res.json(); throw new Error(err.error); }
-      const { url } = await res.json();
+      const url = await uploadAudio(file);
       setFormData(prev => ({ ...prev, audioUrl: url }));
       toast.success('Áudio enviado!');
     } catch (err: any) {
@@ -197,23 +190,27 @@ export default function PodcastAdmin() {
             </div>
 
             <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Link do Áudio (Drive / Anchor / URL)</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Link do Áudio (Spotify, YouTube, Google Drive, Anchor…)</label>
                 <input value={formData.audioUrl} onChange={e => setFormData({...formData, audioUrl: e.target.value})} placeholder="https://..." className="w-full p-4 bg-slate-50 rounded-2xl text-sm outline-none" />
-                <div className="flex items-center gap-3 pt-1">
-                  <div className="h-px flex-1 bg-slate-100" />
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-slate-300">ou</span>
-                  <div className="h-px flex-1 bg-slate-100" />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => audioInputRef.current?.click()}
-                  disabled={uploadingAudio}
-                  className="w-full flex items-center justify-center gap-2 p-4 bg-slate-50 rounded-2xl text-[11px] font-bold text-slate-400 uppercase tracking-widest border-2 border-dashed border-slate-200 hover:border-[#D9B5B2] hover:text-[#D9B5B2] transition-all disabled:opacity-50"
-                >
-                  {uploadingAudio
-                    ? <><Loader2 size={14} className="animate-spin" /> Enviando...</>
-                    : <><FileAudio size={14} /> Subir Arquivo de Áudio (MP3, WAV, M4A)</>}
-                </button>
+                {process.env.NEXT_PUBLIC_USE_BLOB_CLIENT === 'true' && (
+                  <>
+                    <div className="flex items-center gap-3 pt-1">
+                      <div className="h-px flex-1 bg-slate-100" />
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-300">ou</span>
+                      <div className="h-px flex-1 bg-slate-100" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => audioInputRef.current?.click()}
+                      disabled={uploadingAudio}
+                      className="w-full flex items-center justify-center gap-2 p-4 bg-slate-50 rounded-2xl text-[11px] font-bold text-slate-400 uppercase tracking-widest border-2 border-dashed border-slate-200 hover:border-[#D9B5B2] hover:text-[#D9B5B2] transition-all disabled:opacity-50"
+                    >
+                      {uploadingAudio
+                        ? <><Loader2 size={14} className="animate-spin" /> Enviando...</>
+                        : <><FileAudio size={14} /> Subir Arquivo de Áudio (MP3, WAV, M4A)</>}
+                    </button>
+                  </>
+                )}
                 {formData.audioUrl && (formData.audioUrl.startsWith('/uploads/') || formData.audioUrl.startsWith('https://')) && (
                   <p className="text-[10px] text-emerald-500 italic flex items-center gap-1 mt-1">
                     <FileAudio size={11} /> {formData.audioUrl.split('/').pop()}

@@ -7,6 +7,7 @@ import {
   Trash2, Instagram, Heart, Store, 
   User, Tag, Sparkles, Save, ImageIcon, Loader2, Pencil, X
 } from 'lucide-react';
+import { uploadFile } from '@/lib/upload-client';
 
 const lavandaPrincipal = "var(--page-color)";
 
@@ -40,20 +41,12 @@ export default function EmpreendedorasAdmin() {
   useEffect(() => { loadDados(); }, []);
 
   const uploadFoto = async (file: File) => {
-    const fd = new FormData();
-    fd.append('file', file);
     setIsUploading(true);
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || 'Erro ao fazer upload da foto.');
-        return null;
-      }
-      const data = await res.json();
-      return data.url ?? null;
-    } catch {
-      toast.error('Erro de conexão ao fazer upload.');
+      const url = await uploadFile(file);
+      return url;
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao fazer upload da foto.');
       return null;
     } finally {
       setIsUploading(false);

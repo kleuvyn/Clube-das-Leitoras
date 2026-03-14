@@ -11,6 +11,7 @@ import {
   ShieldAlert, ShieldCheck, AlertTriangle, Filter
 } from 'lucide-react';
 import { analyzeContentModeration } from '@/lib/content-moderation';
+import { uploadFile } from '@/lib/upload-client';
 
 const vermelhoTerracota = "var(--page-color)";
 
@@ -236,16 +237,12 @@ export default function LeituraAtivaAdmin() {
   const handleUploadImagem = async (file: File, paraEdicao = false) => {
     setUploadingImg(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error();
-      const { url } = await res.json();
+      const url = await uploadFile(file);
       if (paraEdicao) setEditData(p => ({ ...p, imagem: url }));
       else setNovoEncontro(p => ({ ...p, imagem: url }));
       toast.success('Imagem enviada!');
-    } catch {
-      toast.error('Erro ao fazer upload.');
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao fazer upload.');
     } finally {
       setUploadingImg(false);
     }

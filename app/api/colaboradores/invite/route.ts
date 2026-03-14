@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       password: hashedPassword,
       name,
       active: true,
-      mustChangePassword: false,
+      mustChangePassword: true,
     });
 
     // Tentar enviar e-mail via Resend (se configurado)
@@ -67,13 +67,16 @@ export async function POST(req: Request) {
                 <p style="font-size: 18px; margin: 0 0 24px;">Olá, <strong>${name}</strong> 💜</p>
                 <p style="line-height: 1.8; color: #555; margin: 0 0 24px;">
                   Que alegria te ter aqui! Seu acesso ao Clube das Leitoras foi criado com sucesso.
-                  Use os dados abaixo para entrar:
+                  Use os dados abaixo para o <strong>primeiro acesso</strong>:
                 </p>
-                <div style="background: #f4f0ff; border-radius: 12px; padding: 24px; margin: 0 0 28px; border-left: 4px solid #967BB6;">
+                <div style="background: #f4f0ff; border-radius: 12px; padding: 24px; margin: 0 0 16px; border-left: 4px solid #967BB6;">
                   <p style="margin: 0 0 8px; font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 0.15em;">Seus dados de acesso</p>
                   <p style="margin: 0 0 6px;"><strong>E-mail:</strong> ${email}</p>
                   <p style="margin: 0;"><strong>Senha temporária:</strong> <code style="background:#e0d9ff; padding: 2px 8px; border-radius: 4px; font-size: 15px;">${tempPassword}</code></p>
                 </div>
+                <p style="font-size: 13px; color: #777; margin: 0 0 28px; line-height: 1.7;">
+                  Ao entrar pela primeira vez, você será direcionada para criar a sua senha definitiva. ✨
+                </p>
                 <div style="text-align: center; margin: 32px 0;">
                   <a href="${siteUrl}/login"
                      style="background: #967BB6; color: #fff; padding: 16px 40px; border-radius: 30px; text-decoration: none; font-size: 14px; font-style: italic; display: inline-block;">

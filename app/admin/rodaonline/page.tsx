@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { uploadFile } from '@/lib/upload-client';
 import { 
   Laptop, 
   Calendar as CalendarIcon,
@@ -101,15 +102,11 @@ export default function RodaOnlineAdmin() {
     if (!file) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      setFormData(prev => ({ ...prev, imageUrl: data.url }));
+      const url = await uploadFile(file);
+      setFormData(prev => ({ ...prev, imageUrl: url }));
       toast.success('Imagem enviada!');
-    } catch {
-      toast.error('Erro ao enviar imagem.');
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao enviar imagem.');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

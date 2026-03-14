@@ -8,6 +8,7 @@ import {
   Tag, Sparkles, Save, ImageIcon, Loader2, ShoppingCart,
   Edit2, X, Check
 } from 'lucide-react';
+import { uploadFile } from '@/lib/upload-client';
 
 const rosaPrincipal = "var(--page-color)";
 
@@ -85,12 +86,11 @@ export default function EscritorasAdmin() {
   useEffect(() => { loadDados(); }, []);
 
   const uploadImagem = async (file: File): Promise<string | null> => {
-    const fd = new FormData();
-    fd.append('file', file);
-    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.url || null;
+    try {
+      return await uploadFile(file);
+    } catch {
+      return null;
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, target: 'add' | 'edit') => {
