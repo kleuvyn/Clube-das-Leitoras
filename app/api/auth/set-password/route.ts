@@ -35,13 +35,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
   }
 
-  if (!user.mustChangePassword) {
-    return NextResponse.json(
-      { error: 'Esta operação não é permitida para essa conta.' },
-      { status: 403 }
-    );
-  }
-
   const body = await req.json().catch(() => ({}));
   const newPassword: string = body.newPassword ?? '';
 

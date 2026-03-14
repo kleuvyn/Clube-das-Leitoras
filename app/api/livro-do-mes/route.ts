@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminOrColaboradora } from '@/lib/auth';
+import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { livroDoMes, resenhas } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requireAdminOrColaboradora();
+    await requireMember();
     const body = await request.json();
 
     if (!body.livro || !body.autora) {
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await requireAdminOrColaboradora();
+    await requireAdmin();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
@@ -117,7 +117,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    await requireAdminOrColaboradora();
+    await requireAdmin();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });

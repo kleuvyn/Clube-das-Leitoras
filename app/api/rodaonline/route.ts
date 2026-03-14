@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminOrColaboradora } from '@/lib/auth';
+import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { rodaonline } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
@@ -20,7 +20,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     try {
-      await requireAdminOrColaboradora();
+      await requireMember();
     } catch (err: any) {
       return NextResponse.json({ error: err?.message || 'Não autorizado' }, { status: err?.status || 401 });
     }
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     try {
-      await requireAdminOrColaboradora();
+      await requireAdmin();
     } catch (err: any) {
       return NextResponse.json({ error: err?.message || 'Não autorizado' }, { status: err?.status || 401 });
     }
@@ -97,7 +97,7 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     try {
-      await requireAdminOrColaboradora();
+      await requireAdmin();
     } catch (err: any) {
       return NextResponse.json({ error: err?.message || 'Não autorizado' }, { status: err?.status || 401 });
     }

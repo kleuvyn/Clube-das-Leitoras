@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useAdmin } from '@/lib/admin-context';
 import { uploadFile } from '@/lib/upload-client';
 import { 
   Laptop, 
@@ -76,6 +77,7 @@ function ModerationBadge({ texto, nome }: { texto: string; nome: string }) {
 }
 
 export default function RodaOnlineAdmin() {
+  const { isAdmin } = useAdmin();
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -482,9 +484,11 @@ export default function RodaOnlineAdmin() {
                       </div>
                       <p className="text-[11px] italic text-slate-600 leading-relaxed">"{ref.texto}"</p>
                     </div>
+                    {isAdmin && (
                     <button onClick={() => handleDeleteReflexao(ref.id)} className="text-rose-400 hover:text-rose-600 transition-colors p-1.5 shrink-0 rounded-xl hover:bg-rose-50" title="Remover">
                       <Trash2 size={14} />
                     </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -547,8 +551,10 @@ export default function RodaOnlineAdmin() {
                   {extras.map(p => (
                     <span key={p} className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-rose-50 text-rose-600 text-[10px] font-bold border border-rose-100">
                       {p}
+                      {isAdmin && (<>
                       <button onClick={() => handleEditPalavra(p)} className="hover:text-rose-800 transition-colors" title="Editar"><Pencil size={10} /></button>
                       <button onClick={() => handleRemovePalavra(p)} className="hover:text-rose-800 transition-colors" title="Remover"><X size={10} /></button>
+                      </>)}
                     </span>
                   ))}
                 </div>

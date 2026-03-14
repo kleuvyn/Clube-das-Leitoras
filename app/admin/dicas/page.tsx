@@ -35,6 +35,7 @@ const IconMap: any = {
 const FORM_VAZIO = { categoria: 'Ritual', titulo: '', descricao: '', iconName: 'BookOpen', textoCompleto: '' };
 
 export default function DicasAdmin() {
+  const { isAdmin } = useAdmin();
   const [dicas, setDicas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -304,6 +305,7 @@ export default function DicasAdmin() {
                       {item.textoCompleto ? 'Coluna' : 'Pílula'}
                     </span>
                   </div>
+                  {isAdmin && (
                   <div className="flex items-center gap-1">
                     <button onClick={() => handleEdit(item)} className="p-2 text-slate-200 hover:text-sky-400 transition-all" title="Editar">
                       <Pencil size={15} />
@@ -312,6 +314,7 @@ export default function DicasAdmin() {
                       <Trash2 size={15} />
                     </button>
                   </div>
+                  )}
                 </div>
                 
                 <div className="space-y-2 relative z-10">

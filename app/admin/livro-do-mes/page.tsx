@@ -26,6 +26,7 @@ interface LivroItem {
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
 export default function LivroDoMesAdmin() {
+  const { isAdmin } = useAdmin();
   const router = useRouter();
   const [rodas, setRodas] = useState<LivroItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -306,6 +307,7 @@ export default function LivroDoMesAdmin() {
                   <p className="text-[11px] text-slate-400 truncate font-medium mt-1">Por {item.autora}</p>
                 </div>
 
+                {isAdmin && (
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleEdit(item)}
@@ -323,6 +325,7 @@ export default function LivroDoMesAdmin() {
                     {deletando === item.id ? <Loader2 size={16} className="animate-spin"/> : <Trash2 size={16} />}
                   </button>
                 </div>
+                )}
               </div>
             ))
           )}

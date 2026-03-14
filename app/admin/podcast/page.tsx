@@ -14,6 +14,7 @@ import { uploadFile, uploadAudio } from '@/lib/upload-client';
 const rosaRetro = "var(--page-color)";
 
 export default function PodcastAdmin() {
+  const { isAdmin } = useAdmin();
   const [loading, setLoading] = useState(false);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingAudio, setUploadingAudio] = useState(false);
@@ -293,6 +294,7 @@ export default function PodcastAdmin() {
                     {ep.youtubeUrl && <a href={ep.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-[9px] font-bold uppercase tracking-widest text-red-400 hover:underline flex items-center gap-1"><Youtube size={10} /> YouTube</a>}
                   </div>
                 </div>
+                {isAdmin && (
                 <button
                   onClick={() => handleDelete(ep.id)}
                   className="opacity-0 group-hover:opacity-100 transition-opacity p-3 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl"
@@ -300,6 +302,7 @@ export default function PodcastAdmin() {
                 >
                   <Trash2 size={18} />
                 </button>
+                )}
               </div>
             ))}
           </div>

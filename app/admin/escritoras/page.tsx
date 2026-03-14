@@ -57,6 +57,7 @@ function Field({ label, icon: Icon, children }: { label: string; icon: any; chil
 }
 
 export default function EscritorasAdmin() {
+  const { isAdmin } = useAdmin();
   const [lista, setLista] = useState<Escritora[]>([]);
   const [loading, setLoading] = useState(false);
   const [salvando, setSalvando] = useState(false);
@@ -472,6 +473,7 @@ export default function EscritorasAdmin() {
                       </div>
                     </div>
 
+                    {isAdmin && (
                     <div className="flex gap-2 flex-shrink-0">
                       <button
                         onClick={() => iniciarEdicao(item)}
@@ -488,6 +490,7 @@ export default function EscritorasAdmin() {
                         <Trash2 size={14} />
                       </button>
                     </div>
+                    )}
                   </div>
                 )}
               </div>

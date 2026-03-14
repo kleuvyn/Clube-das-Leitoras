@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { analyzeContentModeration } from '@/lib/content-moderation';
 import { uploadFile } from '@/lib/upload-client';
+import { useAdmin } from '@/lib/admin-context';
 
 const vermelhoTerracota = "var(--page-color)";
 
@@ -36,6 +37,7 @@ function EncontroCard({
   setEditData, setEditandoId, startEdit, handleSalvarEdicao,
   handleEncerrar, handleReativar, handleDelete, handleUploadImagem,
 }: EncontroCardProps) {
+  const { isAdmin } = useAdmin();
   const editando = editandoId === enc.id;
   return (
     <div className={`p-6 bg-white border rounded-[2.5rem] shadow-sm flex flex-col gap-4 ${isEncerrado ? 'opacity-70 border-slate-100' : 'border-slate-50'}`}>
@@ -120,9 +122,11 @@ function EncontroCard({
             </div>
           </div>
           <div className="flex items-start gap-1 self-start">
+            {isAdmin && (
             <button onClick={() => startEdit(enc)} className="text-slate-300 hover:text-blue-500 p-2 transition-colors" title="Editar">
               <Edit3 size={16}/>
             </button>
+            )}
             {isEncerrado ? (
               <button onClick={() => handleReativar(enc.id)} className="text-slate-300 hover:text-emerald-500 p-2 transition-colors" title="Reativar">
                 <CheckCircle size={16}/>
@@ -132,9 +136,11 @@ function EncontroCard({
                 <Clock size={16}/>
               </button>
             )}
+            {isAdmin && (
             <button onClick={() => handleDelete(enc.id)} className="text-slate-200 hover:text-rose-500 p-2 transition-colors" title="Excluir">
               <Trash2 size={16}/>
             </button>
+            )}
           </div>
         </div>
       )}

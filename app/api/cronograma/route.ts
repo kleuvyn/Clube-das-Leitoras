@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminOrColaboradora } from '@/lib/auth';
+import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { cronograma } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
@@ -41,9 +41,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     
-    await requireAdminOrColaboradora();
-    
-    const body = await request.json();
+    await requireMember();
 
     const [inserted] = await db.insert(cronograma).values({
       title: body.title || 'Cronograma',

@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { requireAdminOrColaboradora } from '@/lib/auth';
+import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { encontros, eventoConfirmacoes } from '@/lib/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
@@ -62,7 +62,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     
-    try { await requireAdminOrColaboradora(); } 
+    try { await requireMember(); } 
     catch { return NextResponse.json({ error: 'Sessão expirada ou sem permissão.' }, { status: 401 }); }
 
     const body = await req.json();
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    try { await requireAdminOrColaboradora(); } catch { return NextResponse.json({ error: 'Sem permissão.' }, { status: 401 }); }
+    try { await requireAdmin(); } catch { return NextResponse.json({ error: 'Sem permissão.' }, { status: 401 }); }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
@@ -149,7 +149,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    try { await requireAdminOrColaboradora(); } catch { return NextResponse.json({ error: 'Sem permissão.' }, { status: 401 }); }
+    try { await requireAdmin(); } catch { return NextResponse.json({ error: 'Sem permissão.' }, { status: 401 }); }
 
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminOrColaboradora } from '@/lib/auth';
+import { requireAdminOrColaboradora, requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { livros, votacoes, votacaoConfig, votacoesHistorico } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    try { await requireAdminOrColaboradora(); } catch {
+    try { await requireAdmin(); } catch {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
@@ -150,7 +150,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    try { await requireAdminOrColaboradora(); } catch {
+    try { await requireAdmin(); } catch {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
     const { searchParams } = new URL(request.url);

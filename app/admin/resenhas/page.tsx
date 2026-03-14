@@ -11,6 +11,7 @@ import {
   Filter, AlertTriangle, MessageSquare,
 } from 'lucide-react';
 import { analyzeContentModeration } from '@/lib/content-moderation';
+import { useAdmin } from '@/lib/admin-context';
 
 const azulLogo = "var(--page-color)";
 
@@ -57,7 +58,7 @@ interface Comentario {
 const formVazio = { title: '', book: '', author: '', content: '', rating: 5, imageUrl: '', publishedAt: '' };
 
 export default function ResenhasAdmin() {
-  
+  const { isAdmin } = useAdmin();
   const [resenhas, setResenhas] = useState<Resenha[]>([]);
   const [loadingResenhas, setLoadingResenhas] = useState(true);
   const [salvandoResenha, setSalvandoResenha] = useState(false);
@@ -340,12 +341,14 @@ export default function ResenhasAdmin() {
                     >
                       {resenhaAberta === r.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </button>
+                    {isAdmin && (<>
                     <button onClick={() => handleEditarResenha(r)} className="p-2 text-slate-300 hover:text-blue-400 transition-colors" title="Editar">
                       <Edit3 size={16} />
                     </button>
                     <button onClick={() => handleDeletarResenha(r.id)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors" title="Remover">
                       <Trash2 size={16} />
                     </button>
+                    </>)}
                   </div>
                 </div>
 

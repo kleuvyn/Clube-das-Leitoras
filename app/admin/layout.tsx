@@ -36,17 +36,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     }
 
     
-    if (user.role !== 'admin' && user.role !== 'colaboradora') {
-      
-      try {
-        logAdminBlock({ email: typeof userData?.email === 'string' ? userData.email : undefined, role: user.role, path: '/admin', reason: 'unauthorized_role' });
-      } catch (e) {
-        console.error('Erro ao gravar log de bloqueio:', e);
-      }
-
-      
-      return <AdminForbidden />;
-    }
+    // Qualquer usuária ativa pode acessar o painel
+    // Permissões específicas (editar/apagar) são verificadas nas APIs
   } catch (err) {
     redirect('/admin/login');
   }

@@ -18,6 +18,7 @@ function formatarData(dataStr: string) {
 }
 
 export default function AdminEventos() {
+  const { isAdmin } = useAdmin();
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -345,6 +346,7 @@ export default function AdminEventos() {
                 </div>
 
                 
+                {isAdmin && (
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   <button
                     onClick={() => handleEditar(evento)}
@@ -361,6 +363,7 @@ export default function AdminEventos() {
                     <Trash2 size={15} />
                   </button>
                 </div>
+                )}
               </div>
             ))}
           </div>

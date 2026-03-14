@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useAdmin } from '@/lib/admin-context';
 import {
   Trash2, Loader2, Save, BarChart3, Trophy,
   XCircle, Plus, History, Book, ToggleLeft, ToggleRight,
@@ -47,6 +48,7 @@ interface Historico {
 }
 
 export default function VotacoesAdmin() {
+  const { isAdmin } = useAdmin();
   const [livros, setLivros] = useState<Livro[]>([]);
   const [historico, setHistorico] = useState<Historico[]>([]);
   const [ativa, setAtiva] = useState(false);
@@ -476,6 +478,7 @@ export default function VotacoesAdmin() {
                         <span className="text-2xl font-light italic" style={{ color: 'var(--page-color)' }}>{pct}%</span>
                         <p className="text-[10px] opacity-40 text-slate-500">{livro.votos} v.</p>
                       </div>
+                      {isAdmin && (
                       <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                         <button onClick={() => abrirEdicao(livro)}
                                 className="p-2.5 text-slate-300 hover:text-slate-600 transition-colors" title="Editar">
@@ -490,6 +493,7 @@ export default function VotacoesAdmin() {
                           <Trash2 size={15}/>
                         </button>
                       </div>
+                      )}
                     </div>
                   )}
                   

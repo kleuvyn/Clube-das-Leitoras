@@ -21,6 +21,7 @@ const CATEGORIAS = [
 const FORM_VAZIO = { negocio: '', nome: '', frase: '', categoria: 'Bordado', instagram: '', fotoUrl: '' };
 
 export default function EmpreendedorasAdmin() {
+  const { isAdmin } = useAdmin();
   const [lista, setLista] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -228,6 +229,7 @@ export default function EmpreendedorasAdmin() {
                   <h3 className="font-serif text-lg italic text-slate-900 truncate leading-tight">{emp.negocio}</h3>
                   <p className="text-[10px] text-slate-400 truncate italic">por {emp.nome}</p>
                 </div>
+                {isAdmin && (
                 <div className="flex flex-col gap-1 shrink-0">
                   <button onClick={() => handleEdit(emp)} className="p-2 text-slate-200 hover:text-(--page-color) transition-all" title="Editar">
                     <Pencil size={15} />
@@ -236,6 +238,7 @@ export default function EmpreendedorasAdmin() {
                     <Trash2 size={15} />
                   </button>
                 </div>
+                )}
               </div>
             ))
           )}

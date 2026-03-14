@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdminOrColaboradora } from '@/lib/auth';
+import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { podcasts } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
@@ -35,7 +35,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireAdminOrColaboradora();
+    await requireMember();
     const body = await request.json();
 
     if (!body.titulo) {

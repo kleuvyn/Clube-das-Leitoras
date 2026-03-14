@@ -24,6 +24,24 @@ export async function requireAdminOrColaboradora() {
   return user;
 }
 
+export async function requireMember() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('clube-admin-token')?.value ?? cookieStore.get('clube-sessao')?.value;
+  if (!token) throw { status: 401, message: 'Não autorizado' } as AuthError;
+
+  let tokenData: any;
+  try {
+    tokenData = typeof token === 'string' ? JSON.parse(token) : token;
+  } catch {
+    throw { status: 401, message: 'Token inválido' } as AuthError;
+  }
+
+  const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, tokenData.email));
+  if (!user || !user.active) throw { status: 401, message: 'Não autorizado' } as AuthError;
+
+  return user;
+}
+
 export async function requireAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get('clube-admin-token')?.value ?? cookieStore.get('clube-sessao')?.value;

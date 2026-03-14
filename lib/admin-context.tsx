@@ -13,6 +13,7 @@ interface User {
 interface AdminContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   currentUser: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -43,7 +44,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         }
 
         const payload = await response.json();
-        if (payload?.user?.role === 'admin') {
+        if (payload?.user) {
           setCurrentUser(payload.user);
           setIsAuthenticated(true);
         }
@@ -80,10 +81,6 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       const payload = await response.json();
       if (!response.ok) {
         throw new Error(payload?.error || 'Credenciais inválidas');
-      }
-
-      if (payload?.user?.role !== 'admin') {
-        throw new Error('Acesso permitido somente para administradoras.');
       }
 
       setCurrentUser(payload.user);
@@ -190,6 +187,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     <AdminContext.Provider value={{
       isAuthenticated,
       isLoading,
+      isAdmin: currentUser?.role === 'admin',
       currentUser,
       login,
       logout,
