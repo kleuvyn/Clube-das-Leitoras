@@ -12,10 +12,28 @@ import { uploadFile } from '@/lib/upload-client';
 const lavandaPrincipal = "var(--page-color)";
 
 const CATEGORIAS = [
-  'Bordado', 'Arte', 'Papelaria', 'Bem-estar', 'Moda',
-  'Acessórios', 'Gastronomia', 'Crochê', 'Costura', 'Bijuteria',
-  'Plantas', 'Decoração', 'Fotografia', 'Consultoria', 'Tecnologia',
-  'Educação', 'Saúde', 'Beleza', 'Joias', 'Outro'
+  "Bordado",
+  "Tecido",
+  "Crochê",
+  "Macramê",
+  "Saúde",
+  "Bem-Estar",
+  "Literatura",
+  "Escrita",
+  "Arte",
+  "Papelaria",
+  "Presentes",
+  "Beleza",
+  "Estilo",
+  "Serviços Profissionais",
+  "Gestão",
+  "Fotografia",
+  "Arquitetura",
+  "Design",
+  "Gastronomia",
+  "Viagens",
+  "Pets",
+  "Outros"
 ];
 
 const FORM_VAZIO = { negocio: '', nome: '', frase: '', categoria: 'Bordado', instagram: '', fotoUrl: '' };
