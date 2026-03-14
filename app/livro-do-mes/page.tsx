@@ -68,8 +68,8 @@ export default function CalendarioJornal() {
           
           const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long' });
           const doAnoAtual = lista.filter(r => r.ano === anoAtual).sort((a, b) => mesNum(a) - mesNum(b));
-          const current = doAnoAtual.find(r => r.mes?.toLowerCase() === mesAtualNome.toLowerCase()) || doAnoAtual[0] || lista[0];
-          setAtivo(current || null);
+          const current = doAnoAtual.find(r => r.mes?.toLowerCase() === mesAtualNome.toLowerCase()) || null;
+          setAtivo(current);
         }
       } catch (err) {
         console.error("Erro ao carregar calendário:", err);
@@ -99,8 +99,8 @@ export default function CalendarioJornal() {
   }
 
   const anos = [...new Set(todas.map(r => r.ano ?? anoAtual))].sort((a, b) => b - a);
-  const ativoAno = ativo?.ano ?? anoAtual;
-  const isPastAtivo = ativoAno < anoAtual;
+  const ativoAno = ativo?.ano ?? null;
+  const isPastAtivo = ativoAno !== null && ativoAno < anoAtual;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center italic opacity-30 bg-[#FDFCFB]">
