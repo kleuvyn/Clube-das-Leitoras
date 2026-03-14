@@ -203,6 +203,10 @@ export default function ResenhasPage() {
   
   for (const ano of anos) {
     agrupado[ano].sort((a, b) => extrairAnoMes(b).mes - extrairAnoMes(a).mes);
+    // Remover duplicatas por título
+    agrupado[ano] = agrupado[ano].filter((resenha, idx, arr) =>
+      arr.findIndex(r => r.book?.toLowerCase() === resenha.book?.toLowerCase()) === idx
+    );
   }
 
   return (
