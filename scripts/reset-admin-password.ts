@@ -5,7 +5,7 @@ import { config } from 'dotenv';
 config();
 
 // Altere aqui o email e a nova senha desejada
-const ADMIN_EMAIL = 'b.kleuvyn@gmail.com';
+const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com';
 const NOVA_SENHA = 'Outlander777@11';
 
 async function run() {
@@ -16,7 +16,7 @@ async function run() {
   const result = await sql`
     UPDATE colaboradoras
     SET password = ${hash},
-        role = 'convidada',
+        role = 'admin',
         active = true,
         must_change_password = false
     WHERE LOWER(email) = LOWER(${ADMIN_EMAIL})
