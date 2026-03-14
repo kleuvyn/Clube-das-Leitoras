@@ -383,8 +383,7 @@ export default function VotacaoPage() {
         </section>
 
         
-        {dados?.historico && dados.historico.length > 0 && (
-        {!dados.ativa && dados?.historico && dados.historico.length > 0 && (
+        {dados && !dados.ativa && dados.historico && dados.historico.length > 0 && (
           <section className="space-y-10 border-t border-black/5 pt-16">
             <div className="flex items-center gap-6">
               <History size={18} style={{ color: ocre }} className="opacity-50"/>
