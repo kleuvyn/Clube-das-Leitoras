@@ -34,14 +34,21 @@ export default function HomeJornalClubeLeitoras() {
   useEffect(() => {
     async function buscarMemoria() {
       try {
-        const res = await fetch(`/api/livro-do-mes?ano=${anoAtual - 1}`);
+        const res = await fetch(`/api/livro-do-mes`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setCuradoriaMemoria(data.map((l: any) => ({
-            mes: l.mes || '',
-            livro: l.livro || '',
-            autor: l.autora || '',
-          })));
+          // Agrupa por ano
+          const agrupado = data.reduce((acc: Record<number, any[]>, l: any) => {
+            const ano = l.ano || anoAtual;
+            acc[ano] = acc[ano] || [];
+            acc[ano].push({
+              mes: l.mes || '',
+              livro: l.livro || '',
+              autor: l.autora || '',
+            });
+            return acc;
+          }, {});
+          setCuradoriaMemoria(agrupado);
         }
       } catch (err) {
         console.error("Erro ao carregar memória:", err);
@@ -264,19 +271,26 @@ export default function HomeJornalClubeLeitoras() {
             <div className="lg:col-span-7 space-y-8">
               <div className="flex items-center gap-3 border-b border-black/10 pb-2">
                 <BookOpen size={16} className="text-[#B04D4A]" />
-                <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-black">Memória {anoCuradoria}</h4>
+                <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-black">Memória Literária</h4>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
-                {curadoriaMemoria.length > 0 ? curadoriaMemoria.map((item, idx) => (
-                  <div key={idx} className="group pb-3 border-b border-black/5">
-                    <span className="text-[9px] font-bold uppercase text-[#B04D4A]">{item.mes}</span>
-                    <p className="text-base md:text-lg leading-tight group-hover:italic transition-all text-black">{item.livro}</p>
-                    <p className="text-[10px] uppercase opacity-40 text-black font-bold">{item.autor}</p>
+              {curadoriaMemoria && Object.keys(curadoriaMemoria).length > 0 ? (
+                Object.entries(curadoriaMemoria).sort(([a], [b]) => b - a).map(([ano, livros]: [string, any[]]) => (
+                  <div key={ano}>
+                    <h5 className="text-[11px] font-bold uppercase tracking-widest text-[#B04D4A] mb-2">Ano {ano}</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                      {livros.map((item, idx) => (
+                        <div key={idx} className="group pb-3 border-b border-black/5">
+                          <span className="text-[9px] font-bold uppercase text-[#B04D4A]">{item.mes}</span>
+                          <p className="text-base md:text-lg leading-tight group-hover:italic transition-all text-black">{item.livro}</p>
+                          <p className="text-[10px] uppercase opacity-40 text-black font-bold">{item.autor}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                )) : (
-                  <p className="text-sm italic opacity-40 text-black col-span-2">Os livros de {anoCuradoria} ainda serão registrados aqui.</p>
-                )}
-              </div>
+                ))
+              ) : (
+                <p className="text-sm italic opacity-40 text-black col-span-2">Nenhum livro registrado ainda.</p>
+              )}
             </div>
         </div>
       </main>

@@ -63,7 +63,7 @@ export default function CalendarioJornal() {
 
           
           const anos = [...new Set(lista.map(r => r.ano ?? anoAtual))];
-          setAnosExpandidos(new Set(anos.filter(a => a >= anoAtual)));
+          setAnosExpandidos(new Set(anos));
 
           
           const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long' });
