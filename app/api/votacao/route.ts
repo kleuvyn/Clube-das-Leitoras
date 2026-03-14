@@ -3,6 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { livros, votacoes, votacaoConfig, votacoesHistorico } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +131,14 @@ export async function PATCH(request: Request) {
       await db.update(votacaoConfig).set({ ativa, prazo });
     } else {
       await db.insert(votacaoConfig).values({ ativa, prazo });
+    }
+
+    if (ativa) {
+      notificarLeitoras({
+        secao: 'votacao',
+        tituloConteudo: prazo ? `Votação aberta — prazo: ${prazo}` : 'Votação aberta!',
+        descricaoConteudo: 'Acesse o clube e vote no livro que você quer ler no próximo mês.',
+      }).catch(console.error);
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

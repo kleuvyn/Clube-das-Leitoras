@@ -4,7 +4,7 @@ import { eq, and } from 'drizzle-orm';
 
 const FROM = 'Clube das Leitoras <no-reply@clubedasleitoras.com.br>';
 
-export type SecaoNotificacao = 'dicas' | 'livro-do-mes' | 'cronograma' | 'rodaonline' | 'leitura' | 'podcast' | 'eventos';
+export type SecaoNotificacao = 'dicas' | 'livro-do-mes' | 'cronograma' | 'rodaonline' | 'leitura' | 'podcast' | 'eventos' | 'votacao';
 
 const CONFIG: Record<SecaoNotificacao, {
   cor: string;
@@ -69,6 +69,14 @@ const CONFIG: Record<SecaoNotificacao, {
     intro: 'Tenho uma novidade que vai aquecer o seu coração: um novo encontro foi criado! Guarda esse momento — vai ser lindo estar juntas.',
     subject: '🌸 Novo encontro no Clube das Leitoras!',
     path: '/eventos',
+  },
+  'votacao': {
+    cor: '#A0522D',
+    emoji: '🗳️',
+    titulo: 'A votação está aberta!',
+    intro: 'Chegou a hora de escolher juntas! A votação para o próximo livro do clube está aberta e o seu voto faz toda a diferença. Corre lá e escolhe o favorito do seu coração.',
+    subject: '🗳️ Vote agora — escolha o próximo livro do Clube!',
+    path: '/votacao',
   },
 };
 
