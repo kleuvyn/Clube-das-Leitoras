@@ -182,7 +182,7 @@ export default function DicasPage() {
         >
           <div
             className="relative bg-white w-full md:max-w-2xl max-h-[90vh] overflow-y-auto rounded-t-[2.5rem] md:rounded-[2.5rem] pt-14 md:pt-16 pb-10 md:pb-14 px-6 md:px-14 shadow-2xl"
-            style={{ marginTop: '24px', boxSizing: 'border-box' }}
+            style={{ marginTop: '64px', boxSizing: 'border-box' }}
             onClick={e => e.stopPropagation()}
           >
             
