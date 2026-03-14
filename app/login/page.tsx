@@ -74,7 +74,7 @@ export default function LoginCafeFuncional() {
       <div className="max-w-6xl w-full grid lg:grid-cols-2 gap-12 items-center relative z-10">
         
         
-        <div className="space-y-12 text-center lg:text-left p-8 animate-in fade-in slide-in-from-left-8 duration-1000">
+        <div className="space-y-12 text-center lg:text-left p-8">
           <header className="space-y-6">
             <div className="flex items-center justify-center lg:justify-start gap-4 opacity-40">
               <Coffee size={18} style={{ color: marromPapel }} />
@@ -111,7 +111,7 @@ export default function LoginCafeFuncional() {
         </div>
 
         
-        <main className="w-full max-w-md mx-auto animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+        <main className="w-full max-w-md mx-auto">
           <div className="bg-[#FDFBF9] p-10 md:p-14 rounded-[4rem] relative border border-black/5 group transition-all duration-700">
             
             

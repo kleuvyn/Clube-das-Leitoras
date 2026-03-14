@@ -48,7 +48,8 @@ function NovaSenhaForm() {
       }
 
       setSucesso(true);
-      setTimeout(() => router.push('/cronograma'), 2000);
+      const destino = (data.role === 'admin' || data.role === 'colaboradora') ? '/admin' : '/cronograma';
+      setTimeout(() => router.push(destino), 2000);
     } catch {
       setErro('Erro de conexão. Tente novamente.');
     } finally {

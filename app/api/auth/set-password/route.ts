@@ -52,5 +52,5 @@ export async function POST(req: Request) {
     .set({ password: hashed, mustChangePassword: false })
     .where(eq(colaboradoras.id, user.id));
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, role: user.role });
 }
