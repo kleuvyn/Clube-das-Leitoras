@@ -19,6 +19,7 @@ export default function LeitorasAdmin() {
   const [lista, setLista] = useState<any[]>([]);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [inviteRole, setInviteRole] = useState('convidada');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
@@ -34,6 +35,13 @@ export default function LeitorasAdmin() {
 
   useEffect(() => { load(); }, []);
 
+  const scrollTop = () => document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const handleEdit = (u: any) => {
+    setEditing({ id: u.id, name: u.name, role: u.role, active: u.active ?? true });
+    scrollTop();
+  };
+
   const handleInvite = async () => {
     if (!email || !name) return toast.error('Nome e E-mail são obrigatórios para o convite');
     setLoading(true);
@@ -41,21 +49,21 @@ export default function LeitorasAdmin() {
       const res = await fetch('/api/colaboradores/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name, role: 'convidada' }),
+        body: JSON.stringify({ email, name, role: inviteRole }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error);
 
       if (data.emailError) {
-        
         toast.warning(
-          `Acesso criado! E-mail não pôde ser enviado. Passe a senha manualmente: leitura2026`,
-          { duration: 15000 }
+          `Acesso criado! E-mail não pôde ser enviado. Passe a senha temporária manualmente: ${data.tempPassword}`,
+          { duration: 20000 }
         );
       } else {
         toast.success(`Convite enviado para ${name}!`);
       }
-      setEmail(''); setName('');
+      setEmail(''); setName(''); setInviteRole('convidada');
+      scrollTop();
       load();
     } catch (err: any) {
       toast.error(err.message ?? 'Erro ao processar convite.');
@@ -201,6 +209,17 @@ export default function LeitorasAdmin() {
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-400 uppercase ml-2 tracking-widest">Nível de Acesso</label>
+                <select
+                  value={inviteRole}
+                  onChange={e => setInviteRole(e.target.value)}
+                  className="w-full p-3.5 bg-slate-50 rounded-2xl text-sm outline-none focus:bg-white transition-all"
+                >
+                  {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+                </select>
+              </div>
+
               <div className="pt-4">
                 <Button 
                   onClick={handleInvite} 
@@ -266,7 +285,7 @@ export default function LeitorasAdmin() {
                     {u.email !== 'clubedasleitorasbsb@gmail.com' && (
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
-                          onClick={() => setEditing({ id: u.id, name: u.name, role: u.role, active: u.active ?? true })}
+                          onClick={() => handleEdit(u)}
                           className="p-2 text-slate-300 hover:text-violet-500 transition-colors"
                           title="Editar"
                         >

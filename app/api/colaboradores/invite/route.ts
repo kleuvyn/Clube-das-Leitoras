@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { db } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
 
 const FROM = 'Clube das Leitoras <no-reply@clubedasleitoras.com.br>';
+
+function gerarSenhaTemporaria(): string {
+  const palavras = ['livro', 'flor', 'cafe', 'rosa', 'lua', 'sol', 'brisa', 'afeto', 'laca', 'petal'];
+  const i = crypto.randomInt(palavras.length);
+  const j = crypto.randomInt(palavras.length);
+  const num = 100 + crypto.randomInt(900);
+  return `${palavras[i]}${palavras[j]}${num}`;
+}
 
 export async function POST(req: Request) {
   try {
@@ -24,7 +33,7 @@ export async function POST(req: Request) {
 
     const name: string = body.name?.trim() || email.split('@')[0];
     const role = body.role === 'admin' ? 'colaboradora' : (body.role ?? 'convidada');
-    const tempPassword = 'leitura2026';
+    const tempPassword = gerarSenhaTemporaria();
 
     const [existing] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, email));
     if (existing) {

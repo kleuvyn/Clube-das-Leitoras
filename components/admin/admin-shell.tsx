@@ -3,9 +3,9 @@
 import { useAdmin } from '@/lib/admin-context';
 import { Button } from '@/components/ui/button';
 import { LogOut, Menu, Users, LayoutDashboard, BookOpen, Vote, Sparkles, ShoppingBag, ExternalLink, Calendar, Mic, ImageIcon, Handshake, Feather } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import React from 'react';
 
 const laranjaFolha = "var(--page-color)";
@@ -14,6 +14,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const { logout, currentUser } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pathname]);
 
   const handleLogout = () => {
     logout();
@@ -131,7 +135,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </Link>
         </header>
 
-        <div className="flex-1 animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-y-auto">
+        <div id="admin-scroll" className="flex-1 animate-in fade-in slide-in-from-bottom-2 duration-500 overflow-y-auto">
           {children}
         </div>
       </main>

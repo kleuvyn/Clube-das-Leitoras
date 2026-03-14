@@ -55,6 +55,17 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     };
 
     checkSession();
+
+    // Escuta logout em outras abas
+    const channel = new BroadcastChannel('clube-auth');
+    channel.onmessage = (e) => {
+      if (e.data?.type === 'logout') {
+        setCurrentUser(null);
+        setIsAuthenticated(false);
+        window.location.replace('/login');
+      }
+    };
+    return () => channel.close();
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -137,15 +148,19 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = () => {
-    
+    // Avisar outras abas
+    try {
+      const channel = new BroadcastChannel('clube-auth');
+      channel.postMessage({ type: 'logout' });
+      channel.close();
+    } catch (_) {}
+
     localStorage.removeItem('clube-admin-user');
     localStorage.removeItem('clube-sessao');
     localStorage.removeItem('clube-role');
-    
-    
+
     fetch('/api/auth/logout', { method: 'POST' }).catch(() => null);
-    
-    
+
     setCurrentUser(null);
     setIsAuthenticated(false);
   };
