@@ -3,6 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { dicas } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
+import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +55,13 @@ export async function POST(request: Request) {
       textoCompleto: body.textoCompleto ?? null,
       iconName: body.iconName ?? 'BookOpen',
     }).returning();
+
+    // Notifica leitoras em background (fire-and-forget)
+    notificarLeitoras({
+      secao: 'dicas',
+      tituloConteudo: body.titulo,
+      descricaoConteudo: body.descricao,
+    }).catch(console.error);
 
     return NextResponse.json({ success: true, data: inserted }, { status: 201 });
   } catch (err: any) {

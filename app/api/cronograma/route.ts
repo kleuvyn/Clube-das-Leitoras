@@ -3,6 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { cronograma } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +52,12 @@ export async function POST(request: Request) {
       ano: body.ano ? Number(body.ano) : new Date().getFullYear(),
       status: body.status || 'ativo',
     }).returning();
+
+    notificarLeitoras({
+      secao: 'cronograma',
+      tituloConteudo: body.title ?? 'Cronograma',
+      descricaoConteudo: body.notes ?? '',
+    }).catch(console.error);
 
     return NextResponse.json(inserted, { status: 201 });
   } catch (err: any) {

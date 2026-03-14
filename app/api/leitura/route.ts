@@ -3,6 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { leituras } from '@/lib/db/schema'; 
 import { eq, desc } from 'drizzle-orm';
+import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,6 +52,12 @@ export async function POST(request: Request) {
       data: body.data ?? null,     
       status: 'ativo',
     }).returning();
+
+    notificarLeitoras({
+      secao: 'leitura',
+      tituloConteudo: body.tema,
+      descricaoConteudo: '',
+    }).catch(console.error);
 
     return NextResponse.json(inserted, { status: 201 });
   } catch (err) {

@@ -3,6 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { encontros, eventoConfirmacoes } from '@/lib/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
+import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,6 +93,12 @@ export async function POST(req: NextRequest) {
       telefone: body.telefone ?? null,
       linkInscricao: body.linkInscricao ?? null,
     }).returning();
+
+    notificarLeitoras({
+      secao: 'eventos',
+      tituloConteudo: body.title,
+      descricaoConteudo: body.description ?? '',
+    }).catch(console.error);
 
     return NextResponse.json(mapToUiEvent(inserted), { status: 201 });
   } catch (err) {

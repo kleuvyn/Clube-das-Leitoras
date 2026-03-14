@@ -102,14 +102,14 @@ export default function RootLayout({
         }}
       >
         
-        <div className="fixed inset-0 z-0 opacity-[0.06] pointer-events-none flex items-center justify-center scale-125">
+        <div className="fixed inset-0 z-[-1] opacity-[0.06] pointer-events-none flex items-center justify-center scale-125">
           <Image src="/logo.png" alt="Logo" width={900} height={900} priority className="object-contain max-w-275 opacity-100" />
         </div>
 
         
         {!isAuthPage && <Navigation />}
         
-        <main className="min-h-screen">
+        <main className="min-h-screen relative z-[1]">
           {children}
         </main>
         

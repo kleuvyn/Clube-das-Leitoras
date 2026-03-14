@@ -3,6 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { livroDoMes, resenhas } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
+import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,13 @@ export async function POST(request: Request) {
       imageUrl: body.foto ?? null,
       publishedAt: mesAno,
     });
+
+    // Notifica leitoras em background
+    notificarLeitoras({
+      secao: 'livro-do-mes',
+      tituloConteudo: `${body.livro} — ${body.autora}`,
+      descricaoConteudo: body.sinopse ?? '',
+    }).catch(console.error);
 
     return NextResponse.json({ success: true, data: inserted }, { status: 201 });
   } catch (err: any) {

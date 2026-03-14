@@ -3,6 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { podcasts } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
+import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,12 @@ export async function POST(request: Request) {
       youtubeUrl: body.youtubeUrl ?? null,
       imageUrl: body.imageUrl ?? null,
     }).returning();
+
+    notificarLeitoras({
+      secao: 'podcast',
+      tituloConteudo: body.titulo,
+      descricaoConteudo: body.resumo ?? '',
+    }).catch(console.error);
 
     return NextResponse.json({ success: true, data: inserted }, { status: 201 });
   } catch (err) {
