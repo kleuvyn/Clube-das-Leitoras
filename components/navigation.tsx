@@ -55,7 +55,7 @@ export function Navigation() {
         { label: 'Dicas da Gabi', href: '/dicas' },
         { label: 'Nossas Parcerias', href: '/parcerias' },
         { label: 'Empreendedoras', href: '/empreendedoras' },
-        { label: 'Escritoras', href: '/escritoras' }
+        //{ label: 'Escritoras', href: '/escritoras' }
       ]
     },
     {
