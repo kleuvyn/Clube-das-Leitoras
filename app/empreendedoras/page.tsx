@@ -2,10 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { 
-  Instagram, ShoppingBag, Star, Feather, X, ArrowRight, CheckCircle2, Coffee, Sparkles 
+  Instagram, ShoppingBag, Star, Feather, X, ArrowRight, CheckCircle2, Coffee, Sparkles, Heart 
 } from "lucide-react"; 
 
-// Paleta de Cores e Estilos
+// Paleta de Cores e Estilos (Consistente com DNA Club)
 const lavandaPrincipal = "#967BB6";
 const azulPetroleo = "#2C3E50";
 const papelCor = "#FDFCFB";
@@ -90,7 +90,7 @@ export default function VitrineEmpreendedoras() {
       if (!res.ok) throw new Error('Falha ao enviar');
       setSolEnviado(true);
       setSolNegocio(''); setSolEmpreendedora(''); setSolInstagram(''); setSolMensagem(''); setSolCategoria(''); setSolFrase('');
-      setTimeout(() => { setSolEnviado(false); setModalOpen(false); }, 3000);
+      setTimeout(() => { setSolEnviado(false); setModalOpen(false); }, 3500);
     } catch (err) {
       alert('Erro ao enviar solicitação.');
     } finally {
@@ -200,7 +200,7 @@ export default function VitrineEmpreendedoras() {
         <section className="bg-white border border-black/5 p-12 md:p-24 text-center shadow-sm rounded-[3rem] relative overflow-hidden">
           <div className="max-w-xl mx-auto space-y-8 relative z-10">
             <Star className="mx-auto opacity-20" size={32} style={{ color: lavandaPrincipal }} />
-            <h2 className="text-5xl text-[#2C3E50] tracking-tight">
+            <h2 className="text-5xl text-[#2C3E50] tracking-tight leading-tight">
               Sua criatividade também <br/> 
               <span className="italic font-light" style={{ color: lavandaPrincipal }}>tem lugar aqui.</span>
             </h2>
@@ -210,7 +210,7 @@ export default function VitrineEmpreendedoras() {
             <div className="pt-6">
               <button
                 onClick={() => setModalOpen(true)}
-                className="inline-flex items-center gap-3 text-white px-14 py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                className="inline-flex items-center gap-4 text-white px-14 py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                 style={{ backgroundColor: lavandaPrincipal }}
               >
                 Tomar um café <ArrowRight size={14} />
@@ -220,84 +220,127 @@ export default function VitrineEmpreendedoras() {
         </section>
       </main>
 
-      {/* MODAL DE CADASTRO REFINADO */}
+      {/* MODAL REFINADO DNA CLUB */}
       {modalOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-[#2C3E50]/40 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
           
-          <div className="relative w-full max-w-2xl bg-[#FDFCFB] rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+          <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
             <button onClick={() => setModalOpen(false)} className="absolute right-8 top-8 p-2 hover:bg-black/5 rounded-full transition-colors z-20">
               <X size={20} className="opacity-30" />
             </button>
 
             <div className="grid md:grid-cols-5 h-full max-h-[90vh]">
-              {/* Lateral do Modal */}
-              <div className="hidden md:flex md:col-span-2 bg-[#F7F2FA] p-12 flex-col justify-between border-r border-black/5">
+              {/* Coluna Lateral */}
+              <div className="hidden md:flex md:col-span-2 bg-[#967BB6]/5 p-12 flex-col justify-between border-r border-black/5">
                 <div className="space-y-8">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white shadow-sm">
-                    <Coffee size={24} style={{ color: lavandaPrincipal }} />
+                  <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm rotate-3">
+                     <Heart size={28} style={{ color: lavandaPrincipal }} />
                   </div>
-                  <h3 className="text-4xl font-serif italic leading-tight text-[#2C3E50]">Nova Curadoria</h3>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest leading-relaxed font-bold opacity-60">Conte-nos sobre a alma do seu negócio.</p>
+                  <div className="space-y-4">
+                    <h3 className="text-4xl font-serif italic leading-tight text-[#2C3E50]">Nova <br/>Empreendedora</h3>
+                    <div className="h-[1px] w-12 bg-[#967BB6]/30" />
+                    <p className="text-[10px] text-slate-500 leading-relaxed uppercase tracking-[0.2em] font-bold">
+                      Buscamos a alma do seu negócio. Conte-nos sua história criativa.
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 opacity-30 italic text-[10px] font-bold">
-                        <Sparkles size={12} /> Espaço Criativo
-                    </div>
+                <div className="text-[9px] uppercase tracking-[0.4em] opacity-30 italic font-bold text-[#2C3E50]">
+                  DNA Club • Curadoria 2026
                 </div>
               </div>
 
-              {/* Formulário */}
+              {/* Formulário Refinado */}
               <div className="md:col-span-3 p-10 md:p-14 overflow-y-auto">
                 {solEnviado ? (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20">
-                    <CheckCircle2 size={48} className="text-green-500" />
-                    <h4 className="text-3xl font-serif italic">Café agendado!</h4>
-                    <p className="text-sm text-slate-500">Sua proposta foi enviada. Logo daremos um retorno carinhoso.</p>
+                    <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">
+                      <CheckCircle2 size={32} className="text-green-600 animate-bounce" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="text-3xl font-serif italic text-[#2C3E50]">Pedido Recebido!</h4>
+                      <p className="text-sm text-slate-500 max-w-xs mx-auto">Em breve, sua marca poderá florescer em nosso acervo. Logo daremos retorno.</p>
+                    </div>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Empreendedora</label>
-                      <input type="text" value={solEmpreendedora} onChange={e => setSolEmpreendedora(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors" />
-                    </div>
-                    
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Nome do Negócio</label>
-                      <input type="text" value={solNegocio} onChange={e => setSolNegocio(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors" />
-                    </div>
+                  <div className="space-y-8">
+                    <header className="space-y-2">
+                      <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-[#967BB6]">Formulário de Candidatura</span>
+                      <h2 className="text-2xl text-[#2C3E50] font-medium tracking-tight">Sua Marca na Vitrine</h2>
+                    </header>
 
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="space-y-1">
-                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Instagram</label>
-                        <input type="text" placeholder="@" value={solInstagram} onChange={e => setSolInstagram(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors" />
+                    <div className="grid grid-cols-1 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">Empreendedora</label>
+                          <input 
+                            type="text" 
+                            value={solEmpreendedora} 
+                            onChange={e => setSolEmpreendedora(e.target.value)} 
+                            className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors text-sm" 
+                          />
+                        </div>
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">Nome do Negócio</label>
+                          <input 
+                            type="text" 
+                            value={solNegocio} 
+                            onChange={e => setSolNegocio(e.target.value)} 
+                            className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors text-sm" 
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Categoria</label>
-                        <select value={solCategoria} onChange={e => setSolCategoria(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none text-sm italic">
-                          <option value="">Selecione...</option>
-                          {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">Instagram (@)</label>
+                          <input 
+                            type="text" 
+                            value={solInstagram} 
+                            onChange={e => setSolInstagram(e.target.value)} 
+                            className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors text-sm" 
+                          />
+                        </div>
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">Categoria</label>
+                          <select 
+                            value={solCategoria} 
+                            onChange={e => setSolCategoria(e.target.value)} 
+                            className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none text-sm italic"
+                          >
+                            <option value="">Selecione...</option>
+                            {CATEGORIAS.map(c => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">A essência (em uma frase)</label>
-                      <input type="text" value={solFrase} onChange={e => setSolFrase(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors" placeholder="Ex: Arte que abraça o cotidiano" />
-                    </div>
+                      <div className="space-y-1 pt-2">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">A Essência (Frase de impacto)</label>
+                        <input 
+                          type="text" 
+                          value={solFrase} 
+                          onChange={e => setSolFrase(e.target.value)} 
+                          placeholder="Uma frase que define seu trabalho..."
+                          className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors text-sm italic placeholder:opacity-20" 
+                        />
+                      </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">O que você cria?</label>
-                      <textarea value={solMensagem} onChange={e => setSolMensagem(e.target.value)} className="w-full bg-black/[0.03] rounded-2xl p-4 text-sm focus:ring-1 focus:ring-[#967BB6] outline-none transition-all" rows={3} />
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">O que você cria? (Detalhes)</label>
+                        <textarea 
+                          value={solMensagem} 
+                          onChange={e => setSolMensagem(e.target.value)} 
+                          className="w-full bg-black/[0.03] rounded-2xl p-4 text-sm focus:ring-1 focus:ring-[#967BB6] outline-none transition-all min-h-[100px]" 
+                        />
+                      </div>
                     </div>
 
                     <button
                       onClick={enviarSolicitacao}
                       disabled={solEnviando}
-                      className="w-full text-white py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:shadow-lavandaPrincipal/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
-                      style={{ backgroundColor: lavandaPrincipal }}
+                      className="w-full bg-[#967BB6] text-white py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.4em] shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all disabled:opacity-50"
                     >
-                      {solEnviando ? 'Enviando convite...' : 'Solicitar Curadoria'}
+                      {solEnviando ? 'Submetendo Proposta...' : 'Enviar para Curadoria'}
                     </button>
                   </div>
                 )}
