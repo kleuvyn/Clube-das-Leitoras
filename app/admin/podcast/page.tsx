@@ -9,6 +9,7 @@ import {
   Headphones, CassetteTape, UploadCloud, X,
   FileAudio, Disc, Laptop, Trash2, Plus
 } from 'lucide-react';
+import { useAdmin } from '@/lib/admin-context';
 import { uploadFile, uploadAudio } from '@/lib/upload-client';
 
 const rosaRetro = "var(--page-color)";

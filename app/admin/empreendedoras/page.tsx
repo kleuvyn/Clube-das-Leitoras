@@ -7,6 +7,7 @@ import {
   Trash2, Instagram, Heart, Store, 
   User, Tag, Sparkles, Save, ImageIcon, Loader2, Pencil, X
 } from 'lucide-react';
+import { useAdmin } from '@/lib/admin-context';
 import { uploadFile } from '@/lib/upload-client';
 
 const lavandaPrincipal = "var(--page-color)";

@@ -1,0 +1,177 @@
+"use client";
+
+import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Loader2, RefreshCw, Mail, Phone, Calendar, MapPin } from 'lucide-react';
+
+type Solicitacao = {
+  id: string;
+  tipo: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  mensagem?: string;
+  status: string;
+  createdAt: string;
+};
+
+export default function SolicitacoesAdmin() {
+  const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
+  const [filtro, setFiltro] = useState('todas');
+  const [carregando, setCarregando] = useState(true);
+
+  const load = async () => {
+    setCarregando(true);
+    try {
+      const res = await fetch('/api/solicitacoes', { cache: 'no-store' }); // Evita cache do navegador
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Erro ao buscar');
+      
+      // Garantimos que data seja um array
+      setSolicitacoes(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Erro ao carregar solicitações.');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const atualizarStatus = async (id: string, status: string) => {
+    const loadingToast = toast.loading("Atualizando status...");
+    try {
+      const res = await fetch('/api/solicitacoes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar');
+      
+      toast.success(status === 'aprovada' ? 'Aprovada! E-mail com senha enviado.' : 'Solicitação rejeitada.', { id: loadingToast });
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao atualizar.', { id: loadingToast });
+    }
+  };
+
+  // Filtro Case-Insensitive (ignora maiúsculas/minúsculas)
+  const itens = filtro === 'todas' 
+    ? solicitacoes 
+    : solicitacoes.filter(item => item.tipo?.toLowerCase() === filtro.toLowerCase());
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 md:p-12 space-y-8 font-sans">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-4xl font-serif italic text-slate-900">Curadoria de Acessos</h1>
+          <p className="text-slate-500 text-sm mt-1">Gerencie quem entra no Clube das Leitoras.</p>
+        </div>
+        <Button onClick={load} variant="ghost" className="gap-2 text-slate-400 hover:text-slate-900">
+          <RefreshCw size={16} className={carregando ? "animate-spin" : ""} /> Atualizar Lista
+        </Button>
+      </header>
+
+      {/* Barra de Filtros Estilizada */}
+      <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-xl w-fit">
+        {['todas', 'leitora', 'escritora', 'empreendedora', 'parceria'].map(f => (
+          <button
+            key={f}
+            onClick={() => setFiltro(f)}
+            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+              filtro === f ? 'bg-white shadow-sm text-[#B04D4A]' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {f === 'todas' ? 'Ver Todas' : f}
+          </button>
+        ))}
+      </div>
+
+      {carregando ? (
+        <div className="flex flex-col items-center py-20 opacity-20">
+          <Loader2 className="animate-spin mb-4" size={40} />
+          <p className="font-serif italic text-xl">Consultando os manuscritos...</p>
+        </div>
+      ) : itens.length === 0 ? (
+        <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-[3rem]">
+          <p className="text-slate-400 italic">Nenhuma solicitação de "{filtro}" encontrada.</p>
+        </div>
+      ) : (
+        <div className="grid gap-6">
+          {itens.map(item => (
+            <div key={item.id} className="group bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-500 relative overflow-hidden">
+              
+              {/* Tag de Status Lateral */}
+              <div className={`absolute top-0 right-0 px-6 py-1 text-[9px] font-bold uppercase tracking-widest rounded-bl-2xl ${
+                item.status === 'pendente' ? 'bg-amber-100 text-slate-900' : 
+                item.status === 'aprovada' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+              }`}>
+                {item.status}
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-8">
+                
+                {/* Coluna 1: Perfil */}
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-tighter text-[#B04D4A] block mb-1">{item.tipo}</span>
+                    <h3 className="text-xl font-serif text-slate-900 leading-tight">{item.nome}</h3>
+                  </div>
+                  <div className="space-y-2 text-sm text-slate-500">
+                    <div className="flex items-center gap-2"><Mail size={14} className="opacity-40" /> {item.email}</div>
+                    {item.telefone && <div className="flex items-center gap-2"><Phone size={14} className="opacity-40" /> {item.telefone}</div>}
+                    <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> {new Date(item.createdAt).toLocaleDateString('pt-BR')}</div>
+                  </div>
+                </div>
+
+                {/* Coluna 2: Conteúdo/Mensagem */}
+                <div className="md:col-span-1 bg-slate-50 p-6 rounded-3xl border border-black/[0.03]">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                    <MapPin size={12} /> Detalhes da Inscrição
+                  </p>
+                    {item.enderecoCompleto && (
+                      <p className="text-sm text-slate-700 mb-2 break-words">
+                        <strong>Endereço:</strong> {item.enderecoCompleto}
+                      </p>
+                    )}
+                  <p className="text-sm text-slate-700 italic leading-relaxed whitespace-pre-line">
+                    {item.mensagem || "Sem mensagem adicional."}
+                  </p>
+                </div>
+
+                {/* Coluna 3: Ações */}
+                <div className="flex flex-col justify-center gap-3">
+                  {item.status === 'pendente' ? (
+                    <>
+                      <Button 
+                        onClick={() => atualizarStatus(item.id, 'aprovada')} 
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-2xl h-12 text-xs font-bold uppercase tracking-widest"
+                      >
+                        Aprovar Cadastro
+                      </Button>
+                      <Button 
+                        onClick={() => atualizarStatus(item.id, 'rejeitada')} 
+                        variant="outline"
+                        className="w-full border-rose-200 text-rose-600 hover:bg-rose-50 rounded-2xl h-12 text-xs font-bold uppercase tracking-widest"
+                      >
+                        Recusar
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="text-center p-4 border border-dashed border-slate-200 rounded-2xl opacity-40 italic text-xs">
+                      Esta solicitação já foi processada.
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

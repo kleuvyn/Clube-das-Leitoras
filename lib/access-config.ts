@@ -23,7 +23,7 @@ export const CONVIDADA_EXTRA_NAV_ITEMS: NavAccessItem[] = [
   { href: '/livro-do-mes', label: 'Livros do Mês', icon: 'bookMarked', color: 'text-rose-300' },
   { href: '/cronograma', label: 'Cronograma', icon: 'calendar', color: 'text-emerald-300' },
   { href: '/votacao', label: 'Votacao do Mes', icon: 'vote', color: 'text-cyan-300' },
-  { href: '/dicas', label: 'Dicas da Gabi', icon: 'lightbulb', color: 'text-amber-300' },
+  { href: '/dicas', label: 'Dicas da Gabi', icon: 'lightbulb', color: 'text-slate-900' },
   { href: '/podcast', label: 'Podcast', icon: 'podcast', color: 'text-orange-300' },
 ];
 

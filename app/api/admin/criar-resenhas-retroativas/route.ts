@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     
-    await db.execute(sql`ALTER TABLE resenhas ADD COLUMN IF NOT EXISTS published_at text`);
+    await (db as any).execute(sql`ALTER TABLE resenhas ADD COLUMN IF NOT EXISTS published_at text`);
 
     const livros = await db.select().from(livroDoMes);
     const resenhasExistentes = await db.select().from(resenhas);

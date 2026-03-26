@@ -1,10 +1,19 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Instagram, BookOpen, ShoppingCart, Globe, Quote, Feather, Star, ArrowLeft } from "lucide-react";
+import { 
+  Instagram, BookOpen, ShoppingCart, Globe, Quote, Feather, 
+  Star, ArrowLeft, X, CheckCircle2, PencilLine, Heart 
+} from "lucide-react";
 
+// Definições de Estilo Editorial do Clube
 const rosaPrincipal = "#C47E8A";
 const marromTerra = "#4A3F35";
+const papelCor = "#FDFCFB";
+const bgStyle = { 
+  backgroundColor: papelCor,
+  backgroundImage: `url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` 
+};
 
 interface Escritora {
   id: string;
@@ -19,12 +28,24 @@ interface Escritora {
   bio?: string | null;
 }
 
-const bgStyle = { background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` };
-
 export default function EscritorasPage() {
   const [escritoras, setEscritoras] = useState<Escritora[]>([]);
   const [loading, setLoading] = useState(true);
   const [ativa, setAtiva] = useState<Escritora | null>(null);
+
+  // Estados do Modal de Cadastro Completo
+  const [modalOpen, setModalOpen] = useState(false);
+  const [solNome, setSolNome] = useState('');
+  const [solTitulo, setSolTitulo] = useState('');
+  const [solGenero, setSolGenero] = useState('');
+  const [solInstagram, setSolInstagram] = useState('');
+  const [solLinkCompra, setSolLinkCompra] = useState('');
+  const [solSite, setSolSite] = useState('');
+  const [solSinopse, setSolSinopse] = useState('');
+  const [solBio, setSolBio] = useState('');
+  const [solCapa, setSolCapa] = useState('');
+  const [solEnviando, setSolEnviando] = useState(false);
+  const [solEnviado, setSolEnviado] = useState(false);
 
   useEffect(() => {
     async function carregar() {
@@ -41,319 +62,345 @@ export default function EscritorasPage() {
     carregar();
   }, []);
 
-  /* ─── VISTA DETALHE ─── */
+  const enviarSolicitacaoEscritora = async () => {
+    if (!solNome || !solTitulo) {
+      alert('Por favor, preencha pelo menos seu nome e o título do livro.');
+      return;
+    }
+    setSolEnviando(true);
+    try {
+      const res = await fetch('/api/solicitacoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo: 'escritora',
+          nome: solNome,
+          livroTitulo: solTitulo,
+          genero: solGenero,
+          instagram: solInstagram,
+          linkCompra: solLinkCompra,
+          site: solSite,
+          sinopse: solSinopse,
+          bio: solBio,
+          capaUrl: solCapa || null,
+        }),
+      });
+      if (!res.ok) throw new Error('Falha ao enviar');
+      setSolEnviado(true);
+      
+      // Limpar campos após sucesso
+      setSolNome(''); setSolTitulo(''); setSolGenero(''); setSolSinopse(''); 
+      setSolInstagram(''); setSolLinkCompra(''); setSolSite(''); setSolBio(''); setSolCapa('');
+      
+      setTimeout(() => { setSolEnviado(false); setModalOpen(false); }, 3000);
+    } catch (err) {
+      alert('Erro ao enviar sua obra. Tente novamente em instantes.');
+    } finally {
+      setSolEnviando(false);
+    }
+  };
+
+  /* ─── VISTA DETALHE (Quando clica em um livro) ─── */
   if (ativa) {
     return (
-      <div className="min-h-screen font-alice pb-40 relative overflow-hidden" style={bgStyle}>
-        <header className="max-w-7xl mx-auto pt-32 pb-8 px-6 border-b border-black/5">
+      <div className="min-h-screen font-serif pb-40 relative animate-in fade-in duration-500" style={bgStyle}>
+        <header className="max-w-7xl mx-auto pt-24 pb-8 px-6">
           <button
             onClick={() => setAtiva(null)}
-            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] opacity-40 hover:opacity-80 transition-opacity"
+            className="group flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] opacity-50 hover:opacity-100 transition-all"
           >
-            <ArrowLeft size={13} /> Voltar às escritoras
+            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
+            Voltar ao Acervo
           </button>
         </header>
 
-        <main className="max-w-7xl mx-auto px-6 pt-16">
-          <div className="grid lg:grid-cols-12 gap-16 items-start">
-
-            {/* Sidebar esquerda — lista */}
-            <aside className="lg:col-span-3 border-r border-black/5 pr-8 space-y-2">
-              <p className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-30 text-black mb-6">
-                Escritoras do Clube
-              </p>
-              {escritoras.map(e => {
-                const isAtiva = ativa.id === e.id;
-                return (
-                  <button
-                    key={e.id}
-                    onClick={() => setAtiva(e)}
-                    className={`w-full text-left transition-all duration-300 py-4 border-b border-black/5 ${
-                      isAtiva ? 'opacity-100 translate-x-1' : 'opacity-40 hover:opacity-70'
-                    }`}
-                  >
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-black block mb-1 opacity-60">
-                      {e.genero}
-                    </span>
-                    <span
-                      className="text-base italic block leading-tight"
-                      style={{ color: isAtiva ? rosaPrincipal : 'black' }}
-                    >
-                      {e.livroTitulo}
-                    </span>
-                    <span className="text-[8px] opacity-40 block mt-1">por {e.nome}</span>
-                  </button>
-                );
-              })}
+        <main className="max-w-7xl mx-auto px-6">
+          <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+            
+            <aside className="hidden lg:block lg:col-span-3 sticky top-10 space-y-2 border-l border-black/5 pl-6">
+              <p className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-30 mb-8">Outras Obras</p>
+              {escritoras.map(e => (
+                <button
+                  key={e.id}
+                  onClick={() => { setAtiva(e); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                  className={`w-full text-left py-3 border-b border-black/5 transition-all ${ativa.id === e.id ? 'translate-x-2' : 'opacity-40 hover:opacity-70'}`}
+                >
+                  <span className="text-[10px] italic block" style={{ color: ativa.id === e.id ? rosaPrincipal : 'inherit' }}>
+                    {e.livroTitulo}
+                  </span>
+                  <span className="text-[8px] uppercase tracking-widest opacity-60">por {e.nome}</span>
+                </button>
+              ))}
             </aside>
 
-            {/* Centro — detalhe */}
-            <article className="lg:col-span-6 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 flex-wrap">
-                  {ativa.genero && (
-                    <span
-                      className="text-[9px] font-bold uppercase tracking-[0.4em] px-3 py-1 border border-black/10 rounded-full"
-                      style={{ color: rosaPrincipal }}
-                    >
-                      {ativa.genero}
-                    </span>
-                  )}
-                  <span className="text-[9px] font-bold uppercase tracking-[0.4em] px-3 py-1 border border-black/20 rounded-full text-slate-500">
-                    por {ativa.nome}
-                  </span>
+            <article className="lg:col-span-6 space-y-12">
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                   <div className="h-[1px] w-8 bg-black/20" />
+                   <span className="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">{ativa.genero || "Literatura"}</span>
                 </div>
-                <h2 className="text-6xl md:text-7xl text-[#2C3E50] tracking-tighter leading-[0.9]">
+                <h2 className="text-5xl md:text-7xl text-[#2C3E50] font-light leading-tight">
                   {ativa.livroTitulo}
                 </h2>
               </div>
 
               {ativa.capaUrl && (
-                <div className="relative group max-w-xs">
-                  <div className="bg-white p-4 shadow-xl border border-black/5 -rotate-1 group-hover:rotate-0 transition-transform duration-700">
-                    <img
-                      src={ativa.capaUrl}
-                      alt={ativa.livroTitulo}
-                      style={{ width: '100%', height: 'auto' }}
-                      className="rounded-sm"
-                    />
-                    <div className="mt-3 pt-3 border-t border-black/5">
-                      <span className="text-[8px] font-bold uppercase tracking-[0.3em] opacity-25 block text-center italic">
-                        {ativa.nome} · {new Date().getFullYear()}
-                      </span>
-                    </div>
+                <div className="relative inline-block">
+                  <div className="bg-white p-3 shadow-[20px_20px_60px_rgba(0,0,0,0.1)] border border-black/5 -rotate-1 transform transition-transform hover:rotate-0 duration-700">
+                    <img src={ativa.capaUrl} alt={ativa.livroTitulo} className="max-w-full h-auto w-[320px] rounded-sm object-cover" />
                   </div>
                 </div>
               )}
 
-              {ativa.bio && (
-                <div className="pt-4 border-t border-black/5">
-                  <p className="text-base leading-relaxed opacity-60 text-black">{ativa.bio}</p>
-                </div>
-              )}
+              <div className="prose prose-slate max-w-none">
+                {ativa.bio && (
+                  <div className="mb-10">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-30 mb-4">Sobre a Autora</h4>
+                    <p className="text-lg leading-relaxed text-slate-700 italic">{ativa.bio}</p>
+                  </div>
+                )}
 
-              {ativa.sinopse && (
-                <div className="relative pl-6 border-l-2 border-black/5">
-                  <Quote size={14} className="absolute -left-1 top-0 opacity-20" style={{ color: rosaPrincipal }} />
-                  <p className="text-xl italic leading-relaxed opacity-60 text-black">
-                    &ldquo;{ativa.sinopse}&rdquo;
-                  </p>
-                </div>
-              )}
+                {ativa.sinopse && (
+                  <div className="relative p-10 bg-black/[0.02] border-l-4 rounded-r-xl" style={{ borderColor: rosaPrincipal }}>
+                    <Quote size={24} className="absolute -top-3 -left-3 opacity-20" style={{ color: rosaPrincipal }} />
+                    <p className="text-xl italic leading-relaxed text-slate-800">
+                      {ativa.sinopse}
+                    </p>
+                  </div>
+                )}
+              </div>
             </article>
 
-            {/* Sidebar direita — info */}
-            <aside className="lg:col-span-3 space-y-8">
-              <section className="bg-white p-8 border border-black/5 shadow-sm rounded-2xl">
-                <h4 className="text-[9px] font-bold uppercase tracking-widest mb-6 opacity-30 text-black">
-                  Sobre a Autora
-                </h4>
-                <div className="space-y-5 text-sm italic opacity-60 text-black">
-                  {ativa.nome && (
-                    <div className="flex items-start gap-4">
-                      <Feather size={15} style={{ color: rosaPrincipal }} className="opacity-70 mt-0.5 shrink-0" />
-                      <span>{ativa.nome}</span>
+            <aside className="lg:col-span-3 space-y-6">
+              <div className="bg-white/50 backdrop-blur-sm p-8 border border-black/5 rounded-3xl shadow-sm">
+                 <div className="space-y-6">
+                    <div>
+                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40 block mb-2">Autoria</span>
+                      <p className="flex items-center gap-2 font-medium"><Feather size={14} style={{ color: rosaPrincipal }}/> {ativa.nome}</p>
                     </div>
-                  )}
-                  {ativa.genero && (
-                    <div className="flex items-start gap-4">
-                      <BookOpen size={15} style={{ color: rosaPrincipal }} className="opacity-70 mt-0.5 shrink-0" />
-                      <span>{ativa.genero}</span>
-                    </div>
-                  )}
-                  {ativa.instagram && (
-                    <div className="flex items-center gap-4">
-                      <Instagram size={15} style={{ color: rosaPrincipal }} className="opacity-70 shrink-0" />
-                      <a
-                        href={`https://instagram.com/${ativa.instagram.replace('@', '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:opacity-100 transition-opacity underline underline-offset-2"
-                      >
-                        {ativa.instagram}
+                    {ativa.instagram && (
+                      <a href={`https://instagram.com/${ativa.instagram.replace('@', '')}`} target="_blank" className="flex items-center gap-3 text-sm opacity-60 hover:opacity-100 transition-opacity">
+                        <Instagram size={16} /> @{ativa.instagram.replace('@', '')}
                       </a>
-                    </div>
-                  )}
-                  {ativa.site && (
-                    <div className="flex items-center gap-4">
-                      <Globe size={15} style={{ color: rosaPrincipal }} className="opacity-70 shrink-0" />
-                      <a
-                        href={ativa.site}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:opacity-100 transition-opacity underline underline-offset-2 break-all"
-                      >
-                        Site / Blog
-                      </a>
-                    </div>
-                  )}
-                </div>
-              </section>
+                    )}
+                 </div>
 
-              {ativa.linkCompra && (
-                <a
-                  href={ativa.linkCompra}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-2xl text-white text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: rosaPrincipal }}
-                >
-                  <ShoppingCart size={13} /> Onde Comprar
-                </a>
-              )}
+                 {ativa.linkCompra && (
+                    <a
+                      href={ativa.linkCompra}
+                      target="_blank"
+                      className="mt-8 flex items-center justify-center gap-3 w-full py-4 rounded-2xl text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-rose-900/10"
+                      style={{ backgroundColor: rosaPrincipal }}
+                    >
+                      <ShoppingCart size={14} /> Adquirir Obra
+                    </a>
+                  )}
+              </div>
             </aside>
-
           </div>
         </main>
       </div>
     );
   }
 
-  /* ─── VISTA LISTA ─── */
+  /* ─── VISTA LISTA PRINCIPAL ─── */
   return (
-    <div
-      className="min-h-screen font-alice pb-40 relative overflow-hidden"
-      style={bgStyle}
-    >
-      
-      <header className="max-w-5xl mx-auto pt-32 pb-24 px-6 text-center border-b border-black/5">
-        <div className="flex items-center justify-center gap-4 mb-8 opacity-40">
-          <div className="h-[1px] w-10 bg-black" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.6em] text-black italic">
-            Brasília • Palavras que Florescem
-          </span>
-          <div className="h-[1px] w-10 bg-black" />
+    <div className="min-h-screen font-serif pb-40 relative" style={bgStyle}>
+      <header className="max-w-6xl mx-auto pt-32 pb-20 px-6 text-center">
+        <div className="flex items-center justify-center gap-6 mb-10 opacity-30">
+          <div className="h-[1px] w-12 bg-black" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.5em]">Brasília • Acervo Literário</span>
+          <div className="h-[1px] w-12 bg-black" />
         </div>
-
-        <h1 className="text-7xl md:text-[90px] text-[#4A3F35] tracking-tighter leading-[0.85] mb-10">
-          Escritoras{" "}
-          <span style={{ color: rosaPrincipal }} className="italic font-light">
-            do Clube
-          </span>
+        <h1 className="text-7xl md:text-8xl text-[#4A3F35] tracking-tighter leading-none mb-8">
+          Escritoras <span className="italic font-light" style={{ color: rosaPrincipal }}>do Clube</span>
         </h1>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto border-t border-black/10 pt-10">
-          <p className="text-base leading-relaxed opacity-60 text-black italic">
-            "Um espaço dedicado às leitoras que também são autoras. Aqui, cada livro carrega a alma de quem o escreveu e o amor de quem o leu."
-          </p>
-          <div className="flex flex-col justify-end items-start md:items-end">
-            <div
-              className="flex items-center gap-4 text-[10px] uppercase tracking-[0.3em] font-sans font-bold"
-              style={{ color: rosaPrincipal }}
-            >
-              <Feather size={14} /> Apoie Autoras Locais
-            </div>
-          </div>
-        </div>
+        <p className="max-w-2xl mx-auto text-lg italic opacity-50 leading-relaxed border-t border-black/5 pt-8">
+          "Um refúgio para as vozes que florescem no papel. Aqui celebramos as mulheres do nosso clube que transformam sentimentos em literatura."
+        </p>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 pt-24 space-y-48">
+      <main className="max-w-7xl mx-auto px-6">
         {loading ? (
-          <div className="text-center py-20 italic opacity-40 text-black animate-pulse">
-            Abrindo as páginas...
-          </div>
-        ) : escritoras.length === 0 ? (
-          <div className="text-center py-24 space-y-4">
-            <BookOpen size={48} className="mx-auto opacity-20" style={{ color: rosaPrincipal }} />
-            <p className="italic opacity-40 text-black text-lg">
-              Em breve, as histórias das nossas escritoras estarão aqui.
-            </p>
+          <div className="flex flex-col items-center justify-center py-40 gap-4 opacity-30">
+            <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: `${rosaPrincipal} transparent` }} />
+            <p className="text-[10px] uppercase tracking-widest font-bold">Folheando as páginas...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-16 gap-y-24">
-            {escritoras.map((item, idx) => (
-              <div
-                key={item.id || idx}
-                className="group space-y-6 cursor-pointer"
-                onClick={() => setAtiva(item)}
-              >
-                
-                <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
+            {escritoras.map((item) => (
+              <div key={item.id} className="group cursor-pointer space-y-8" onClick={() => setAtiva(item)}>
+                <div className="relative aspect-[3/4] bg-white rounded-sm shadow-[10px_10px_30px_rgba(0,0,0,0.05)] overflow-hidden transition-all duration-500 group-hover:shadow-[20px_20px_50px_rgba(0,0,0,0.1)] group-hover:-translate-y-2">
                   {item.capaUrl ? (
-                    <div className="relative w-36 h-52 shadow-lg group-hover:shadow-xl transition-all duration-500 group-hover:-rotate-1">
-                      <img
-                        src={item.capaUrl}
-                        alt={`Capa de ${item.livroTitulo}`}
-                        className="w-full h-full object-cover rounded-sm"
-                      />
-                      <div
-                        className="absolute inset-0 rounded-sm opacity-0 group-hover:opacity-100 transition-all duration-500"
-                        style={{ boxShadow: `4px 4px 0 ${rosaPrincipal}40` }}
-                      />
-                    </div>
+                    <img src={item.capaUrl} alt={item.livroTitulo} className="w-full h-full object-cover" />
                   ) : (
-                    <div
-                      className="relative w-36 h-52 flex items-center justify-center rounded-sm border border-black/10 group-hover:border-black/20 transition-all"
-                      style={{ backgroundColor: `${rosaPrincipal}15` }}
-                    >
-                      <BookOpen size={32} className="opacity-30" style={{ color: rosaPrincipal }} />
+                    <div className="w-full h-full flex items-center justify-center bg-slate-50">
+                      <BookOpen size={40} className="opacity-10" />
                     </div>
                   )}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                     <span className="text-white text-[10px] font-bold uppercase tracking-widest border border-white/40 px-6 py-3 rounded-full backdrop-blur-sm">Conhecer Obra</span>
+                  </div>
                 </div>
-
-                <div className="space-y-2">
-                  {item.genero && (
-                    <span
-                      className="text-[9px] font-bold uppercase tracking-[0.3em]"
-                      style={{ color: rosaPrincipal }}
-                    >
-                      {item.genero}
-                    </span>
-                  )}
-                  <h3 className="text-3xl text-[#2C3E50] tracking-tighter leading-none group-hover:italic group-hover:font-light transition-all">
-                    {item.livroTitulo}
-                  </h3>
-                  <p className="text-[10px] uppercase tracking-widest opacity-40 text-black italic">
-                    por {item.nome}
-                  </p>
+                <div className="space-y-3">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.4em]" style={{ color: rosaPrincipal }}>{item.genero || "Literatura"}</span>
+                  <h3 className="text-3xl text-slate-800 leading-none group-hover:italic transition-all">{item.livroTitulo}</h3>
+                  <div className="flex items-center gap-3 pt-2">
+                    <div className="w-6 h-[1px] bg-black/20" />
+                    <p className="text-[10px] uppercase tracking-widest opacity-40 italic">por {item.nome}</p>
+                  </div>
                 </div>
-
-                {item.bio && (
-                  <p className="text-sm opacity-50 text-black leading-relaxed line-clamp-3">
-                    {item.bio}
-                  </p>
-                )}
-
-                <span
-                  className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-[0.3em] opacity-0 group-hover:opacity-60 transition-all"
-                  style={{ color: rosaPrincipal }}
-                >
-                  Ver detalhes →
-                </span>
               </div>
             ))}
           </div>
         )}
 
-        
-        <section className="bg-white border border-black/5 p-12 md:p-20 text-center shadow-sm rounded-[3rem]">
-          <div className="max-w-xl mx-auto space-y-8">
+        {/* ─── CALL TO ACTION (CONVITE) ─── */}
+        <section className="mt-48 bg-white/40 border border-black/5 p-12 md:p-24 text-center rounded-[3rem] backdrop-blur-sm relative overflow-hidden shadow-sm">
+          <div className="absolute top-0 right-0 p-10 opacity-[0.03] rotate-12">
+            <PencilLine size={200} />
+          </div>
+
+          <div className="max-w-2xl mx-auto space-y-10 relative z-10">
             <Star className="mx-auto opacity-20" size={32} style={{ color: rosaPrincipal }} />
-            <h2 className="text-5xl text-[#2C3E50] tracking-tight">
-              Você também{" "}
-              <br />
-              <span className="italic font-light" style={{ color: rosaPrincipal }}>
-                escreve?
-              </span>
-            </h2>
-            <p className="text-sm italic opacity-60 text-black leading-relaxed">
-              Se você faz parte do clube e já publicou ou está escrevendo um livro,
-              <br />
-              queremos divulgar sua obra aqui. Venha compartilhar sua história com a gente!
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-              <a
-                href="mailto:clubedasleitorasbsb@gmail.com?subject=Quero%20divulgar%20meu%20livro&body=Ol%C3%A1%2C%20sou%20escritora%20e%20gostaria%20de%20divulgar%20meu%20livro%20no%20Clube%20das%20Leitoras!"
-                className="inline-flex items-center gap-2 text-white px-14 py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:scale-[1.02] transition-all"
-                style={{ backgroundColor: rosaPrincipal }}
-              >
-                <Feather size={14} /> Quero Divulgar Meu Livro
-              </a>
+            
+            <div className="space-y-4">
+              <h2 className="text-5xl md:text-6xl text-[#2C3E50] leading-tight font-light tracking-tight">
+                Você também <br />
+                <span className="italic" style={{ color: rosaPrincipal }}>escreve?</span>
+              </h2>
+              
+              <p className="text-slate-600 italic text-lg leading-relaxed max-w-lg mx-auto">
+                "Se você faz parte do clube e já publicou ou está escrevendo um livro, 
+                queremos divulgar sua obra aqui. Venha compartilhar sua história com a gente!"
+              </p>
             </div>
+
+            <button
+              onClick={() => setModalOpen(true)}
+              className="group inline-flex items-center gap-4 bg-[#4A3F35] text-white px-12 py-6 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] hover:bg-black transition-all shadow-xl hover:-translate-y-1"
+            >
+              <Feather size={14} className="group-hover:rotate-12 transition-transform" /> 
+              Quero fazer parte do acervo
+            </button>
           </div>
         </section>
       </main>
+
+      {/* ─── MODAL DE CADASTRO REFINADO ─── */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
+          
+          <div className="relative w-full max-w-3xl bg-[#FDFCFB] rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <button onClick={() => setModalOpen(false)} className="absolute right-8 top-8 p-2 hover:bg-black/5 rounded-full transition-colors z-10">
+              <X size={20} className="opacity-40" />
+            </button>
+
+            <div className="grid md:grid-cols-5 h-full max-h-[92vh]">
+              <div className="hidden md:flex md:col-span-2 bg-[#C47E8A]/10 p-10 flex-col justify-between border-r border-black/5">
+                <div className="space-y-6">
+                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
+                     <Heart size={24} style={{ color: rosaPrincipal }} />
+                  </div>
+                  <h3 className="text-4xl font-serif italic leading-tight text-slate-800">Nova Escritora</h3>
+                  <p className="text-[10px] text-slate-500 leading-relaxed uppercase tracking-[0.2em] font-bold">Cada página conta uma história, cada autora fortalece nosso clube.</p>
+                </div>
+                <div className="text-[8px] uppercase tracking-widest opacity-30 italic font-bold">Curadoria Literária</div>
+              </div>
+
+              <div className="md:col-span-3 p-8 md:p-10 overflow-y-auto">
+                {solEnviado ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-20">
+                    <CheckCircle2 size={48} className="text-green-500 animate-bounce" />
+                    <h4 className="text-2xl font-serif italic">Manuscrito Recebido!</h4>
+                    <p className="text-sm text-slate-500">Obrigada por confiar sua história ao clube.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Nome da Escritora</label>
+                        <input type="text" value={solNome} onChange={e => setSolNome(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Título do Livro</label>
+                        <input type="text" value={solTitulo} onChange={e => setSolTitulo(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Gênero Literário</label>
+                        <input type="text" value={solGenero} onChange={e => setSolGenero(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" placeholder="Poesia, Romance..." />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Instagram</label>
+                        <input type="text" placeholder="@" value={solInstagram} onChange={e => setSolInstagram(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Link de Compra</label>
+                        <input type="text" value={solLinkCompra} onChange={e => setSolLinkCompra(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors text-xs" placeholder="Amazon, Editora..." />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Site / Blog</label>
+                        <input type="text" value={solSite} onChange={e => setSolSite(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors text-xs" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Sinopse do Livro</label>
+                      <textarea value={solSinopse} onChange={e => setSolSinopse(e.target.value)} className="w-full bg-black/5 rounded-xl p-4 text-sm focus:ring-1 focus:ring-[#C47E8A] outline-none" rows={3} />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Bio da Escritora</label>
+                      <textarea value={solBio} onChange={e => setSolBio(e.target.value)} className="w-full bg-black/5 rounded-xl p-4 text-sm focus:ring-1 focus:ring-[#C47E8A] outline-none" rows={2} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Capa do Livro</label>
+                      <div className="relative group border-2 border-dashed border-black/10 rounded-2xl p-4 text-center hover:bg-black/[0.02] transition-colors">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => setSolCapa(reader.result as string);
+                            reader.readAsDataURL(file);
+                          }} 
+                        />
+                        {solCapa ? (
+                          <div className="flex items-center justify-center gap-3">
+                             <img src={solCapa} className="h-12 w-8 object-cover rounded shadow-sm" />
+                             <p className="text-[10px] font-bold text-green-600">Imagem selecionada</p>
+                          </div>
+                        ) : (
+                          <p className="text-[10px] opacity-40 font-bold uppercase tracking-widest">Anexar Capa</p>
+                        )}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={enviarSolicitacaoEscritora}
+                      disabled={solEnviando}
+                      className="w-full bg-[#C47E8A] text-white py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all disabled:opacity-50"
+                    >
+                      {solEnviando ? 'Submetendo...' : 'Submeter Obra'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-

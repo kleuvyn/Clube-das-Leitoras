@@ -1,144 +1,170 @@
-import { relations } from 'drizzle-orm';
-import { sql } from 'drizzle-orm'; 
-import { pgTable, text, timestamp, uuid, varchar, boolean, integer } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
+import {
+  sqliteTable,
+  text,
+  integer,
+} from 'drizzle-orm/sqlite-core';
 
-export const livros = pgTable('livros', {
-  id: uuid('id').primaryKey().defaultRandom(),
+
+export const livros = sqliteTable('livros', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   titulo: text('titulo').notNull(),
   isbn: text('isbn'),
   autor: text('autor').notNull(),
   sinopse: text('sinopse'),
   capaUrl: text('capa_url'),
   indicadoPor: text('indicado_por'),
-  mes: varchar('mes', { length: 20 }).notNull(),
+  mes: text('mes').notNull(),
   ano: integer('ano').notNull(),
-  tipo: text('tipo').default('candidato'), 
+  tipo: text('tipo').default('candidato'),
   votos: integer('votos').default(0),
   slug: text('slug').unique().notNull(),
   linkCompra: text('link_compra'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const encontros = pgTable('encontros', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const encontros = sqliteTable('encontros', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   titulo: text('titulo').notNull(),
   descricao: text('descricao'),
   local: text('local'),
-  data: timestamp('data').notNull(),
-  horaInicio: varchar('hora_inicio', { length: 5 }),
-  horaFim: varchar('hora_fim', { length: 5 }),
-  livroDoMes_id: uuid('livro_do_mes_id').references(() => livros.id, { onDelete: 'set null' }),
+  data: integer('data', { mode: 'timestamp' }).notNull(),
+  horaInicio: text('hora_inicio'),
+  horaFim: text('hora_fim'),
+  livroDoMes_id: text('livro_do_mes_id').references(() => livros.id, { onDelete: 'set null' }),
   imagemUrl: text('imagem_url'),
   slug: text('slug').unique(),
   valor: text('valor'),
   telefone: text('telefone'),
   linkInscricao: text('link_inscricao'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const eventoConfirmacoes = pgTable('evento_confirmacoes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  eventoId: uuid('evento_id').notNull().references(() => encontros.id, { onDelete: 'cascade' }),
+export const eventoConfirmacoes = sqliteTable('evento_confirmacoes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  eventoId: text('evento_id').notNull().references(() => encontros.id, { onDelete: 'cascade' }),
   usuarioEmail: text('usuario_email').notNull(),
-  status: text('status').notNull().default('vou'), 
-  createdAt: timestamp('created_at').defaultNow(),
+  status: text('status').notNull().default('vou'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const votacoes = pgTable('votacoes', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  livro_id: uuid('livro_id').notNull().references(() => livros.id, { onDelete: 'cascade' }),
+export const votacoes = sqliteTable('votacoes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  livro_id: text('livro_id').notNull().references(() => livros.id, { onDelete: 'cascade' }),
   usuario_email: text('usuario_email').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const colaboradoras = pgTable('colaboradoras', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const colaboradoras = sqliteTable('colaboradoras', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   email: text('email').unique().notNull(),
   password: text('password').notNull(),
   name: text('name'),
   avatarUrl: text('avatar_url'),
-  role: varchar('role', { length: 20 }).default('colaboradora'), 
-  mustChangePassword: boolean('must_change_password').default(true),
-  active: boolean('active').default(true),
-  createdAt: timestamp('created_at').defaultNow(),
-  lastLogin: timestamp('last_login'),
+  role: text('role').default('colaboradora'),
+  mustChangePassword: integer('must_change_password', { mode: 'boolean' }).default(true),
+  active: integer('active', { mode: 'boolean' }).default(true),
+  status: text('status').default('ativa'),
+  phone: text('phone'),
+  birthdate: integer('birthdate', { mode: 'timestamp' }),
+  tempoClube: text('tempo_clube'),
+  enderecoCompleto: text('endereco_completo'),
+  cartaMimo: integer('carta_mimo', { mode: 'boolean' }).default(false),
+  enviosRealizados: integer('envios_realizados').default(0),
+  ultimaInteracao: integer('ultima_interacao', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+  lastLogin: integer('last_login', { mode: 'timestamp' }),
 });
 
-export const permissoesSeccao = pgTable('permissoes_seccao', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  nomeSecao: text('nome_secao').notNull(), 
+export const permissoesSeccao = sqliteTable('permissoes_seccao', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  nomeSecao: text('nome_secao').notNull(),
   usuarioEmail: text('usuario_email').notNull(),
-  ativo: boolean('ativo').default(false),
-  createdAt: timestamp('created_at').defaultNow(),
+  ativo: integer('ativo', { mode: 'boolean' }).default(false),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const parcerias = pgTable('parcerias', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const parcerias = sqliteTable('parcerias', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),
   link: text('link'),
   description: text('description'),
-  imagem: text('imagem'), 
-  createdAt: timestamp('created_at').defaultNow(),
+  imagem: text('imagem'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const empreendedoras = pgTable('empreendedoras', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const empreendedoras = sqliteTable('empreendedoras', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),
-  feitoPor: text('feito_por'),       
+  feitoPor: text('feito_por'),
   frase: text('frase'),
   categoria: text('categoria'),
   instagram: text('instagram'),
   logoUrl: text('logo_url'),
   website: text('website'),
   bio: text('bio'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const escritoras = pgTable('escritoras', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  nome: text('nome').notNull(),           
-  livroTitulo: text('livro_titulo').notNull(), 
-  genero: text('genero'),                 
+export const solicitacoes = sqliteTable('solicitacoes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tipo: text('tipo').notNull(),
+  nome: text('nome').notNull(),
+  email: text('email').notNull(),
+  telefone: text('telefone'),
+  site: text('site'),
+  instagram: text('instagram'),
+  mensagem: text('mensagem'),
+  enderecoCompleto: text('endereco_completo'),
+  status: text('status').default('pendente'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const escritoras = sqliteTable('escritoras', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  nome: text('nome').notNull(),
+  livroTitulo: text('livro_titulo').notNull(),
+  genero: text('genero'),
   sinopse: text('sinopse'),
   instagram: text('instagram'),
   linkCompra: text('link_compra'),
   capaUrl: text('capa_url'),
   site: text('site'),
   bio: text('bio'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const cronograma = pgTable('cronograma', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const cronograma = sqliteTable('cronograma', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
   date: text('date'),
   notes: text('notes'),
   imageUrl: text('image_url'),
   ano: integer('ano'),
   status: text('status').default('ativo'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const votacaoConfig = pgTable('votacao_config', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  ativa: boolean('ativa').default(false),
+export const votacaoConfig = sqliteTable('votacao_config', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ativa: integer('ativa', { mode: 'boolean' }).default(false),
   prazo: text('prazo'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const votacoesHistorico = pgTable('votacoes_historico', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const votacoesHistorico = sqliteTable('votacoes_historico', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   periodo: text('periodo').notNull(),
   vencedorTitulo: text('vencedor_titulo').notNull(),
   vencedorAutor: text('vencedor_autor').notNull(),
   vencedorVotos: integer('vencedor_votos').default(0),
   totalVotos: integer('total_votos').default(0),
   porcentagem: integer('porcentagem').default(0),
-  encerradoEm: timestamp('encerrado_em').defaultNow(),
+  encerradoEm: integer('encerrado_em', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const resenhas = pgTable('resenhas', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const resenhas = sqliteTable('resenhas', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
   book: text('book'),
   author: text('author'),
@@ -146,11 +172,11 @@ export const resenhas = pgTable('resenhas', {
   rating: integer('rating'),
   imageUrl: text('image_url'),
   publishedAt: text('published_at'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const podcasts = pgTable('podcasts', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const podcasts = sqliteTable('podcasts', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   titulo: text('titulo').notNull(),
   convidada: text('convidada'),
   duracao: text('duracao'),
@@ -160,35 +186,35 @@ export const podcasts = pgTable('podcasts', {
   spotifyUrl: text('spotify_url'),
   youtubeUrl: text('youtube_url'),
   imageUrl: text('image_url'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const rodaonline = pgTable('rodaonline', {
-  id: text('id').default(sql`gen_random_uuid()`).primaryKey(),
+export const rodaonline = sqliteTable('rodaonline', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
-  book: text('book'),           
-  author: text('author'),       
-  date: timestamp('date'),
+  book: text('book'),
+  author: text('author'),
+  date: integer('date', { mode: 'timestamp' }),
   link: text('link'),
   description: text('description'),
-  imageUrl: text('image_url'), 
-  videoUrl: text('video_url'), 
+  imageUrl: text('image_url'),
+  videoUrl: text('video_url'),
   linkDrive: text('link_drive'),
-  status: text('status').default('ativo'), 
-  createdAt: timestamp('created_at').defaultNow(),
+  status: text('status').default('ativo'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const reflexoesRodaOnline = pgTable('reflexoes_roda_online', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const reflexoesRodaOnline = sqliteTable('reflexoes_roda_online', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   rodaId: text('roda_id').notNull(),
   autoraNome: text('autora_nome').notNull(),
   autoraEmail: text('autora_email'),
   texto: text('texto').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const livroDoMes = pgTable('livro_do_mes', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const livroDoMes = sqliteTable('livro_do_mes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   mes: text('mes'),
   num: integer('num'),
   ano: integer('ano'),
@@ -199,23 +225,23 @@ export const livroDoMes = pgTable('livro_do_mes', {
   tag: text('tag'),
   diaEncontro: text('dia_encontro'),
   horarioEncontro: text('horario_encontro'),
-  confirmado: boolean('confirmado').default(false),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  confirmado: integer('confirmado', { mode: 'boolean' }).default(false),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const dicas = pgTable('dicas', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const dicas = sqliteTable('dicas', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   categoria: text('categoria').default('Leitura'),
   titulo: text('titulo').notNull(),
   descricao: text('descricao').notNull(),
-  imagem: text('imagem'), 
+  imagem: text('imagem'),
   textoCompleto: text('texto_completo'),
   iconName: text('icon_name').default('BookOpen'),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const leituras = pgTable('leituras', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const leituras = sqliteTable('leituras', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   title: text('title').notNull(),
   author: text('author'),
   link: text('link'),
@@ -223,34 +249,34 @@ export const leituras = pgTable('leituras', {
   linkDrive: text('link_drive'),
   imageUrl: text('image_url'),
   data: text('data'),
-  status: text('status').default('ativo'), 
-  createdAt: timestamp('created_at').defaultNow(),
+  status: text('status').default('ativo'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const reflexoesLobos = pgTable('reflexoes_lobos', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  leituraId: uuid('leitura_id').references(() => leituras.id, { onDelete: 'cascade' }),
+export const reflexoesLobos = sqliteTable('reflexoes_lobos', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  leituraId: text('leitura_id').references(() => leituras.id, { onDelete: 'cascade' }),
   autoraNome: text('autora_nome').notNull(),
   autoraEmail: text('autora_email'),
   texto: text('texto').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const comentarios = pgTable('comentarios', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  livroDoMesId: uuid('livro_do_mes_id').references(() => livroDoMes.id, { onDelete: 'cascade' }),
-  resenhaId: uuid('resenha_id').references(() => resenhas.id, { onDelete: 'cascade' }),
+export const comentarios = sqliteTable('comentarios', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  livroDoMesId: text('livro_do_mes_id').references(() => livroDoMes.id, { onDelete: 'cascade' }),
+  resenhaId: text('resenha_id').references(() => resenhas.id, { onDelete: 'cascade' }),
   autoraNome: text('autora_nome').notNull(),
   autoraEmail: text('autora_email'),
   texto: text('texto').notNull(),
-  createdAt: timestamp('created_at').defaultNow(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
-export const configModeracao = pgTable('config_moderacao', {
-  id: uuid('id').primaryKey().defaultRandom(),
+export const configModeracao = sqliteTable('config_moderacao', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   palavrasExtras: text('palavras_extras').default(''),
   palavrasRemovidasBase: text('palavras_removidas_base').default(''),
-  updatedAt: timestamp('updated_at').defaultNow(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow(),
 });
 
 export const livrosRelations = relations(livros, ({ many }) => ({

@@ -10,6 +10,7 @@ import {
 
 const azulSerenoLogo = "var(--page-color)";
 const rosaLetrasGabi = "var(--page-color)";
+const inputCls = "w-full p-4 bg-slate-50 rounded-2xl text-sm outline-none border border-slate-100 focus:border-[var(--page-color)] transition-all";
 
 export default function AdminParcerias() {
   const [loading, setLoading] = useState(true);
@@ -120,189 +121,177 @@ export default function AdminParcerias() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        
-        
-        <div className="lg:col-span-1">
-          <section className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm sticky top-8 space-y-6">
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 border-b pb-4">
-              <Plus size={14} style={{ color: azulSerenoLogo }} /> {editandoId ? 'Editar Parceiro' : 'Nova Aliança'}
-            </div>
-
-            <div className="space-y-4">
-              
-              
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-slate-400 uppercase ml-2">Selo / Logo da Parceria</label>
-                
-                {novaParceria.img ? (
-                  <div className="relative group w-full aspect-square bg-[#FDFBF9] rounded-4xl border border-slate-100 overflow-hidden flex items-center justify-center p-6">
-                    <img src={novaParceria.img} alt="Preview" className="w-full h-full object-contain" />
-                    <button 
-                      onClick={() => setNovaParceria({ ...novaParceria, img: '' })}
-                      className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2"
-                    >
-                      <X size={20} />
-                      <span className="text-[9px] font-bold uppercase tracking-widest">Trocar Logo</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full aspect-square bg-[#FDFBF9] rounded-4xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 transition-all hover:border-[#8DA4BF]/50 group"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="animate-spin text-[#8DA4BF]" />
-                    ) : (
-                      <>
-                        <div className="p-4 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
-                          <UploadCloud size={24} style={{ color: azulSerenoLogo }} />
-                        </div>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Clique para subir selo</span>
-                      </>
-                    )}
-                  </div>
-                )}
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileChange} 
-                  className="hidden" 
-                  accept="image/*" 
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Nome da Editora</label>
-                <input 
-                  value={novaParceria.nome}
-                  onChange={e => setNovaParceria({...novaParceria, nome: e.target.value})}
-                  placeholder="Ex: Editora Record"
-                  className="w-full p-4 bg-[#FDFBF9] rounded-2xl text-sm outline-none border border-slate-50" 
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Descrição</label>
-                <textarea 
-                  value={novaParceria.info}
-                  onChange={e => setNovaParceria({...novaParceria, info: e.target.value})}
-                  placeholder="Histórias fundamentais..."
-                  className="w-full p-4 bg-[#FDFBF9] rounded-2xl text-sm outline-none border border-slate-50 min-h-20 resize-none"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Instagram</label>
-                <input 
-                  value={novaParceria.link}
-                  onChange={e => setNovaParceria({...novaParceria, link: e.target.value})}
-                  placeholder="Link do perfil"
-                  className="w-full p-4 bg-[#FDFBF9] rounded-2xl text-sm outline-none border border-slate-50" 
-                />
-              </div>
-
-              <Button 
-                onClick={handleAddParceria}
-                disabled={isUploading}
-                className="w-full h-14 rounded-2xl text-white font-bold uppercase text-[10px] tracking-widest border-none shadow-lg mt-4 transition-transform hover:scale-[1.02]"
-                style={{ backgroundColor: azulSerenoLogo }}
-              >
-                <Save size={16} className="mr-2" /> {editandoId ? 'Salvar Alterações' : 'Publicar Parceiro'}
-              </Button>
-              {editandoId && (
-                <button
-                  onClick={() => { setEditandoId(null); setNovaParceria({ nome: '', info: '', link: '', img: '' }); }}
-                  className="w-full text-center text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors mt-1"
-                >
-                  Cancelar edição
-                </button>
-              )}
-            </div>
-          </section>
+      <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
+          <Plus size={14} style={{ color: azulSerenoLogo }} /> {editandoId ? 'Editar Parceiro' : 'Nova Aliança'}
         </div>
 
-        
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex items-center justify-between px-4">
-             <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Aliados Cadastrados</h3>
-             <span className="text-[10px] italic text-slate-400">{parcerias.length} parceiros</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold text-slate-400 uppercase ml-2">Selo / Logo da Parceria</label>
+            {novaParceria.img ? (
+              <div className="relative group w-full aspect-square bg-[#FDFBF9] rounded-4xl border border-slate-100 overflow-hidden flex items-center justify-center p-6">
+                <img src={novaParceria.img} alt="Preview" className="w-full h-full object-contain" />
+                <button 
+                  onClick={() => setNovaParceria({ ...novaParceria, img: '' })}
+                  className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white gap-2"
+                >
+                  <X size={20} />
+                  <span className="text-[9px] font-bold uppercase tracking-widest">Remover logo</span>
+                </button>
+              </div>
+            ) : (
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full aspect-square bg-[#FDFBF9] rounded-4xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 transition-all hover:border-[#8DA4BF]/50 group"
+              >
+                {isUploading ? (
+                  <Loader2 className="animate-spin text-[#8DA4BF]" />
+                ) : (
+                  <>
+                    <div className="p-4 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                      <UploadCloud size={24} style={{ color: azulSerenoLogo }} />
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Clique para subir selo</span>
+                  </>
+                )}
+              </div>
+            )}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              className="hidden" 
+              accept="image/*" 
+            />
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-20"><Loader2 className="animate-spin opacity-10" size={40} /></div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {parcerias.length === 0 && (
-                <div className="col-span-full py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 text-center">
-                   <Info className="mx-auto mb-2 opacity-20" />
-                   <p className="text-slate-400 italic text-sm font-alice">Nenhum parceiro cadastrado.</p>
-                </div>
-              )}
-              
-              {parcerias.map((parceiro) => (
-                <div key={parceiro.id} className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-                  <div className="flex gap-4 items-start">
-                    <div className="w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center p-2">
-                       {parceiro.imagem ? (
-                         <img src={parceiro.imagem} alt="" className="w-full h-full object-contain" />
-                       ) : (
-                         <ImageIcon className="text-slate-200" size={20} />
-                       )}
-                    </div>
-                    <div className="space-y-1">
-                      <h4 className="font-bold text-slate-700 text-lg leading-tight italic font-serif">{parceiro.name}</h4>
-                      <p className="text-[11px] text-slate-400 italic line-clamp-2">{parceiro.description}</p>
-                    </div>
-                  </div>
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Nome da Editora</label>
+            <input 
+              value={novaParceria.nome}
+              onChange={e => setNovaParceria({...novaParceria, nome: e.target.value})}
+              placeholder="Ex: Editora Record"
+              className={inputCls}
+            />
+          </div>
 
-                  <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
-                    <div className="flex gap-2">
-                      {parceiro.link && (
-                        <a href={parceiro.link} target="_blank" className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-400 transition-colors">
-                          <Instagram size={14} />
-                        </a>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        onClick={() => {
-                          setEditandoId(parceiro.id);
-                          setNovaParceria({
-                            nome: parceiro.name || '',
-                            info: parceiro.description || '',
-                            link: parceiro.link || '',
-                            img: parceiro.imagem || '',
-                          });
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className="flex items-center gap-1 text-[10px] font-bold text-blue-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
-                      >
-                        <Pencil size={12} /> Editar
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(parceiro.id)}
-                        className="flex items-center gap-2 text-[10px] font-bold text-rose-300 hover:text-rose-500 transition-colors uppercase tracking-widest"
-                      >
-                        <Trash2 size={14} /> Remover
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Descrição</label>
+            <textarea 
+              value={novaParceria.info}
+              onChange={e => setNovaParceria({...novaParceria, info: e.target.value})}
+              placeholder="Histórias fundamentais..."
+              className={`${inputCls} min-h-20 resize-none`}
+            />
+          </div>
+
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Link / Instagram</label>
+            <input 
+              value={novaParceria.link}
+              onChange={e => setNovaParceria({...novaParceria, link: e.target.value})}
+              placeholder="https://..."
+              className={inputCls} 
+            />
+          </div>
+
+          <div className="md:col-span-2 flex justify-end">
+            <Button 
+              onClick={handleAddParceria}
+              disabled={isUploading}
+              className="w-full md:w-auto h-14 rounded-2xl text-white font-bold uppercase text-[10px] tracking-widest border-none shadow-lg transition-transform hover:scale-[1.02]"
+              style={{ backgroundColor: azulSerenoLogo }}
+            >
+              <Save size={16} className="mr-2" /> {editandoId ? 'Salvar Alterações' : 'Publicar Parceiro'}
+            </Button>
+          </div>
+
+          {editandoId && (
+            <div className="md:col-span-2 text-right">
+              <button
+                onClick={() => { setEditandoId(null); setNovaParceria({ nome: '', info: '', link: '', img: '' }); }}
+                className="text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                Cancelar edição
+              </button>
             </div>
           )}
-
-          <div className="p-8 bg-white/50 border border-dashed border-[#8DA4BF]/30 rounded-[3rem] flex items-center gap-6">
-             <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
-                <Heart size={20} style={{ color: rosaLetrasGabi }} className="opacity-40" />
-             </div>
-             <p className="text-xs italic text-[#8C7A66] leading-relaxed">
-               As parcerias aparecem automaticamente no rodapé do jornal e na página de Aliados.
-             </p>
-          </div>
         </div>
-      </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center justify-between px-4">
+          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Aliados Cadastrados</h3>
+          <span className="text-[10px] italic text-slate-400">{parcerias.length} parceiros</span>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-20"><Loader2 className="animate-spin opacity-10" size={40} /></div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {parcerias.length === 0 && (
+              <div className="col-span-full py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 text-center">
+                <Info className="mx-auto mb-2 opacity-20" />
+                <p className="text-slate-400 italic text-sm font-alice">Nenhum parceiro cadastrado.</p>
+              </div>
+            )}
+            {parcerias.map((parceiro) => (
+              <div key={parceiro.id} className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+                <div className="flex gap-4 items-start">
+                  <div className="w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center p-2">
+                    {parceiro.imagem ? (
+                      <img src={parceiro.imagem} alt="Logo" className="w-full h-full object-contain" />
+                    ) : (
+                      <ImageIcon className="text-slate-200" size={20} />
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-slate-700 text-lg leading-tight italic font-serif">{parceiro.name}</h4>
+                    <p className="text-[11px] text-slate-400 italic line-clamp-2">{parceiro.description}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
+                  <div className="flex gap-2">
+                    {parceiro.link && (
+                      <a href={parceiro.link} target="_blank" rel="noreferrer" className="p-2 bg-slate-50 rounded-full text-slate-400 hover:text-blue-400 transition-colors">
+                        <Instagram size={14} />
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setEditandoId(parceiro.id);
+                        setNovaParceria({ nome: parceiro.name || '', info: parceiro.description || '', link: parceiro.link || '', img: parceiro.imagem || '' });
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="flex items-center gap-1 text-[10px] font-bold text-blue-400 hover:text-blue-600 transition-colors uppercase tracking-widest"
+                    >
+                      <Pencil size={12} /> Editar
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(parceiro.id)}
+                      className="flex items-center gap-2 text-[10px] font-bold text-rose-300 hover:text-rose-500 transition-colors uppercase tracking-widest"
+                    >
+                      <Trash2 size={14} /> Remover
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="p-8 bg-white/50 border border-dashed border-[#8DA4BF]/30 rounded-[3rem] flex items-center gap-6">
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm shrink-0">
+            <Heart size={20} style={{ color: rosaLetrasGabi }} className="opacity-40" />
+          </div>
+          <p className="text-xs italic text-[#8C7A66] leading-relaxed">
+            As parcerias aparecem automaticamente no rodapé do jornal e na página de Aliados.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

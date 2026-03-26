@@ -7,6 +7,7 @@ import {
   Plus, Trash2, MapPin, Calendar, 
   Loader2, Save, Image as ImageIcon, X, Clock, Edit3, DollarSign, Phone, Link
 } from 'lucide-react';
+import { useAdmin } from '@/lib/admin-context';
 import { uploadFile } from '@/lib/upload-client';
 
 const ocreDestaque = "var(--page-color)";

@@ -85,6 +85,26 @@ export default function LeitorasAdmin() {
     }
   };
 
+  const handleApprove = async (u: any) => {
+    if (!confirm(`Aprovar leitora "${u.name}" e enviar senha temporária?`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/colaboradores/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: u.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao aprovar');
+      toast.success('Leitora aprovada com sucesso!');
+      load();
+    } catch (err: any) {
+      toast.error(err.message ?? 'Erro na aprovação.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editing) return;
     setLoading(true);
@@ -271,7 +291,7 @@ export default function LeitorasAdmin() {
 
                   <div className="flex items-center gap-3">
                     <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                      u.role === 'admin' ? 'bg-amber-50 text-amber-600' :
+                      u.role === 'admin' ? 'bg-amber-50 text-slate-900' :
                       u.role === 'colaboradora' ? 'bg-violet-50 text-violet-500' :
                       'bg-slate-100 text-slate-500'
                     }`}>
@@ -279,11 +299,23 @@ export default function LeitorasAdmin() {
                     </span>
                     
                     {!u.active && (
-                      <span className="px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-rose-50 text-rose-400">Inativa</span>
+                      <span className="px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-rose-50 text-rose-400">Pendente</span>
+                    )}
+                    {u.active && u.status !== 'ativa' && (
+                      <span className="px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-amber-50 text-slate-900">{u.status || 'ativa'}</span>
                     )}
 
                     {u.email !== 'clubedasleitorasbsb@gmail.com' && (
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!u.active && (
+                          <button
+                            onClick={() => handleApprove(u)}
+                            className="p-2 text-green-500 hover:text-emerald-600 transition-colors"
+                            title="Aprovar"
+                          >
+                            <ShieldCheck size={15} />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleEdit(u)}
                           className="p-2 text-slate-300 hover:text-violet-500 transition-colors"

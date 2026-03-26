@@ -17,9 +17,18 @@ export async function GET() {
         avatarUrl: colaboradoras.avatarUrl,
         role: colaboradoras.role,
         active: colaboradoras.active,
+        status: colaboradoras.status,
+        phone: colaboradoras.phone,
+        birthdate: colaboradoras.birthdate,
+        tempoClube: colaboradoras.tempoClube,
+        enderecoCompleto: colaboradoras.enderecoCompleto,
+        cartaMimo: colaboradoras.cartaMimo,
+        enviosRealizados: colaboradoras.enviosRealizados,
+        ultimaInteracao: colaboradoras.ultimaInteracao,
         createdAt: colaboradoras.createdAt,
       })
       .from(colaboradoras)
+      .where(eq(colaboradoras.active, true))
       .orderBy(desc(colaboradoras.createdAt));
     
     return NextResponse.json(allLeitoras, { status: 200 });

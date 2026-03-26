@@ -23,7 +23,7 @@ function ModerationBadge({ texto, nome }: { texto: string; nome: string }) {
     </span>
   );
   if (r.score > 0) return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[9px] font-bold uppercase tracking-wider">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-slate-900 text-[9px] font-bold uppercase tracking-wider">
       <AlertTriangle size={10} /> Suspeito
     </span>
   );

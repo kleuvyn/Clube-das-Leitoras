@@ -10,6 +10,7 @@ import {
   Sun, Moon, Music, Flower2, Leaf, Star,
   BookMarked, PenLine, Glasses, Bookmark
 } from 'lucide-react';
+import { useAdmin } from '@/lib/admin-context';
 
 const azulSereno = "var(--page-color)";
 

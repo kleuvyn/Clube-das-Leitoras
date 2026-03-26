@@ -8,6 +8,7 @@ import {
   Tag, Sparkles, Save, ImageIcon, Loader2, ShoppingCart,
   Edit2, X, Check
 } from 'lucide-react';
+import { useAdmin } from '@/lib/admin-context';
 import { uploadFile } from '@/lib/upload-client';
 
 const rosaPrincipal = "var(--page-color)";

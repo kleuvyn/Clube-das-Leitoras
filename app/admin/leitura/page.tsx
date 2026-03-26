@@ -115,9 +115,9 @@ function EncontroCard({
               <span className="text-[10px] font-black uppercase text-slate-300">{enc.data}</span>
               <h5 className="text-lg font-bold text-slate-700 font-serif italic">{enc.tema}</h5>
               <div className="flex gap-3 mt-2">
-                {enc.linkMeet && <Video size={14} className="text-blue-500" title="Meet"/>}
-                {enc.linkLive && <Youtube size={14} className="text-red-500" title="Live"/>}
-                {enc.linkDrive && <FileText size={14} className="text-emerald-500" title="Drive"/>}
+                {enc.linkMeet && <span title="Meet"><Video size={14} className="text-blue-500" /></span>}
+                {enc.linkLive && <span title="Live"><Youtube size={14} className="text-red-500" /></span>}
+                {enc.linkDrive && <span title="Drive"><FileText size={14} className="text-emerald-500" /></span>}
               </div>
             </div>
           </div>
@@ -156,7 +156,7 @@ function ModerationBadge({ texto, nome }: { texto: string; nome: string }) {
     </span>
   );
   if (r.score > 0) return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[9px] font-bold uppercase tracking-wider">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-slate-900 text-[9px] font-bold uppercase tracking-wider">
       <AlertTriangle size={10} /> Suspeito
     </span>
   );

@@ -8,6 +8,7 @@ import {
   Trash2, BookOpen, Upload, Calendar, Tag, Quote, 
   PenTool, Loader2, Sparkles, Save, BookMarked, Pencil, X
 } from 'lucide-react';
+import { useAdmin } from '@/lib/admin-context';
 
 const verdeSalvia = "#B04D4A";
 const anoAtual = new Date().getFullYear();

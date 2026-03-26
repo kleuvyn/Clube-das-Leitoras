@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Quote, Star, BookOpen, ChevronDown, MessageCircle, Send, Loader2 } from "lucide-react";
-import { toast } from 'sonner';
+import Link from 'next/link';
+import { Quote, Star, BookOpen, ChevronDown, Loader2 } from "lucide-react";
+import ResenhaComments from '@/components/ResenhaComments';
+import { normalizeDateValue, parseDateValue, formatMonthYear } from '@/lib/utils';
 
 const papelEditorial = "#FDFCFB";
-const amareloVintage = "#E9C46A";
+const amareloVintage = "#E9C46A"; 
 const azulPetroleo = "#2C3E50";
 
 interface Resenha {
@@ -32,141 +34,38 @@ const MESES_PT: Record<string, number> = {
   julho: 7, agosto: 8, setembro: 9, outubro: 10, novembro: 11, dezembro: 12,
 };
 
-function extrairAnoMes(r: Resenha): { ano: number; mes: number } {
-  if (r.publishedAt) {
-    const partes = r.publishedAt.split('/');
-    if (partes.length === 2) {
-      const anoNum = parseInt(partes[1].trim(), 10);
-      const mesParte = partes[0].trim().toLowerCase();
-      const mesNum = MESES_PT[mesParte] ?? parseInt(mesParte, 10);
-      if (!isNaN(anoNum)) return { ano: anoNum, mes: isNaN(mesNum) ? 1 : mesNum };
+function normalizeMonthName(monthName: string): number | null {
+  const cleaned = monthName
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .trim()
+    .toLowerCase();
+
+  for (const [num, name] of Object.entries(MESES_PT)) {
+    const normalizedName = name
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
+    if (normalizedName === cleaned || normalizedName.startsWith(cleaned) || cleaned.startsWith(normalizedName)) {
+      return Number(num);
     }
-    const apenasAno = parseInt(r.publishedAt, 10);
-    if (!isNaN(apenasAno)) return { ano: apenasAno, mes: 1 };
   }
-  const d = new Date(r.createdAt);
-  return { ano: d.getFullYear(), mes: d.getMonth() + 1 };
+
+  const numeric = Number(cleaned);
+  return Number.isInteger(numeric) && numeric >= 1 && numeric <= 12 ? numeric : null;
+}
+
+function extrairAnoMes(r: Resenha): { ano: number; mes: number } {
+  const d = parseDateValue(r.publishedAt ?? null) ?? normalizeDateValue(r.createdAt)
+  return { ano: d.getFullYear(), mes: d.getMonth() + 1 }
 }
 
 function labelMes(r: Resenha): string {
-  if (r.publishedAt) {
-    const partes = r.publishedAt.split('/');
-    if (partes.length >= 1) return partes[0].trim();
-    return r.publishedAt;
-  }
-  return new Date(r.createdAt).toLocaleDateString('pt-BR', { month: 'long' });
+  const d = parseDateValue(r.publishedAt ?? null) ?? normalizeDateValue(r.createdAt)
+  return formatMonthYear(d)
 }
 
-function MiniChat({ resenhaId, tituloResenha }: { resenhaId: string; tituloResenha: string }) {
-  const [aberto, setAberto] = useState(false);
-  const [comentarios, setComentarios] = useState<Comentario[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [enviando, setEnviando] = useState(false);
-  const [nome, setNome] = useState('');
-  const [texto, setTexto] = useState('');
-
-  const carregar = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/comentarios?resenhaId=${resenhaId}`);
-      const data = await res.json();
-      setComentarios(Array.isArray(data) ? data : []);
-    } catch {}
-    finally { setLoading(false); }
-  };
-
-  useEffect(() => { if (aberto) carregar(); }, [aberto, resenhaId]);
-
-  const enviar = async () => {
-    if (!nome.trim() || !texto.trim()) return toast.error('Preencha seu nome e seu comentário.');
-    setEnviando(true);
-    try {
-      const res = await fetch('/api/comentarios', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resenhaId, autoraNome: nome.trim(), texto: texto.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) toast.error(data.error || 'Erro ao enviar.');
-      else { toast.success('Comentário publicado!'); setTexto(''); carregar(); }
-    } catch { toast.error('Erro de conexão.'); }
-    finally { setEnviando(false); }
-  };
-
-  return (
-    <div className="border-t border-black/5 pt-10 mt-10">
-      <button
-        onClick={() => setAberto(!aberto)}
-        className="flex items-center gap-4 w-full text-left group"
-      >
-        <div
-          className="w-9 h-9 rounded-full border border-black/10 flex items-center justify-center shrink-0 group-hover:border-black/20 transition-colors"
-          style={{ color: azulPetroleo }}
-        >
-          <MessageCircle size={14}/>
-        </div>
-        <div className="flex-1">
-          <p className="text-[9px] font-bold uppercase tracking-[0.5em] opacity-30 text-[#2C3E50] group-hover:opacity-50 transition-opacity">
-            {comentarios.length > 0 && !aberto ? `${comentarios.length} comentário${comentarios.length > 1 ? 's' : ''}` : 'Comentários'}
-          </p>
-          <p className="text-lg italic font-light text-[#2C3E50]/50 group-hover:text-[#2C3E50]/70 transition-colors leading-tight">
-            {aberto ? 'Fechar comentários' : 'Ver comentários das leitoras'}
-          </p>
-        </div>
-        <ChevronDown size={14} className={`opacity-20 group-hover:opacity-40 transition-all duration-300 ${aberto ? 'rotate-180' : ''}`}/>
-      </button>
-
-      {aberto && (
-        <div className="mt-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
-          {loading ? (
-            <div className="flex justify-center py-10"><Loader2 size={22} className="animate-spin opacity-20"/></div>
-          ) : comentarios.length === 0 ? (
-            <p className="text-center italic text-sm opacity-30 text-[#2C3E50] py-8">
-              Seja a primeira a comentar sobre <em>{tituloResenha}</em>.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {comentarios.map(c => (
-                <div key={c.id} className="bg-white/60 border border-black/5 rounded-3xl p-6 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: amareloVintage }}>{c.autoraNome}</span>
-                    <span className="text-[9px] opacity-30 text-[#2C3E50]">{new Date(c.createdAt).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                  <p className="text-sm italic leading-relaxed text-[#2C3E50]/70">"{c.texto}"</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="space-y-3 bg-white/40 rounded-3xl p-6 border border-black/5">
-            <input
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              placeholder="Seu nome"
-              className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-black/5 font-alice text-[#2C3E50]"
-            />
-            <textarea
-              value={texto}
-              onChange={e => setTexto(e.target.value)}
-              placeholder="Compartilhe sua opinião sobre esta resenha..."
-              rows={3}
-              className="w-full p-3 bg-white rounded-xl text-sm outline-none border border-black/5 resize-none font-alice text-[#2C3E50]"
-            />
-            <button
-              onClick={enviar}
-              disabled={enviando}
-              className="flex items-center gap-2 px-5 py-2.5 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl disabled:opacity-40 transition-opacity"
-              style={{ backgroundColor: azulPetroleo }}
-            >
-              {enviando ? <Loader2 size={12} className="animate-spin"/> : <Send size={12}/>}
-              Publicar Comentário
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+// use extracted ResenhaComments component instead
 
 export default function ResenhasPage() {
   const [resenhas, setResenhas] = useState<Resenha[]>([]);
@@ -180,6 +79,37 @@ export default function ResenhasPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  // Add BreadcrumbList JSON-LD to head after resenhas load (client-side)
+  useEffect(() => {
+    if (!resenhas || resenhas.length === 0) return;
+    try {
+      const siteUrl = (window as any).NEXT_PUBLIC_SITE_URL || window.location.origin;
+      const items = resenhas.slice(0, 20).map((r, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        name: r.title,
+        item: `${siteUrl}/resenhas/${r.id}`
+      }));
+
+      const json = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        'itemListElement': items
+      };
+
+      const scriptId = 'breadcrumb-jsonld';
+      let existing = document.getElementById(scriptId);
+      if (existing) existing.remove();
+      const s = document.createElement('script');
+      s.type = 'application/ld+json';
+      s.id = scriptId;
+      s.text = JSON.stringify(json);
+      document.head.appendChild(s);
+    } catch (err) {
+      console.error('Erro ao adicionar Breadcrumb JSON-LD', err);
+    }
+  }, [resenhas]);
 
   const toggleAberta = (id: string) =>
     setAbertas(prev => {
@@ -204,9 +134,10 @@ export default function ResenhasPage() {
   for (const ano of anos) {
     agrupado[ano].sort((a, b) => extrairAnoMes(b).mes - extrairAnoMes(a).mes);
     // Remover duplicatas por título
-    agrupado[ano] = agrupado[ano].filter((resenha, idx, arr) =>
-      arr.findIndex(r => r.book?.toLowerCase() === resenha.book?.toLowerCase()) === idx
-    );
+    agrupado[ano] = agrupado[ano].filter((resenha, idx, arr) => {
+      const key = String(resenha.book ?? '').toLowerCase();
+      return arr.findIndex(r => String(r.book ?? '').toLowerCase() === key) === idx;
+    });
   }
 
   return (
@@ -319,11 +250,15 @@ function ResenhaCard({ resenha: r, periodo, aberta, onToggle }: {
         
         <div className="space-y-4">
           <h2 className="text-4xl md:text-5xl text-[#2C3E50] tracking-tight group-hover:italic transition-all duration-500">
-            {r.title}
+            <Link href={`/resenhas/${r.id}#comentarios`} className="hover:underline">{r.title}</Link>
           </h2>
           {(r.book || r.author) && (
             <p className="text-lg italic opacity-50 text-black leading-relaxed">
-              {r.book && <span>{r.book}</span>}
+              {r.book && (
+                <Link href={`/livro-do-mes?q=${encodeURIComponent(String(r.book))}`} className="underline">
+                  {r.book}
+                </Link>
+              )}
               {r.book && r.author && <span> · </span>}
               {r.author && <span>por {r.author}</span>}
             </p>
@@ -349,25 +284,25 @@ function ResenhaCard({ resenha: r, periodo, aberta, onToggle }: {
           </button>
         )}
 
-        <MiniChat resenhaId={r.id} tituloResenha={r.title} />
+        <ResenhaComments resenhaId={r.id} tituloResenha={r.title} aberto={aberta} />
       </div>
 
       
       <div className="md:col-span-4 flex justify-end">
         {r.imageUrl ? (
           <div className="p-3 bg-white shadow-xl -rotate-2 group-hover:rotate-0 transition-all duration-700 border border-black/3 w-full max-w-70">
-            <div className="aspect-4/5 overflow-hidden relative transition-all duration-1000">
-              <img
-                src={r.imageUrl}
-                alt={r.book ?? r.title}
-                className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-1000"
-              />
+              <div className="aspect-4/5 overflow-hidden relative transition-all duration-1000">
+                <Link href={`/resenhas/${r.id}#comentarios`} className="w-full h-full p-0 m-0 block">
+                  <img
+                    src={r.imageUrl}
+                    alt={r.book ?? r.title}
+                    className="w-full h-full object-cover scale-110 group-hover:scale-100 transition-transform duration-1000"
+                  />
+                </Link>
             </div>
             <div className="mt-3 py-2 border-t border-black/5">
               <span className="text-[8px] font-bold uppercase tracking-[0.3em] opacity-30 block text-center italic">
-                {/* Legenda mais escura para melhor leitura */}
                 <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-black block text-center italic">
-                  {/* Legenda com cinza escuro para melhor leitura */}
                   <span className="text-[8px] font-bold uppercase tracking-[0.3em] text-[#222] block text-center italic">
                     {r.author ?? ''}
                   </span>
@@ -402,6 +337,9 @@ function ResenhaCardCompacto({ resenha: r, periodo }: { resenha: Resenha; period
           )}
         </div>
         <h4 className="text-3xl text-[#2C3E50] tracking-tight group-hover:italic transition-all duration-500">{r.title}</h4>
+        <div className="mt-1">
+          <Link href={`/resenhas/${r.id}#comentarios`} className="text-sm underline opacity-60">Abrir na página de comentários</Link>
+        </div>
         {(r.book || r.author) && (
           <p className="text-base italic opacity-40 text-black">{r.book}{r.author ? ` · por ${r.author}` : ''}</p>
         )}
@@ -412,7 +350,7 @@ function ResenhaCardCompacto({ resenha: r, periodo }: { resenha: Resenha; period
             </p>
           </div>
         )}
-        <MiniChat resenhaId={r.id} tituloResenha={r.title} />
+        <ResenhaComments resenhaId={r.id} tituloResenha={r.title} aberto={false} />
       </div>
 
       

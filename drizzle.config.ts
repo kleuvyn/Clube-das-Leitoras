@@ -1,11 +1,11 @@
 import { defineConfig } from 'drizzle-kit';
-import path from 'path';
 
 export default defineConfig({
-  schema: path.resolve(__dirname, 'lib/db/schema.ts'),
+  schema: './lib/db/schema.ts',
   out: './drizzle',
-  dialect: 'postgresql',
+  dialect: 'turso',
   dbCredentials: {
     url: process.env.DATABASE_URL!,
+    authToken: process.env.DATABASE_AUTH_TOKEN!,
   },
 });
