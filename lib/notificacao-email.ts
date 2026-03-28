@@ -3,7 +3,7 @@ import { colaboradoras } from './db/schema';
 import { eq, and } from 'drizzle-orm';
 
 function getFromAddress() {
-  const fromEnv = process.env.RESEND_FROM?.trim();
+  const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
   if (fromEnv) {
     const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
     if (m) {
@@ -210,9 +210,13 @@ export async function notificarLeitoras(params: {
   tituloConteudo: string;
   descricaoConteudo?: string;
 }) {
-  if (!process.env.RESEND_API_KEY) return;
-
   const { secao, tituloConteudo, descricaoConteudo = '' } = params;
+  // Envia notificações em massa usando o cliente central (`lib/email-client`) — prefere BREVO
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    console.warn('[notificacao] BREVO_API_KEY não configurada. Notificações em massa não serão enviadas.');
+    return;
+  }
   const cfg = CONFIG[secao];
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
   const urlDestino = `${siteUrl}${cfg.path}`;
@@ -224,9 +228,6 @@ export async function notificarLeitoras(params: {
       .where(and(eq(colaboradoras.active, true)));
 
     if (!leitoras.length) return;
-
-    const { Resend } = await import('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const effectiveFrom = getFromAddress();
     const emails = leitoras.map((l) => ({
@@ -245,9 +246,10 @@ export async function notificarLeitoras(params: {
       }),
     }));
 
-    // Envia em lotes de 100 (limite Resend)
+    // Envia em lotes via o cliente central (Brevo)
+    const { sendBatch } = await import('@/lib/email-client');
     for (let i = 0; i < emails.length; i += 100) {
-      await resend.batch.send(emails.slice(i, i + 100));
+      await sendBatch(emails.slice(i, i + 100));
     }
 
     console.log(`[notificacao] ${emails.length} emails enviados — seção: ${secao}`);

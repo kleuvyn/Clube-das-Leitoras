@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
 
 function getFromAddress() {
-  const fromEnv = process.env.RESEND_FROM?.trim();
+  const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
   if (fromEnv) {
     const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
     if (m) {
@@ -16,7 +16,7 @@ function getFromAddress() {
       return `${name} <${email}>`;
     }
   }
-  console.warn('[colaboradores/approve] RESEND_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
+  console.warn('[colaboradores/approve] BREVO_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
   return 'Clube das Leitoras <onboarding@resend.dev>';
 }
 
@@ -55,18 +55,18 @@ export async function POST(request: Request) {
     }).where(eq(colaboradoras.id, id));
 
     const emailStatus = { sent: false, error: null };
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('RESEND_API_KEY não configurada. E-mails não serão enviados.');
+    const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn('BREVO_API_KEY não configurada. E-mails não serão enviados.');
     }
 
-    if (process.env.RESEND_API_KEY) {
+    if (apiKey) {
       try {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const { sendEmail } = await import('@/lib/email-client');
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
 
         const effectiveFrom = getFromAddress();
-        await resend.emails.send({
+        await sendEmail({
           from: effectiveFrom,
           to: user.email,
           subject: 'Seja bem-vinda ao Clube das Leitoras',

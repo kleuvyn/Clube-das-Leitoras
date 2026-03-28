@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
 
 function getFromAddress() {
-  const fromEnv = process.env.RESEND_FROM?.trim();
+  const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
   if (fromEnv) {
     const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
     if (m) {
@@ -63,15 +63,15 @@ export async function POST(req: Request) {
       mustChangePassword: true,
     });
 
-    // Tentar enviar e-mail via Resend (se configurado)
+    // Tentar enviar e-mail via Brevo (se configurado)
     let emailError: any = null;
-    if (process.env.RESEND_API_KEY) {
+    const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
+    if (apiKey) {
       try {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const { sendEmail } = await import('@/lib/email-client');
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
         const effectiveFrom = getFromAddress();
-        const result = await resend.emails.send({
+        await sendEmail({
           from: effectiveFrom,
           to: email,
           subject: '💜 Seu acesso ao Clube das Leitoras chegou!',
@@ -82,17 +82,16 @@ export async function POST(req: Request) {
             siteUrl,
           }),
         });
-        emailError = result.error;
       } catch (e) {
         console.error('Erro ao enviar e-mail:', e);
         emailError = e;
       }
     } else {
-      emailError = 'RESEND_API_KEY não configurada';
+      emailError = 'BREVO_API_KEY não configurada';
     }
 
     if (emailError) {
-      console.error('Resend error:', emailError);
+      console.error('E-mail error:', emailError);
       return NextResponse.json(
         { success: true, message: 'Acesso criado, mas o e-mail não pôde ser enviado.', tempPassword, emailError: String(emailError) },
         { status: 201 }

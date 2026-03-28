@@ -255,7 +255,7 @@ export default function CalendarioJornal() {
 
                 <div className="space-y-8 pt-4 border-t border-black/5">
                   <Quote style={{ color: marromPapel }} size={32} className="opacity-20" />
-                  <p className="text-2xl italic leading-relaxed opacity-60 text-black">
+                  <p className="text-lg md:text-xl italic leading-relaxed opacity-80 text-black text-justify font-serif tracking-tight max-w-3xl">
                     &ldquo;{ativo.sinopse}&rdquo;
                   </p>
                   <div className="pt-8">

@@ -153,7 +153,7 @@ export default function HomeJornalClubeLeitoras() {
                       </span>
                   </h2>
                   
-                  <p className="text-2xl italic leading-relaxed opacity-70 text-black">
+                  <p className="text-base md:text-lg italic leading-relaxed opacity-80 text-black text-justify font-serif tracking-tight max-w-3xl">
                     De {livroDoMes.autor}. {livroDoMes.descricao_curta}
                   </p>
                   <a href="/livro-do-mes" className="flex items-center gap-6 font-bold text-xs uppercase tracking-widest text-[#B04D4A] hover:gap-8 transition-all">

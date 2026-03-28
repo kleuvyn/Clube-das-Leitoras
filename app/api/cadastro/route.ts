@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com';
 
 function getFromAddress() {
-  const fromEnv = process.env.RESEND_FROM?.trim();
+  const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
   if (fromEnv) {
     const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
     if (m) {
@@ -16,7 +16,7 @@ function getFromAddress() {
       return `${name} <${email}>`;
     }
   }
-  console.warn('[cadastro] RESEND_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
+  console.warn('[cadastro] BREVO_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
   return 'Clube das Leitoras <onboarding@resend.dev>';
 }
 
@@ -56,22 +56,31 @@ export async function POST(request: Request) {
       status: 'pendente',
     });
 
-    const emailStatus: { user: boolean; admin: boolean; hasKey: boolean; errors: string[] } = { user: false, admin: false, hasKey: !!process.env.RESEND_API_KEY, errors: [] };
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('RESEND_API_KEY não configurada. E-mails não serão enviados.');
-      emailStatus.errors.push('RESEND_API_KEY não configurada');
+    const emailStatus: { user: boolean; admin: boolean; hasKey: boolean; errors: string[] } = { user: false, admin: false, hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY), errors: [] };
+    const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn('BREVO_API_KEY não configurada. E-mails não serão enviados.');
+      emailStatus.errors.push('BREVO_API_KEY não configurada');
     } else {
-      const { Resend } = await import('resend');
-      const resend = new Resend(process.env.RESEND_API_KEY);
+      const { sendEmail } = await import('@/lib/email-client');
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br';
       const effectiveFrom = getFromAddress();
-      console.log('[cadastro] Resend FROM:', effectiveFrom, 'admin:', ADMIN_EMAIL, 'usuario:', email);
+      const requestDate = new Date().toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+      console.log('[cadastro] Brevo FROM:', effectiveFrom, 'admin:', ADMIN_EMAIL, 'usuario:', email);
 
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: effectiveFrom,
           to: email,
-            subject: 'Solicitação de acesso recebida: Clube das Leitoras',
+          subject: 'Solicitação de acesso recebida: Clube das Leitoras',
           html: (await import('@/lib/email-templates')).cartaInscricaoEmAnalise({
             nome: name,
             tipo: 'leitora',
@@ -86,14 +95,14 @@ export async function POST(request: Request) {
         const errorMessage = (e && e instanceof Error ? e.message : String(e));
         console.error('[cadastro] Erro ao enviar e-mail para leitora:', e);
         if (e?.status === 403 || /403/.test(errorMessage)) {
-          emailStatus.errors.push('user:403 - Resend não autorizado para remetente/destinatário. Verifique domínio/envelope e token.');
+          emailStatus.errors.push('user:403 - Brevo não autorizado para remetente/destinatário. Verifique domínio/envelope e token.');
         } else {
           emailStatus.errors.push(`user:${errorMessage}`);
         }
       }
 
       try {
-        await resend.emails.send({
+        await sendEmail({
           from: getFromAddress(),
           to: ADMIN_EMAIL,
           subject: 'Nova Solicitação de Leitora',

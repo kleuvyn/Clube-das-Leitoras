@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 
 // Se possível use o remetente já configurado na conta Resend (mesmo que já esteja validado no DNS)
 function getFromAddress() {
-  const fromEnv = process.env.RESEND_FROM?.trim();
+  const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
   if (fromEnv) {
     const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
     if (m) {
@@ -16,7 +16,7 @@ function getFromAddress() {
       return `${name} <${email}>`;
     }
   }
-  console.warn('[solicitacoes] RESEND_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
+  console.warn('[solicitacoes] BREVO_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
   return 'Clube das Leitoras <onboarding@resend.dev>';
 }
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com'; 
@@ -136,17 +136,17 @@ export async function POST(request: Request) {
     const emailStatus: { admin: boolean; user: boolean; hasKey: boolean; errors: string[] } = {
       admin: false,
       user: false,
-      hasKey: !!process.env.RESEND_API_KEY,
+      hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY),
       errors: [],
     };
 
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('[solicitacoes] RESEND_API_KEY não configurada. E-mails não serão enviados.');
-      emailStatus.errors.push('RESEND_API_KEY não configurada');
+    const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      console.warn('[solicitacoes] BREVO_API_KEY não configurada. E-mails não serão enviados.');
+      emailStatus.errors.push('BREVO_API_KEY não configurada');
     } else {
       try {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const { sendEmail } = await import('@/lib/email-client');
 
         const instagramHtml = body.instagram ? `<p><strong>Instagram:</strong> ${body.instagram}</p>` : '';
         const siteHtml = body.site ? `<p><strong>Site / Blog:</strong> ${body.site}</p>` : '';
@@ -197,7 +197,7 @@ export async function POST(request: Request) {
             `;
 
         const effectiveFrom = getFromAddress();
-        console.log('[solicitacoes] Resend FROM:', effectiveFrom, 'admin:', ADMIN_EMAIL, 'user:', email);
+        console.log('[solicitacoes] Brevo FROM:', effectiveFrom, 'admin:', ADMIN_EMAIL, 'user:', email);
 
         const detalhesHtml = `
               <p><strong>Data do pedido:</strong> ${requestDate}</p>
@@ -209,8 +209,7 @@ export async function POST(request: Request) {
               ${body.capaUrl ? `<div style="margin-top:12px"><p><strong>Visualização da capa:</strong></p><img src="${body.capaUrl}" alt="Capa do livro" style="max-width:360px;max-height:480px;display:block;border:1px solid #ddd;border-radius:8px;" /></div>` : ''}
               <p><strong>Observações:</strong> ${mensagemExtra || 'Sem mensagem'}</p>
             `;
-
-        await resend.emails.send({
+        await sendEmail({
           from: effectiveFrom,
           to: ADMIN_EMAIL,
           subject: `✨ Nova Solicitação: ${nome} (${tipo})`,
@@ -228,7 +227,7 @@ export async function POST(request: Request) {
         const userEmail = rawEmail && rawEmail !== 'nao-informado@clube.com' ? rawEmail : null;
         if (userEmail) {
           try {
-            await resend.emails.send({
+            await sendEmail({
               from: getFromAddress(),
               to: userEmail,
               subject: 'Sua inscrição está em análise - Clube das Leitoras',
@@ -271,14 +270,14 @@ export async function PATCH(request: Request) {
 
     await db.update(solicitacoes).set({ status }).where(eq(solicitacoes.id, id));
 
-    const emailStatus: { adminAction: boolean; user: boolean; hasKey: boolean; errors: string[] } = { adminAction: true, user: false, hasKey: !!process.env.RESEND_API_KEY, errors: [] };
+    const emailStatus: { adminAction: boolean; user: boolean; hasKey: boolean; errors: string[] } = { adminAction: true, user: false, hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY), errors: [] };
     if (status === 'aprovada') {
-      if (!process.env.RESEND_API_KEY) {
-        console.warn('RESEND_API_KEY não configurada. E-mail de aprovação não será enviado.');
-        emailStatus.errors.push('RESEND_API_KEY não configurada');
+      const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
+      if (!apiKey) {
+        console.warn('BREVO_API_KEY não configurada. E-mail de aprovação não será enviado.');
+        emailStatus.errors.push('BREVO_API_KEY não configurada');
       } else {
-        const { Resend } = await import('resend');
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const { sendEmail } = await import('@/lib/email-client');
 
         if (solicitacao.tipo === 'leitora') {
           try {
@@ -301,7 +300,7 @@ export async function PATCH(request: Request) {
               });
             }
 
-            await resend.emails.send({
+            await sendEmail({
               from: getFromAddress(),
               to: solicitacao.email,
               subject: 'Seja bem-vinda ao Clube das Leitoras',
@@ -318,14 +317,14 @@ export async function PATCH(request: Request) {
             const errorMessage = err && err instanceof Error ? err.message : String(err);
             console.error('❌ Erro ao criar conta de leitora ou enviar e-mail:', err);
             if (err?.status === 403 || /403/.test(errorMessage)) {
-              emailStatus.errors.push('user:403 - Resend não autorizado. Verifique remitente/destinatário e token.');
+              emailStatus.errors.push('user:403 - Brevo não autorizado. Verifique remitente/destinatário e token.');
             } else {
               emailStatus.errors.push(errorMessage);
             }
           }
         } else {
           try {
-            await resend.emails.send({
+            await sendEmail({
               from: getFromAddress(),
               to: solicitacao.email,
               subject: 'Sua solicitação foi aprovada – Clube das Leitoras',
@@ -341,7 +340,7 @@ export async function PATCH(request: Request) {
             const errorMessage = err && err instanceof Error ? err.message : String(err);
             console.error('❌ Erro ao enviar e-mail de aprovação para solicitante:', err);
             if (err?.status === 403 || /403/.test(errorMessage)) {
-              emailStatus.errors.push('user:403 - Resend não autorizado. Verifique remitente/destinatário e token.');
+              emailStatus.errors.push('user:403 - Brevo não autorizado. Verifique remitente/destinatário e token.');
             } else {
               emailStatus.errors.push(errorMessage);
             }
