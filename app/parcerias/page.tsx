@@ -24,13 +24,25 @@ export default function PaginaParceriasDNA() {
 
   const [parceriaModalOpen, setParceriaModalOpen] = useState(false);
   const [parceriaNome, setParceriaNome] = useState(''); // Nova Aliança
-  const [parceriaSelo, setParceriaSelo] = useState(''); // URL da imagem após upload
-  const [parceriaArquivo, setParceriaArquivo] = useState<File | null>(null);
+  const [parceriaTelefone, setParceriaTelefone] = useState('');
+  const [parceriaEmail, setParceriaEmail] = useState('');
+  const [parceriaSite, setParceriaSite] = useState('');
   const [parceriaEditora, setParceriaEditora] = useState('');
   const [parceriaDescricao, setParceriaDescricao] = useState('');
   const [parceriaLink, setParceriaLink] = useState(''); // Link / Instagram
   const [parceriaEnviando, setParceriaEnviando] = useState(false);
   const [parceriaEnviado, setParceriaEnviado] = useState(false);
+
+  useEffect(() => {
+    if (parceriaModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [parceriaModalOpen]);
 
   useEffect(() => {
     async function carregarAliados() {
@@ -197,38 +209,23 @@ export default function PaginaParceriasDNA() {
                       <div className="grid grid-cols-1 gap-6">
                         <div className="space-y-4">
                         <div className="group space-y-1">
-                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Nova Aliança</label>
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Nome</label>
                           <input value={parceriaNome} onChange={e => setParceriaNome(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#B04D4A] outline-none transition-colors text-sm" />
                         </div>
 
                         <div className="group space-y-1">
-                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Selo / Logo da Parceria</label>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={async (e) => {
-                              const file = e.target.files?.[0] || null;
-                              setParceriaArquivo(file);
-                              if (!file) {
-                                setParceriaSelo('');
-                                return;
-                              }
-                              try {
-                                const url = await uploadFile(file);
-                                setParceriaSelo(url);
-                                toast.success('Logo carregado com sucesso!');
-                              } catch (err) {
-                                setParceriaSelo('');
-                                toast.error('Falha no upload da imagem. Use JPG/PNG/WebP até 2MB.');
-                              }
-                            }}
-                            className="w-full text-sm"
-                          />
-                          {parceriaSelo && (
-                            <div className="mt-2">
-                              <img src={parceriaSelo} alt="Preview do selo" className="max-h-20 rounded-xl border border-black/10" />
-                            </div>
-                          )}
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Telefone</label>
+                          <input value={parceriaTelefone} onChange={e => setParceriaTelefone(e.target.value)} placeholder="(61) 9xxxx-xxxx" className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#B04D4A] outline-none transition-colors text-sm" />
+                        </div>
+
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">E-mail</label>
+                          <input value={parceriaEmail} onChange={e => setParceriaEmail(e.target.value)} placeholder="nome@seuevento.com" className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#B04D4A] outline-none transition-colors text-sm" />
+                        </div>
+
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Site</label>
+                          <input value={parceriaSite} onChange={e => setParceriaSite(e.target.value)} placeholder="https://..." className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#B04D4A] outline-none transition-colors text-sm" />
                         </div>
 
                         <div className="group space-y-1">
@@ -250,7 +247,7 @@ export default function PaginaParceriasDNA() {
 
                       <button
                         onClick={async () => {
-                          if (!parceriaNome || !parceriaSelo || !parceriaEditora || !parceriaDescricao || !parceriaLink) {
+                          if (!parceriaNome || !parceriaTelefone || !parceriaEmail || !parceriaSite || !parceriaEditora || !parceriaDescricao || !parceriaLink) {
                             toast.error('Preencha todos os campos obrigatórios.');
                             return;
                           }
@@ -262,18 +259,22 @@ export default function PaginaParceriasDNA() {
                               body: JSON.stringify({
                                 tipo: 'parceria',
                                 nome: parceriaNome,
-                                email: 'nao-informado@clube.com',
-                                telefone: 'não informado',
-                                instagram: parceriaLink,
-                                mensagem: `Selo/Logo: ${parceriaSelo}\nNome da Editora: ${parceriaEditora}\nDescrição: ${parceriaDescricao}\nLink/Instagram: ${parceriaLink}`,
+                                email: parceriaEmail || 'nao-informado@clube.com',
+                                telefone: parceriaTelefone,
+                                site: parceriaSite,
+                                editora: parceriaEditora,
+                                descricao: parceriaDescricao,
+                                linkInstagram: parceriaLink,
+                                mensagem: `${parceriaDescricao}`,
                               }),
                             });
                             if (!response.ok) throw new Error();
                             setParceriaEnviado(true);
                             toast.success('Cadastro de parceria enviado!');
                             setParceriaNome('');
-                            setParceriaSelo('');
-                            setParceriaArquivo(null);
+                            setParceriaTelefone('');
+                            setParceriaEmail('');
+                            setParceriaSite('');
                             setParceriaEditora('');
                             setParceriaDescricao('');
                             setParceriaLink('');

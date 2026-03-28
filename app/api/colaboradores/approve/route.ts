@@ -6,7 +6,7 @@ import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
 
-const FROM = 'Clube das Leitoras <no-reply@clubedasleitoras.com.br>';
+const FROM = 'Clube das Leitoras <onboarding@resend.dev>';
 
 function gerarSenhaTemporaria(): string {
   const palavras = ['livro', 'flor', 'cafe', 'rosa', 'lua', 'sol', 'brisa', 'afeto', 'laca', 'petal'];
@@ -42,6 +42,11 @@ export async function POST(request: Request) {
       mustChangePassword: true,
     }).where(eq(colaboradoras.id, id));
 
+    const emailStatus = { sent: false, error: null };
+    if (!process.env.RESEND_API_KEY) {
+      console.warn('RESEND_API_KEY não configurada. E-mails não serão enviados.');
+    }
+
     if (process.env.RESEND_API_KEY) {
       try {
         const { Resend } = await import('resend');
@@ -51,23 +56,27 @@ export async function POST(request: Request) {
         await resend.emails.send({
           from: FROM,
           to: user.email,
-          subject: '🎉 Cadastro aprovado no Clube das Leitoras',
+          subject: 'Seja bem-vinda ao Clube das Leitoras',
           html: `
             <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #2C3E50;">
-              <p>Olá <strong>${user.name ?? user.email}</strong>,</p>
-              <p>Seu cadastro foi aprovado! Agora você tem acesso à comunidade literária.</p>
+              <p>Seja bem-vinda, <strong>${user.name ?? user.email}</strong>!</p>
+              <p>É uma alegria ter você conosco. Sua solicitação foi aprovada pela curadoria.</p>
+              <h3>Seu Acesso:</h3>
               <p><strong>E-mail:</strong> ${user.email}</p>
-              <p><strong>Senha temporária:</strong> <code>${tempPassword}</code></p>
-              <p>Entre e altere sua senha em <a href="${siteUrl}/nova-senha">/nova-senha</a>.</p>
+              <p><strong>Senha Temporária:</strong> <code>${tempPassword}</code></p>
+              <p>Acesse o clube e altere sua senha em <a href="${siteUrl}/nova-senha">/nova-senha</a>.</p>
+              <p>Se tiver dúvidas, estamos aqui para ajudar.</p>
             </div>
           `,
         });
+        emailStatus.sent = true;
       } catch (e) {
         console.error('Erro ao enviar e-mail de aprovação:', e);
+        emailStatus.error = e instanceof Error ? e.message : String(e);
       }
     }
 
-    return NextResponse.json({ success: true, message: 'Leitora aprovada e e-mail enviado.' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'Leitora aprovada.', emailStatus }, { status: 200 });
   } catch (error) {
     console.error('Erro ao aprovar leitora:', error);
     return NextResponse.json({ error: 'Erro ao aprovar leitora.' }, { status: 500 });

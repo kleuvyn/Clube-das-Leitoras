@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { analyzeContentModeration } from '@/lib/content-moderation';
 import { useAdmin } from '@/lib/admin-context';
+import { normalizeDateValue } from '@/lib/utils';
 
 const azulLogo = "var(--page-color)";
 
@@ -357,7 +358,7 @@ export default function ResenhasAdmin() {
                   <div className="px-6 pb-8 pt-2 border-t border-slate-50 animate-in fade-in slide-in-from-top-2 duration-300">
                     <p className="text-sm text-slate-600 leading-relaxed italic whitespace-pre-wrap">{r.content}</p>
                     <p className="text-[9px] text-slate-300 uppercase tracking-widest mt-6">
-                      Publicado em {new Date(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      Publicado em {normalizeDateValue(r.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </p>
                   </div>
                 )}
@@ -423,7 +424,7 @@ export default function ResenhasAdmin() {
                               <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span className="text-[10px] font-black text-slate-600 uppercase">{c.autoraNome}</span>
                                 <ModerationBadge texto={c.texto} nome={c.autoraNome} />
-                                <span className="text-[9px] text-slate-300 ml-auto">{new Date(c.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                                <span className="text-[9px] text-slate-300 ml-auto">{normalizeDateValue(c.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                               </div>
                               <p className="text-[11px] italic text-slate-600 leading-relaxed">"{c.texto}"</p>
                             </div>

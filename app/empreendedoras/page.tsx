@@ -42,6 +42,8 @@ export default function VitrineEmpreendedoras() {
   const [modalOpen, setModalOpen] = useState(false);
   const [solNegocio, setSolNegocio] = useState('');
   const [solEmpreendedora, setSolEmpreendedora] = useState('');
+  const [solEmail, setSolEmail] = useState('');
+  const [solTelefone, setSolTelefone] = useState('');
   const [solInstagram, setSolInstagram] = useState('');
   const [solCategoria, setSolCategoria] = useState('');
   const [solFrase, setSolFrase] = useState('');
@@ -69,10 +71,20 @@ export default function VitrineEmpreendedoras() {
   );
 
   const enviarSolicitacao = async () => {
-    if (!solEmpreendedora || !solNegocio) {
-      alert('Informe o nome da empreendedora e do negócio.');
+    const empreendedoraVal = solEmpreendedora.trim();
+    const negocioVal = solNegocio.trim();
+    const emailVal = solEmail.trim();
+    const telefoneVal = solTelefone.trim();
+    const instagramVal = solInstagram.trim();
+    const categoriaVal = solCategoria.trim();
+    const fraseVal = solFrase.trim();
+    const detalhesVal = solMensagem.trim();
+
+    if (!empreendedoraVal || !negocioVal || !emailVal || !telefoneVal || !instagramVal || !categoriaVal || !fraseVal || !detalhesVal) {
+      alert('Por favor preencha todos os campos: Empreendedora, Nome do Negócio, E-mail, Telefone, Instagram, Categoria, A Essência e O que você cria.');
       return;
     }
+
     setSolEnviando(true);
     try {
       const res = await fetch('/api/solicitacoes', {
@@ -80,16 +92,19 @@ export default function VitrineEmpreendedoras() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tipo: 'empreendedora',
-          nome: solNegocio,
-          responsavel: solEmpreendedora,
-          instagram: solInstagram,
-          categoria: solCategoria,
-          mensagem: `Frase: ${solFrase}\nProposta: ${solMensagem}`,
+          nome: negocioVal,
+          email: emailVal,
+          telefone: telefoneVal,
+          responsavel: empreendedoraVal,
+          instagram: instagramVal,
+          categoria: categoriaVal,
+          frase: fraseVal,
+          mensagem: detalhesVal,
         }),
       });
       if (!res.ok) throw new Error('Falha ao enviar');
       setSolEnviado(true);
-      setSolNegocio(''); setSolEmpreendedora(''); setSolInstagram(''); setSolMensagem(''); setSolCategoria(''); setSolFrase('');
+      setSolNegocio(''); setSolEmpreendedora(''); setSolEmail(''); setSolInstagram(''); setSolMensagem(''); setSolCategoria(''); setSolFrase('');
       setTimeout(() => { setSolEnviado(false); setModalOpen(false); }, 3500);
     } catch (err) {
       alert('Erro ao enviar solicitação.');
@@ -222,15 +237,15 @@ export default function VitrineEmpreendedoras() {
 
       {/* MODAL REFINADO DNA CLUB */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-2">
           <div className="absolute inset-0 bg-[#2C3E50]/40 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
           
-          <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-            <button onClick={() => setModalOpen(false)} className="absolute right-8 top-8 p-2 hover:bg-black/5 rounded-full transition-colors z-20">
+          <div className="relative w-full max-w-3xl bg-[#FDFCFB] rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
+            <button onClick={() => setModalOpen(false)} className="absolute right-6 top-6 p-2 hover:bg-black/5 rounded-full transition-colors z-20">
               <X size={20} className="opacity-30" />
             </button>
 
-            <div className="grid md:grid-cols-5 h-full max-h-[90vh]">
+            <div className="grid md:grid-cols-5 h-full max-h-[84vh]">
               {/* Coluna Lateral */}
               <div className="hidden md:flex md:col-span-2 bg-[#967BB6]/5 p-12 flex-col justify-between border-r border-black/5">
                 <div className="space-y-8">
@@ -293,14 +308,44 @@ export default function VitrineEmpreendedoras() {
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="group space-y-1">
-                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">Instagram (@)</label>
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">E-mail</label>
                           <input 
-                            type="text" 
-                            value={solInstagram} 
-                            onChange={e => setSolInstagram(e.target.value)} 
+                            type="email" 
+                            value={solEmail} 
+                            onChange={e => setSolEmail(e.target.value)} 
+                            placeholder="nome@exemplo.com"
                             className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors text-sm" 
                           />
                         </div>
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">WhatsApp/Telefone</label>
+                          <input 
+                            type="text" 
+                            value={solTelefone} 
+                            onChange={e => setSolTelefone(e.target.value)} 
+                            placeholder="(61) 9xxxx-xxxx"
+                            className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors text-sm" 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">Instagram (@)</label>
+                          <input
+                            type="text"
+                            value={solInstagram}
+                            onChange={e => setSolInstagram(e.target.value)}
+                            placeholder="@seuperfil"
+                            className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#967BB6] outline-none transition-colors text-sm"
+                          />
+                        </div>
+                        <div className="flex items-end">
+                          <span className="text-xs text-slate-500 italic">Opcional, mas importante para nossa vitrine.</span>
+                        </div>
+                      </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div className="group space-y-1">
                           <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">Categoria</label>
                           <select 

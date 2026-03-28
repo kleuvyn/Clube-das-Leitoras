@@ -28,7 +28,6 @@ export async function GET() {
         createdAt: colaboradoras.createdAt,
       })
       .from(colaboradoras)
-      .where(eq(colaboradoras.active, true))
       .orderBy(desc(colaboradoras.createdAt));
     
     return NextResponse.json(allLeitoras, { status: 200 });
@@ -95,17 +94,31 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, role, active, imageUrl } = body;
+    const { id, name, role, active, status, imageUrl } = body;
     
     if (!id) return NextResponse.json({ error: 'ID da leitora é necessário' }, { status: 400 });
 
     const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.id, id));
     if (!user) return NextResponse.json({ error: 'Usuária não encontrada' }, { status: 404 });
 
+    let newStatus = user.status;
+    let newActive = user.active;
+    if (typeof status === 'string') {
+      const normalized = status.toLowerCase();
+      if (['ativa', 'bloqueada', 'excluida'].includes(normalized)) {
+        newStatus = normalized;
+        newActive = normalized === 'ativa';
+      }
+    } else if (typeof active === 'boolean') {
+      newActive = active;
+      newStatus = active ? 'ativa' : user.status === 'excluida' ? 'excluida' : 'bloqueada';
+    }
+
     await db.update(colaboradoras).set({
       name: name ?? user.name,
       role: role ?? user.role,
-      active: typeof active === 'boolean' ? active : user.active,
+      active: newActive,
+      status: newStatus,
       avatarUrl: imageUrl ?? user.avatarUrl,
     }).where(eq(colaboradoras.id, id));
 

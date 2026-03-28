@@ -8,6 +8,7 @@ import {
   ArrowRight, Music, Heart
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { normalizeDateValue } from '@/lib/utils';
 
 const vermelhoTerracota = "#8b2f2f";
 const marromTerra = "#4A3F35";
@@ -86,7 +87,7 @@ function SecaoReflexoes({ leituraId, temaNome }: { leituraId: string; temaNome: 
             <div key={r.id} className="bg-white/60 rounded-2xl p-5 space-y-2 border border-black/5">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: vermelhoTerracota }}>{r.autoraNome}</span>
-                <span className="text-[9px] opacity-30">{new Date(r.createdAt).toLocaleDateString('pt-BR')}</span>
+                <span className="text-[9px] opacity-30">{normalizeDateValue(r.createdAt).toLocaleDateString('pt-BR')}</span>
               </div>
               <p className="text-sm italic leading-relaxed opacity-70" style={{ color: marromTerra }}>"{r.texto}"</p>
             </div>

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { analyzeContentModeration } from '@/lib/content-moderation';
 import { uploadFile } from '@/lib/upload-client';
+import { normalizeDateValue } from '@/lib/utils';
 import { useAdmin } from '@/lib/admin-context';
 
 const vermelhoTerracota = "var(--page-color)";
@@ -496,7 +497,7 @@ export default function LeituraAtivaAdmin() {
                       </button>
                     </div>
                     <p className="text-[11px] italic text-slate-600 leading-relaxed font-medium">"{ref.texto}"</p>
-                    <span className="text-[9px] text-slate-300">{new Date(ref.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <span className="text-[9px] text-slate-300">{normalizeDateValue(ref.createdAt).toLocaleDateString('pt-BR')}</span>
                   </div>
                 ))}
               </div>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Send, MessageCircle, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { normalizeDateValue } from '@/lib/utils';
 
 const verdeMusgo = "#4F5D4B";
 
@@ -119,7 +120,7 @@ export function BatePapo({ livroDoMesId, livroNome }: BatePapoProps) {
                       {c.autoraNome}
                     </span>
                     <span className="text-[9px] opacity-20 text-black">
-                      {new Date(c.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                      {normalizeDateValue(c.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
                     </span>
                   </div>
                   <p className="text-base italic leading-relaxed opacity-60 text-black">{c.texto}</p>

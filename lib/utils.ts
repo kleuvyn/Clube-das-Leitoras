@@ -90,9 +90,30 @@ export function parseDateValue(value: string | number | Date | null | undefined)
   return null
 }
 
+function normalizeDateObject(date: Date): Date {
+  if (!Number.isFinite(date.getTime())) return date
+
+  // Corrige datas absurdas geradas por conversão de epoch em segundos/milliseconds
+  if (date.getFullYear() > 2100 || date.getFullYear() < 1900) {
+    const candidates = [
+      new Date(Math.round(date.valueOf() / 1000)),
+      new Date(Math.round(date.valueOf() / 1000000)),
+      new Date(Math.round(date.valueOf() / 1000000000)),
+    ]
+    for (const candidate of candidates) {
+      if (candidate.getFullYear() >= 1900 && candidate.getFullYear() <= 2100) {
+        return candidate
+      }
+    }
+  }
+
+  return date
+}
+
 export function normalizeDateValue(value: string | number | Date | null | undefined): Date {
   const parsed = parseDateValue(value)
-  return parsed || new Date()
+  if (!parsed) return new Date()
+  return normalizeDateObject(parsed)
 }
 
 export function formatMonthYear(date: Date): string {

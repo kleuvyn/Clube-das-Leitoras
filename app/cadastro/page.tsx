@@ -46,7 +46,16 @@ export default function CadastroLeitoraPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erro ao cadastrar.');
 
-      toast.success('Inscrição enviada com carinho!');
+      if (data?.emailStatus?.user === false) {
+        toast.error('Cadastro recebido, mas falha ao enviar e-mail de confirmação. Verifique seu e-mail e tente novamente.');
+      } else {
+        toast.success('Inscrição enviada com carinho! Verifique seu e-mail para confirmação.');
+      }
+
+      if (data?.emailStatus?.hasKey === false) {
+        toast.warn('A API de e-mail não está configurada. Contate a equipe técnica.');
+      }
+
       router.push('/login');
     } catch (err: any) {
       toast.error(err.message ?? 'Não foi possível enviar o cadastro.');

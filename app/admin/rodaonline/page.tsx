@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAdmin } from '@/lib/admin-context';
 import { uploadFile } from '@/lib/upload-client';
+import { normalizeDateValue } from '@/lib/utils';
 import { 
   Laptop, 
   Calendar as CalendarIcon,
@@ -480,7 +481,7 @@ export default function RodaOnlineAdmin() {
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-[10px] font-black text-slate-600 uppercase">{ref.autoraNome}</span>
                         <ModerationBadge texto={ref.texto} nome={ref.autoraNome} />
-                        <span className="text-[9px] text-slate-300 ml-auto">{new Date(ref.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="text-[9px] text-slate-300 ml-auto">{normalizeDateValue(ref.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <p className="text-[11px] italic text-slate-600 leading-relaxed">"{ref.texto}"</p>
                     </div>

@@ -36,14 +36,27 @@ export default function EscritorasPage() {
   // Estados do Modal de Cadastro Completo
   const [modalOpen, setModalOpen] = useState(false);
   const [solNome, setSolNome] = useState('');
+  const [solEmail, setSolEmail] = useState('');
+  const [solTelefone, setSolTelefone] = useState('');
   const [solTitulo, setSolTitulo] = useState('');
+
+  useEffect(() => {
+    if (modalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [modalOpen]);
   const [solGenero, setSolGenero] = useState('');
   const [solInstagram, setSolInstagram] = useState('');
   const [solLinkCompra, setSolLinkCompra] = useState('');
   const [solSite, setSolSite] = useState('');
   const [solSinopse, setSolSinopse] = useState('');
   const [solBio, setSolBio] = useState('');
-  const [solCapa, setSolCapa] = useState('');
   const [solEnviando, setSolEnviando] = useState(false);
   const [solEnviado, setSolEnviado] = useState(false);
 
@@ -63,10 +76,16 @@ export default function EscritorasPage() {
   }, []);
 
   const enviarSolicitacaoEscritora = async () => {
-    if (!solNome || !solTitulo) {
-      alert('Por favor, preencha pelo menos seu nome e o título do livro.');
+    const nomeVal = solNome.trim();
+    const emailVal = solEmail.trim();
+    const telefoneVal = solTelefone.trim();
+    const tituloVal = solTitulo.trim();
+
+    if (!nomeVal || !emailVal || !telefoneVal || !tituloVal) {
+      alert('Por favor, preencha seu nome, e-mail, telefone e o título do livro.');
       return;
     }
+
     setSolEnviando(true);
     try {
       const res = await fetch('/api/solicitacoes', {
@@ -74,23 +93,24 @@ export default function EscritorasPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           tipo: 'escritora',
-          nome: solNome,
-          livroTitulo: solTitulo,
+          nome: nomeVal,
+          email: emailVal,
+          telefone: telefoneVal,
+          livroTitulo: tituloVal,
           genero: solGenero,
           instagram: solInstagram,
           linkCompra: solLinkCompra,
           site: solSite,
           sinopse: solSinopse,
           bio: solBio,
-          capaUrl: solCapa || null,
         }),
       });
       if (!res.ok) throw new Error('Falha ao enviar');
       setSolEnviado(true);
       
       // Limpar campos após sucesso
-      setSolNome(''); setSolTitulo(''); setSolGenero(''); setSolSinopse(''); 
-      setSolInstagram(''); setSolLinkCompra(''); setSolSite(''); setSolBio(''); setSolCapa('');
+      setSolNome(''); setSolEmail(''); setSolTelefone(''); setSolTitulo(''); setSolGenero(''); setSolSinopse(''); 
+      setSolInstagram(''); setSolLinkCompra(''); setSolSite(''); setSolBio('');
       
       setTimeout(() => { setSolEnviado(false); setModalOpen(false); }, 3000);
     } catch (err) {
@@ -289,15 +309,15 @@ export default function EscritorasPage() {
 
       {/* ─── MODAL DE CADASTRO REFINADO ─── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-2">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
           
-          <div className="relative w-full max-w-3xl bg-[#FDFCFB] rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             <button onClick={() => setModalOpen(false)} className="absolute right-8 top-8 p-2 hover:bg-black/5 rounded-full transition-colors z-10">
               <X size={20} className="opacity-40" />
             </button>
 
-            <div className="grid md:grid-cols-5 h-full max-h-[92vh]">
+            <div className="grid md:grid-cols-5 h-full max-h-[86vh]">
               <div className="hidden md:flex md:col-span-2 bg-[#C47E8A]/10 p-10 flex-col justify-between border-r border-black/5">
                 <div className="space-y-6">
                   <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
@@ -322,6 +342,17 @@ export default function EscritorasPage() {
                       <div className="space-y-1">
                         <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Nome da Escritora</label>
                         <input type="text" value={solNome} onChange={e => setSolNome(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Telefone</label>
+                        <input type="tel" value={solTelefone} onChange={e => setSolTelefone(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" placeholder="(61) 99999-9999" />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">E-mail</label>
+                        <input type="email" value={solEmail} onChange={e => setSolEmail(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" placeholder="nome@exemplo.com" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Título do Livro</label>
@@ -361,39 +392,17 @@ export default function EscritorasPage() {
                       <textarea value={solBio} onChange={e => setSolBio(e.target.value)} className="w-full bg-black/5 rounded-xl p-4 text-sm focus:ring-1 focus:ring-[#C47E8A] outline-none" rows={2} />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Capa do Livro</label>
-                      <div className="relative group border-2 border-dashed border-black/10 rounded-2xl p-4 text-center hover:bg-black/[0.02] transition-colors">
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (!file) return;
-                            const reader = new FileReader();
-                            reader.onload = () => setSolCapa(reader.result as string);
-                            reader.readAsDataURL(file);
-                          }} 
-                        />
-                        {solCapa ? (
-                          <div className="flex items-center justify-center gap-3">
-                             <img src={solCapa} className="h-12 w-8 object-cover rounded shadow-sm" />
-                             <p className="text-[10px] font-bold text-green-600">Imagem selecionada</p>
-                          </div>
-                        ) : (
-                          <p className="text-[10px] opacity-40 font-bold uppercase tracking-widest">Anexar Capa</p>
-                        )}
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={enviarSolicitacaoEscritora}
-                      disabled={solEnviando}
-                      className="w-full bg-[#C47E8A] text-white py-5 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all disabled:opacity-50"
-                    >
-                      {solEnviando ? 'Submetendo...' : 'Submeter Obra'}
-                    </button>
+
+                    <div className="sticky bottom-0 left-0 right-0 bg-[#FDFCFB] border-t border-black/10 p-4">
+                      <button
+                        onClick={enviarSolicitacaoEscritora}
+                        disabled={solEnviando}
+                        className="w-full bg-[#C47E8A] text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:shadow-xl hover:scale-[1.01] transition-all disabled:opacity-50"
+                      >
+                        {solEnviando ? 'Submetendo...' : 'Submeter Obra'}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

@@ -5,6 +5,7 @@ import { Globe, Calendar, Laptop, ArrowRight, Info, Video, Download, Archive, Ch
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
+import { normalizeDateValue } from '@/lib/utils';
 
 const papelEditorial = "#FDFCFB";
 const azulPetroleo = "#2C3E50";
@@ -94,7 +95,7 @@ function SecaoReflexoesRoda({ rodaId, temaNome }: { rodaId: string; temaNome: st
             <div key={r.id} className="bg-white/60 rounded-2xl p-5 space-y-2 border border-black/5">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: verdeMusgo }}>{r.autoraNome}</span>
-                <span className="text-[9px] opacity-30">{new Date(r.createdAt).toLocaleDateString('pt-BR')}</span>
+                <span className="text-[9px] opacity-30">{normalizeDateValue(r.createdAt).toLocaleDateString('pt-BR')}</span>
               </div>
               <p className="text-sm italic leading-relaxed opacity-70" style={{ color: azulPetroleo }}>"{r.texto}"</p>
             </div>

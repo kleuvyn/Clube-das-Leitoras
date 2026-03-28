@@ -27,14 +27,6 @@ export default function RootLayout({
 }) {
   const pathname = usePathname();
 
-  useEffect(() => {
-    try {
-      const hasSession = localStorage.getItem('clube-sessao');
-      if (!hasSession) {
-        localStorage.setItem('clube-sessao', 'public');
-      }
-    } catch {}
-  }, []);
 
   
   const isAuthPage = pathname === "/login" || pathname?.startsWith("/admin");

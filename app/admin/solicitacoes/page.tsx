@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Mail, Phone, Calendar, MapPin } from 'lucide-react';
+import { Loader2, RefreshCw, Mail, Phone, Calendar, MapPin, Instagram } from 'lucide-react';
+import { normalizeDateValue } from '@/lib/utils';
 
 type Solicitacao = {
   id: string;
@@ -11,7 +12,10 @@ type Solicitacao = {
   nome: string;
   email: string;
   telefone?: string;
+  instagram?: string;
+  site?: string;
   mensagem?: string;
+  enderecoCompleto?: string;
   status: string;
   createdAt: string;
 };
@@ -50,11 +54,44 @@ export default function SolicitacoesAdmin() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar');
-      
-      toast.success(status === 'aprovada' ? 'Aprovada! E-mail com senha enviado.' : 'Solicitação rejeitada.', { id: loadingToast });
+
+      if (status === 'aprovada') {
+        if (data?.emailStatus?.sent) {
+          toast.success('Aprovada! E-mail com senha enviado.');
+        } else {
+          toast.warning('Aprovada, mas houve problema no envio do e-mail para a leitora. Verifique os logs.');
+          console.warn('Resposta de emailStatus:', data?.emailStatus);
+        }
+      } else {
+        toast.success('Solicitação rejeitada.');
+      }
       load();
     } catch (err: any) {
       toast.error(err.message || 'Erro ao atualizar.', { id: loadingToast });
+    }
+  };
+
+  const updateLeitoraStatus = async (email: string, status: 'ativa'|'bloqueada'|'excluida') => {
+    const loadingToast = toast.loading('Atualizando status da leitora...');
+    try {
+      const resList = await fetch('/api/colaboradores');
+      if (!resList.ok) throw new Error('Erro ao buscar colaboradoras');
+      const colaboradorasData = await resList.json();
+      const leitora = colaboradorasData.find((u:any) => u.email?.toLowerCase() === email?.toLowerCase());
+      if (!leitora) throw new Error('Leitora não encontrada no cadastro de colaboradoras');
+
+      const res = await fetch('/api/colaboradores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: leitora.id, status }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar leitora');
+
+      toast.success(`Leitora ${status === 'ativa' ? 'ativada' : status === 'bloqueada' ? 'bloqueada' : 'excluída'} com sucesso.`, { id: loadingToast });
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao atualizar leitora.', { id: loadingToast });
     }
   };
 
@@ -123,7 +160,9 @@ export default function SolicitacoesAdmin() {
                   <div className="space-y-2 text-sm text-slate-500">
                     <div className="flex items-center gap-2"><Mail size={14} className="opacity-40" /> {item.email}</div>
                     {item.telefone && <div className="flex items-center gap-2"><Phone size={14} className="opacity-40" /> {item.telefone}</div>}
-                    <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> {new Date(item.createdAt).toLocaleDateString('pt-BR')}</div>
+                    {item.instagram && <div className="flex items-center gap-2"><Instagram size={14} className="opacity-40" /> <a href={item.instagram.startsWith('http') ? item.instagram : `https://instagram.com/${item.instagram.replace('@','')}`} target="_blank" className="text-blue-600 underline">{item.instagram}</a></div>}
+                    {item.site && <div className="flex items-center gap-2"><MapPin size={14} className="opacity-40" /> <a href={item.site.startsWith('http') ? item.site : `https://${item.site}`} target="_blank" className="text-blue-600 underline">{item.site}</a></div>}
+                    <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> {normalizeDateValue(item.createdAt).toLocaleDateString('pt-BR')}</div>
                   </div>
                 </div>
 
@@ -161,8 +200,15 @@ export default function SolicitacoesAdmin() {
                       </Button>
                     </>
                   ) : (
-                    <div className="text-center p-4 border border-dashed border-slate-200 rounded-2xl opacity-40 italic text-xs">
-                      Esta solicitação já foi processada.
+                    <div className="text-center p-4 border border-dashed border-slate-200 rounded-2xl text-xs">
+                      <p className="font-semibold text-slate-700">Status: {item.status}</p>
+                      {item.tipo === 'leitora' && (
+                        <div className="mt-3 space-y-2">
+                          <Button onClick={() => updateLeitoraStatus(item.email, 'bloqueada')} className="w-full bg-orange-500 hover:bg-orange-600 rounded-2xl h-10 text-xs" >Bloquear</Button>
+                          <Button onClick={() => updateLeitoraStatus(item.email, 'ativa')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-10 text-xs" >Reativar</Button>
+                          <Button onClick={() => updateLeitoraStatus(item.email, 'excluida')} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs" >Excluir</Button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -21,6 +21,7 @@ export default function LeitorasAdmin() {
   const [name, setName] = useState('');
   const [inviteRole, setInviteRole] = useState('convidada');
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('todas');
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
 
@@ -36,6 +37,13 @@ export default function LeitorasAdmin() {
   useEffect(() => { load(); }, []);
 
   const scrollTop = () => document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const filteredList = lista
+    .filter(u => (u.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(u => {
+      if (statusFilter === 'todas') return true;
+      return (u.status ?? 'ativa').toLowerCase() === statusFilter;
+    });
 
   const handleEdit = (u: any) => {
     setEditing({ id: u.id, name: u.name, role: u.role, active: u.active ?? true });
@@ -67,6 +75,63 @@ export default function LeitorasAdmin() {
       load();
     } catch (err: any) {
       toast.error(err.message ?? 'Erro ao processar convite.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBlock = async (u: any) => {
+    if (!confirm(`Bloquear leitora "${u.name}"?`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/colaboradores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: u.id, status: 'bloqueada' }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Falha ao bloquear');
+      toast.success(`${u.name} bloqueada com sucesso.`);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao bloquear.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnblock = async (u: any) => {
+    if (!confirm(`Desbloquear leitora "${u.name}"?`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/colaboradores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: u.id, status: 'ativa' }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Falha ao desbloquear');
+      toast.success(`${u.name} reativada com sucesso.`);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao desbloquear.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExclude = async (u: any) => {
+    if (!confirm(`Marcar leitora "${u.name}" como excluída?`)) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/colaboradores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: u.id, status: 'excluida' }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || 'Falha ao excluir');
+      toast.success(`${u.name} marcada como excluída.`);
+      load();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao excluir.');
     } finally {
       setLoading(false);
     }
@@ -260,7 +325,7 @@ export default function LeitorasAdmin() {
         
         <section className="lg:col-span-2 space-y-4">
           <div className="bg-white p-6 rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between px-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 mb-6 gap-3">
               <div className="relative w-full max-w-xs">
                 <Search className="absolute left-4 top-3 text-slate-300" size={14} />
                 <input 
@@ -270,14 +335,25 @@ export default function LeitorasAdmin() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              <div className="flex gap-2 items-center">
+                {['todas', 'ativa', 'bloqueada', 'excluida'].map(status => (
+                  <button
+                    key={status}
+                    onClick={() => setStatusFilter(status)}
+                    className={`px-3 py-1 rounded-lg text-[9px] uppercase tracking-wider ${statusFilter === status ? 'bg-violet-500 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                  >
+                    {status === 'todas' ? 'Todas' : status === 'ativa' ? 'Ativas' : status === 'bloqueada' ? 'Bloqueadas' : 'Excluídas'}
+                  </button>
+                ))}
+              </div>
               <div className="text-right">
-                <span className="text-2xl font-serif italic text-slate-900">{lista.length}</span>
+                <span className="text-2xl font-serif italic text-slate-900">{filteredList.length}</span>
                 <span className="block text-[8px] font-bold uppercase text-slate-400 tracking-tighter">Membros</span>
               </div>
             </div>
 
             <div className="divide-y divide-slate-50">
-              {lista.filter(u => (u.name ?? '').toLowerCase().includes(searchTerm.toLowerCase())).map((u) => (
+              {filteredList.map((u) => (
                 <div key={u.id} className={`flex items-center justify-between p-4 hover:bg-slate-50 transition-all group rounded-2xl ${editing?.id === u.id ? 'bg-violet-50' : ''}`}>
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center font-serif italic text-slate-400 border-2 border-white shadow-sm overflow-hidden">
@@ -307,28 +383,37 @@ export default function LeitorasAdmin() {
 
                     {u.email !== 'clubedasleitorasbsb@gmail.com' && (
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {!u.active && (
+                        {u.status !== 'ativa' && (
                           <button
-                            onClick={() => handleApprove(u)}
+                            onClick={() => handleUnblock(u)}
                             className="p-2 text-green-500 hover:text-emerald-600 transition-colors"
-                            title="Aprovar"
+                            title="Reativar"
                           >
                             <ShieldCheck size={15} />
                           </button>
                         )}
+                        {u.status === 'ativa' && (
+                          <button
+                            onClick={() => handleBlock(u)}
+                            className="p-2 text-orange-500 hover:text-orange-600 transition-colors"
+                            title="Bloquear"
+                          >
+                            <ShieldOff size={15} />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleExclude(u)}
+                          className="p-2 text-rose-500 hover:text-rose-600 transition-colors"
+                          title="Marcar como excluída"
+                        >
+                          <Trash2 size={15} />
+                        </button>
                         <button
                           onClick={() => handleEdit(u)}
                           className="p-2 text-slate-300 hover:text-violet-500 transition-colors"
                           title="Editar"
                         >
                           <Edit3 size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(u)}
-                          className="p-2 text-slate-300 hover:text-rose-500 transition-colors"
-                          title="Remover"
-                        >
-                          <Trash2 size={15} />
                         </button>
                       </div>
                     )}
