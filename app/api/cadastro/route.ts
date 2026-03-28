@@ -5,7 +5,20 @@ import { colaboradoras, solicitacoes } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com';
-const FROM = 'Clube das Leitoras <onboarding@resend.dev>';
+
+function getFromAddress() {
+  const fromEnv = process.env.RESEND_FROM?.trim();
+  if (fromEnv) {
+    const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
+    if (m) {
+      const name = m[1].trim();
+      const email = m[2].toLowerCase();
+      return `${name} <${email}>`;
+    }
+  }
+  console.warn('[cadastro] RESEND_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
+  return 'Clube das Leitoras <onboarding@resend.dev>';
+}
 
 export async function POST(request: Request) {
   try {
@@ -43,48 +56,45 @@ export async function POST(request: Request) {
       status: 'pendente',
     });
 
-    const emailStatus: { user: boolean; admin: boolean; hasKey: boolean; error: string | null } = { user: false, admin: false, hasKey: !!process.env.RESEND_API_KEY, error: null };
+    const emailStatus: { user: boolean; admin: boolean; hasKey: boolean; errors: string[] } = { user: false, admin: false, hasKey: !!process.env.RESEND_API_KEY, errors: [] };
     if (!process.env.RESEND_API_KEY) {
       console.warn('RESEND_API_KEY não configurada. E-mails não serão enviados.');
-      emailStatus.error = 'RESEND_API_KEY não configurada';
+      emailStatus.errors.push('RESEND_API_KEY não configurada');
     } else {
       const { Resend } = await import('resend');
       const resend = new Resend(process.env.RESEND_API_KEY);
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br';
-      const errors: string[] = [];
+      const effectiveFrom = getFromAddress();
+      console.log('[cadastro] Resend FROM:', effectiveFrom, 'admin:', ADMIN_EMAIL, 'usuario:', email);
 
       try {
         await resend.emails.send({
-          from: FROM,
+          from: effectiveFrom,
           to: email,
-          subject: 'Solicitação de acesso recebida: Clube das Leitoras',
-          html: `
-            <div style="font-family: serif; color: #2C3E50; max-width: 600px; margin: auto;">
-              <h1 style="color: #967BB6; font-style: italic;">Olá, ${name}!</h1>
-              <p>Obrigada por solicitar acesso ao Clube das Leitoras. Sua inscrição foi recebida com sucesso e está aguardando aprovação da curadoria.</p>
-              <p>Assim que avaliada, você receberá um segundo e-mail com seu acesso e senha temporária.</p>
-              <div style="margin-top: 20px; padding: 16px; background: #f8f6f3; border: 1px solid #e0dcd8; border-radius: 14px;">
-                <p><strong>Próximos passos:</strong></p>
-                <ul style="margin: 0; padding-left: 18px;">
-                  <li>1. Aguardar aprovação da curadoria.</li>
-                  <li>2. Receber email de aprovação com dados de acesso.</li>
-                  <li>3. Entrar no site e atualizar sua senha.</li>
-                </ul>
-              </div>
-              <p style="margin-top: 20px;"><a href="${siteUrl}/login" style="background: #967BB6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Ir para login</a></p>
-              <p style="font-size: 12px; color: #888; margin-top: 20px;">Se não encontrar o email, verifique a caixa de spam ou lixo eletrônico.</p>
-            </div>
-          `,
+            subject: 'Solicitação de acesso recebida: Clube das Leitoras',
+          html: (await import('@/lib/email-templates')).cartaInscricaoEmAnalise({
+            nome: name,
+            tipo: 'leitora',
+            data: requestDate,
+            resumoHtml: `<p>Próximos passos: aguarde aprovação da curadoria. Você receberá outro e-mail com seus dados de acesso.</p>`,
+            siteUrl,
+          }),
         });
         emailStatus.user = true;
-      } catch (e) {
-        console.error('Erro ao enviar e-mail ao usuário:', e);
-        errors.push(`usuario:${e instanceof Error ? e.message : String(e)}`);
+        console.log(`[cadastro] E-mail de confirmação enviado para leitora: ${email}`);
+      } catch (e: any) {
+        const errorMessage = (e && e instanceof Error ? e.message : String(e));
+        console.error('[cadastro] Erro ao enviar e-mail para leitora:', e);
+        if (e?.status === 403 || /403/.test(errorMessage)) {
+          emailStatus.errors.push('user:403 - Resend não autorizado para remetente/destinatário. Verifique domínio/envelope e token.');
+        } else {
+          emailStatus.errors.push(`user:${errorMessage}`);
+        }
       }
 
       try {
         await resend.emails.send({
-          from: FROM,
+          from: getFromAddress(),
           to: ADMIN_EMAIL,
           subject: 'Nova Solicitação de Leitora',
           html: `
@@ -105,13 +115,10 @@ export async function POST(request: Request) {
           `,
         });
         emailStatus.admin = true;
+        console.log(`[cadastro] E-mail de aviso enviado para admin: ${ADMIN_EMAIL}`);
       } catch (e) {
-        console.error('Erro ao enviar e-mail ao admin:', e);
-        errors.push(`admin:${e instanceof Error ? e.message : String(e)}`);
-      }
-
-      if (errors.length > 0) {
-        emailStatus.error = errors.join(' | ');
+        console.error('[cadastro] Erro ao enviar e-mail para admin:', e);
+        emailStatus.errors.push(`admin:${e instanceof Error ? e.message : String(e)}`);
       }
     }
 

@@ -6,7 +6,19 @@ import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
 
-const FROM = 'Clube das Leitoras <onboarding@resend.dev>';
+function getFromAddress() {
+  const fromEnv = process.env.RESEND_FROM?.trim();
+  if (fromEnv) {
+    const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
+    if (m) {
+      const name = m[1].trim();
+      const email = m[2].toLowerCase();
+      return `${name} <${email}>`;
+    }
+  }
+  console.warn('[colaboradores/approve] RESEND_FROM inválido ou não configurado; usando fallback onboarding@resend.dev');
+  return 'Clube das Leitoras <onboarding@resend.dev>';
+}
 
 function gerarSenhaTemporaria(): string {
   const palavras = ['livro', 'flor', 'cafe', 'rosa', 'lua', 'sol', 'brisa', 'afeto', 'laca', 'petal'];
@@ -53,21 +65,17 @@ export async function POST(request: Request) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
 
+        const effectiveFrom = getFromAddress();
         await resend.emails.send({
-          from: FROM,
+          from: effectiveFrom,
           to: user.email,
           subject: 'Seja bem-vinda ao Clube das Leitoras',
-          html: `
-            <div style="font-family: Georgia, serif; max-width: 560px; margin: 0 auto; color: #2C3E50;">
-              <p>Seja bem-vinda, <strong>${user.name ?? user.email}</strong>!</p>
-              <p>É uma alegria ter você conosco. Sua solicitação foi aprovada pela curadoria.</p>
-              <h3>Seu Acesso:</h3>
-              <p><strong>E-mail:</strong> ${user.email}</p>
-              <p><strong>Senha Temporária:</strong> <code>${tempPassword}</code></p>
-              <p>Acesse o clube e altere sua senha em <a href="${siteUrl}/nova-senha">/nova-senha</a>.</p>
-              <p>Se tiver dúvidas, estamos aqui para ajudar.</p>
-            </div>
-          `,
+          html: (await import('@/lib/email-templates')).cartaAprovacaoComSenha({
+            nome: user.name ?? user.email,
+            email: user.email,
+            senha: tempPassword,
+            siteUrl,
+          }),
         });
         emailStatus.sent = true;
       } catch (e) {

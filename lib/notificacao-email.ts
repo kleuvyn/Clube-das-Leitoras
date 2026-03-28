@@ -2,7 +2,18 @@ import { db } from './db';
 import { colaboradoras } from './db/schema';
 import { eq, and } from 'drizzle-orm';
 
-const FROM = 'Clube das Leitoras <no-reply@clubedasleitoras.com.br>';
+function getFromAddress() {
+  const fromEnv = process.env.RESEND_FROM?.trim();
+  if (fromEnv) {
+    const m = fromEnv.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
+    if (m) {
+      const name = m[1].trim();
+      const email = m[2].toLowerCase();
+      return `${name} <${email}>`;
+    }
+  }
+  return 'Clube das Leitoras <onboarding@resend.dev>';
+}
 
 export type SecaoNotificacao = 'dicas' | 'livro-do-mes' | 'cronograma' | 'rodaonline' | 'leitura' | 'podcast' | 'eventos' | 'votacao';
 
@@ -217,8 +228,9 @@ export async function notificarLeitoras(params: {
     const { Resend } = await import('resend');
     const resend = new Resend(process.env.RESEND_API_KEY);
 
+    const effectiveFrom = getFromAddress();
     const emails = leitoras.map((l) => ({
-      from: FROM,
+      from: effectiveFrom,
       to: l.email,
       subject: cfg.subject,
       html: gerarHtml({
