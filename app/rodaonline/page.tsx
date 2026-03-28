@@ -268,7 +268,7 @@ export default function RodaOnlineFuncional() {
               </div>
 
               
-              <div className="text-base leading-tight space-y-3 font-light italic text-[#2C3E50]/80">
+              <div className="text-base leading-tight space-y-3 font-light italic text-[#2C3E50]/80 text-justify" style={{ textAlign: 'justify' }}>
                 {paragrafos.length > 0 ? (
                   paragrafos.map((paragrafo, idx) => (
                     <p 

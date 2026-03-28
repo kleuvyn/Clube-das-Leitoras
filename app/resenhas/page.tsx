@@ -268,7 +268,7 @@ function ResenhaCard({ resenha: r, periodo, aberta, onToggle }: {
         
         {r.content && (
           <div className="relative pl-5 border-l-2" style={{ borderColor: `${amareloVintage}60` }}>
-            <p className="text-base italic leading-relaxed text-[#2C3E50]/70 font-light">
+            <p className="text-base italic leading-relaxed text-[#2C3E50]/70 font-light text-justify" style={{ textAlign: 'justify' }}>
               &ldquo;{aberta ? r.content : preview}&rdquo;
             </p>
           </div>
@@ -345,7 +345,7 @@ function ResenhaCardCompacto({ resenha: r, periodo }: { resenha: Resenha; period
         )}
         {r.content && (
           <div className="relative pl-4 border-l-2" style={{ borderColor: `${amareloVintage}60` }}>
-            <p className="text-sm italic leading-relaxed text-[#2C3E50]/60">
+            <p className="text-sm italic leading-relaxed text-[#2C3E50]/60 text-justify" style={{ textAlign: 'justify' }}>
               &ldquo;{r.content.slice(0, 220)}{r.content.length > 220 ? '...' : ''}&rdquo;
             </p>
           </div>

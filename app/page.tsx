@@ -95,18 +95,18 @@ export default function HomeJornalClubeLeitoras() {
   }, []);
 
   return (
-    <div className="min-h-screen font-alice pb-20 pt-32 lg:pt-40 relative overflow-hidden"
+    <div className="min-h-screen font-alice pb-20 pt-28 lg:pt-36 relative overflow-hidden"
          style={{ background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}>
       
       {/* HEADER */}
-      <header className="max-w-7xl mx-auto px-6 md:px-12 pb-12 mb-16 relative z-10 border-b-4 border-[#B04D4A]">
+      <header className="max-w-7xl mx-auto px-6 md:px-12 pb-10 mb-12 relative z-10 border-b-4 border-[#B04D4A]">
         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.4em] mb-8 opacity-60 text-black">
           <span>Brasília • DF</span>
           <span className="hidden md:block">Informativo Mensal de Afeto</span>
           <span>Ano {anoRomano} • {anoAtual}</span>
         </div>
         
-        <h1 className="text-center text-6xl md:text-[110px] leading-none tracking-tighter mb-12">
+        <h1 className="text-center text-5xl md:text-[80px] leading-tight tracking-tighter mb-8">
           <span className="text-[#2C3E50]">Clube das</span> <br className="md:hidden" />
           <span className="italic font-light text-[#B04D4A]"> Leitoras</span>
         </h1>
@@ -114,7 +114,7 @@ export default function HomeJornalClubeLeitoras() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto pt-8 border-t border-black/10">
           <div className="relative">
             <Quote className="absolute -left-6 -top-2 w-8 h-8 opacity-20 text-[#B04D4A]" />
-            <p className="italic text-sm md:text-base leading-relaxed pl-4 text-black">
+            <p className="italic text-sm md:text-sm leading-snug pl-4 text-black">
               "Um clube que nasceu do desejo de não ler sozinha. Aqui, a última página é apenas o convite para um café e uma boa conversa."
             </p>
           </div>
@@ -126,7 +126,7 @@ export default function HomeJornalClubeLeitoras() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 md:px-12 space-y-24 relative z-10">
+      <main className="max-w-7xl mx-auto px-6 md:px-12 space-y-16 relative z-10">
         
         {/* SEÇÃO 1: LIVRO DO MÊS */}
         <section className="pb-20 group border-b-2 border-black/5">
@@ -146,14 +146,14 @@ export default function HomeJornalClubeLeitoras() {
                       Leitura em Foco • {livroDoMes.mes}
                   </span>
                   
-                  <h2 className="text-7xl md:text-9xl tracking-tighter leading-none">
+                  <h2 className="text-6xl md:text-7xl tracking-tighter leading-none">
                       <span className="text-[#2C3E50]">{livroDoMes.titulo?.split(' ')[0]}</span> <br/>
                       <span className="italic font-light text-[#B04D4A]">
                         {livroDoMes.titulo?.split(' ').slice(1).join(' ')}
                       </span>
                   </h2>
                   
-                  <p className="text-base md:text-lg italic leading-relaxed opacity-80 text-black text-justify font-serif tracking-tight max-w-3xl">
+                  <p className="text-base md:text-lg italic leading-snug opacity-85 text-black text-justify font-serif tracking-tight max-w-3xl">
                     De {livroDoMes.autor}. {livroDoMes.descricao_curta}
                   </p>
                   <a href="/livro-do-mes" className="flex items-center gap-6 font-bold text-xs uppercase tracking-widest text-[#B04D4A] hover:gap-8 transition-all">
@@ -186,13 +186,13 @@ export default function HomeJornalClubeLeitoras() {
             </a>
           </aside>
 
-          <article className="space-y-8 text-justify">
+          <article className="space-y-6 text-justify">
             <h3 className="text-[10px] font-bold uppercase tracking-widest inline-block px-3 py-1 bg-[#B04D4A]/10 text-[#B04D4A]">Manifesto</h3>
             <h2 className="text-5xl md:text-6xl leading-[0.9] tracking-tighter mb-8 text-[#2C3E50]">
               Onde a última página é o <span className="italic text-[#B04D4A]">começo.</span>
             </h2>
             
-            <div className="text-lg md:text-xl leading-relaxed space-y-6 text-black">
+            <div className="text-base md:text-lg leading-snug space-y-4 text-black">
               <p className="first-letter:text-7xl first-letter:font-bold first-letter:mr-3 first-letter:float-left first-letter:leading-none text-[#B04D4A]">
                 O Clube nasceu de um gesto simples: terminar um livro e perceber que o silêncio não bastava.
               </p>
@@ -204,8 +204,8 @@ export default function HomeJornalClubeLeitoras() {
               <p>E o vento respondeu. Vieram mensagens, convites, incentivos:</p>
 
               {/* CAIXINHA DE COMENTÁRIO */}
-              <div className="relative my-10 max-w-sm">
-                <div className="bg-white border-2 border-[#B04D4A]/20 p-6 rounded-2xl rounded-bl-none shadow-sm italic text-[#B04D4A] font-bold text-2xl relative z-10 flex items-start gap-3">
+              <div className="relative my-8 max-w-sm">
+                <div className="bg-white border-2 border-[#B04D4A]/20 p-4 rounded-2xl rounded-bl-none shadow-sm italic text-[#B04D4A] font-bold text-lg relative z-10 flex items-start gap-3">
                   <MessageCircle className="w-6 h-6 mt-1 opacity-40 shrink-0" />
                   “Cria um clube, Gabi.”
                 </div>
@@ -216,7 +216,7 @@ export default function HomeJornalClubeLeitoras() {
 
               <p>Mês após mês, fomos construindo algo maior do que a soma das páginas que lemos. Houve partilhas. Risadas. Histórias que nos acolheram. Outras que nos inquietaram. Criamos rodas temáticas, rodas de conversa simples, com objetivos igualmente simples — resgatar a leitura e criar laços.</p>
 
-              <div className="py-8 my-12 border-y border-black/10 italic text-2xl md:text-3xl text-[#2C3E50] text-center px-4 leading-snug">
+              <div className="py-6 my-8 border-y border-black/10 italic text-xl md:text-2xl text-[#2C3E50] text-center px-4 leading-snug">
                 “Porque existe uma pergunta silenciosa na vida adulta: <br className="hidden md:block"/> como fazer novas amizades?”
               </div>
 
@@ -239,7 +239,7 @@ export default function HomeJornalClubeLeitoras() {
 
               <p className="pt-6">Porque quem lê não apenas acumula histórias — expande a forma de ver o mundo.</p>
 
-              <p className="font-bold italic text-2xl md:text-3xl mt-10 pt-8 border-t border-black/10 text-[#B04D4A]">
+              <p className="font-bold italic text-xl md:text-2xl mt-8 pt-6 border-t border-black/10 text-[#B04D4A]">
                 Então pode vir, 2026. O livro deste mês já está escolhido. Novas parcerias estão chegando. E novas histórias também.
               </p>
             </div>

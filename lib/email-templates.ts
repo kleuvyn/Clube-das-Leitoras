@@ -197,7 +197,37 @@ export function cartaAprovacaoComSenha(params: { nome: string; email: string; se
 }
 
 /**
- * 3. CARTA: NOTIFICAÇÃO ADMIN
+ * 3. CARTA: APROVAÇÃO SIMPLES (sem senha)
+ */
+export function cartaAprovacaoSimples(params: { nome: string; tipo: string; siteUrl?: string }) {
+  const { nome, tipo, siteUrl = 'https://clubedasleitoras.com.br' } = params;
+  return `<!doctype html>
+<html lang="pt-BR">
+<head><style>${baseStyles}</style></head>
+<body>
+  <div class="card">
+    <div class="mast">
+      <div class="heart-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 21s-7.5-4.5-9-7.5C1 10.5 4.5 6 8.5 6 10 6 12 7.5 12 7.5S14 6 15.5 6C19.5 6 23 10.5 21 13.5 19.5 16.5 12 21 12 21z"/></svg>
+      </div>
+      <h1>Solicitação Aprovada</h1>
+      <div class="tagline">Você está no time</div>
+      <div class="divider"></div>
+    </div>
+    <div class="body">
+      <p>Olá, <strong>${escapeHtml(nome)}</strong>.</p>
+      <p>Parabéns! Sua solicitação de <strong>${escapeHtml(tipo)}</strong> foi aprovada.</p>
+      <p>Acesse o painel para finalizar seu cadastro ou ver seus próximos passos.</p>
+      <a class="cta-button" href="${siteUrl}">Ir para o site</a>
+    </div>
+    <div class="footer">Brasília • Curadoria de Afeto</div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * 4. CARTA: NOTIFICAÇÃO ADMIN
  */
 export function cartaNotificacaoAdmin(params: { tipo: string; nome: string; data: string; detalhesHtml: string; siteUrl?: string }) {
   const { tipo, nome, data, detalhesHtml, siteUrl = 'https://clubedasleitoras.com.br' } = params;

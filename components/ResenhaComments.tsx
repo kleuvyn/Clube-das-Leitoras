@@ -23,6 +23,7 @@ type Props = {
 export default function ResenhaComments({ resenhaId, tituloResenha, aberto: abertoProp, isStandalone }: Props) {
   const [aberto, setAberto] = useState<boolean>(abertoProp ?? false);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [nome, setNome] = useState('');
@@ -106,17 +107,52 @@ export default function ResenhaComments({ resenhaId, tituloResenha, aberto: aber
             <p className="text-center italic text-sm opacity-30 py-8" style={{ color: primaryColor }}>Seja a primeira a comentar sobre <em>{tituloResenha}</em>.</p>
           ) : (
             <div className="space-y-4">
-              {comentarios.map(c => (
-                <div key={c.id} className="bg-white/60 border border-black/5 rounded-3xl p-6 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: primaryColor }}>{c.autoraNome}</span>
-                    <span className="text-[9px] opacity-30" style={{ color: primaryColor }}>
-                      {normalizeDateValue(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
+              {comentarios.map(c => {
+                const isExpanded = expandedIds.has(c.id);
+                return (
+                  <div key={c.id} className="bg-white/60 border border-black/5 rounded-3xl p-6 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: primaryColor }}>{c.autoraNome}</span>
+                      <span className="text-[9px] opacity-30" style={{ color: primaryColor }}>
+                        {normalizeDateValue(c.createdAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p
+                      className="text-sm italic leading-relaxed"
+                      style={isExpanded ? {
+                        color: primaryFaded,
+                        textAlign: 'justify',
+                      } : {
+                        color: primaryFaded,
+                        textAlign: 'justify',
+                        overflow: 'hidden',
+                        display: '-webkit-box',
+                        WebkitBoxOrient: 'vertical',
+                        WebkitLineClamp: 4,
+                      }}
+                    >
+                      &quot;{c.texto}&quot;
+                    </p>
+                    {c.texto.length > 240 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setExpandedIds(prev => {
+                            const next = new Set(prev);
+                            if (next.has(c.id)) next.delete(c.id);
+                            else next.add(c.id);
+                            return next;
+                          });
+                        }}
+                        className="text-[10px] font-bold uppercase tracking-widest underline opacity-70 hover:opacity-100"
+                        style={{ color: primaryColor }}
+                      >
+                        {isExpanded ? 'Ler menos' : 'Ler mais'}
+                      </button>
+                    )}
                   </div>
-                  <p className="text-sm italic leading-relaxed" style={{ color: primaryFaded }}>&quot;{c.texto}&quot;</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

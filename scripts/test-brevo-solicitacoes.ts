@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import { sendEmail, getFromAddressFallback } from '../lib/email-client';
 
 async function run() {
