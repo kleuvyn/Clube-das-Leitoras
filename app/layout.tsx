@@ -74,7 +74,25 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="theme-color" content={pageColor} />
+
+        {/* PWA icons */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
         <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Clube das Leitoras" />
+
+        {/* Social preview (compartilhamento) */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Clube das Leitoras" />
+        <meta property="og:description" content="Clube de leitura em Brasília com encontros, dicas e livro do mês." />
+        <meta property="og:image" content="/og-image.png" />
+        <meta property="og:url" content="https://clubedasleitoras.com" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Clube das Leitoras" />
+        <meta name="twitter:description" content="Clube de leitura em Brasília com encontros, dicas e livro do mês." />
+        <meta name="twitter:image" content="/og-image.png" />
       </head>
       <body
         className="font-alice antialiased"
