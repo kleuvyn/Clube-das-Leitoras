@@ -7,9 +7,14 @@ import Image from "next/image";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "sonner";
 import { Analytics } from '@vercel/analytics/react';
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+};
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const alice = Alice({ 
@@ -60,6 +65,40 @@ export default function RootLayout({
     return laranjaFolha;
   })();
 
+  const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: any) => {
+      event.preventDefault();
+      setInstallPromptEvent(event);
+      setShowInstallButton(true);
+    };
+
+    const handleAppInstalled = () => {
+      setInstallPromptEvent(null);
+      setShowInstallButton(false);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
+  }, []);
+
+  const onInstallClick = async () => {
+    if (!installPromptEvent) return;
+    installPromptEvent.prompt();
+    const choiceResult = await installPromptEvent.userChoice;
+    if (choiceResult.outcome === "accepted") {
+      setShowInstallButton(false);
+      setInstallPromptEvent(null);
+    }
+  };
+
   
   function hexToRgba(hex: string, alpha: number) {
     const h = hex.replace('#', '');
@@ -87,12 +126,14 @@ export default function RootLayout({
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Clube das Leitoras" />
         <meta property="og:description" content="Clube de leitura em Brasília com encontros, dicas e livro do mês." />
-        <meta property="og:image" content="/og-image.png" />
-        <meta property="og:url" content="https://clubedasleitoras.com" />
+        <meta property="og:image" content="https://clubedasleitoras.com.br/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:url" content="https://clubedasleitoras.com.br" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Clube das Leitoras" />
         <meta name="twitter:description" content="Clube de leitura em Brasília com encontros, dicas e livro do mês." />
-        <meta name="twitter:image" content="/og-image.png" />
+        <meta name="twitter:image" content="https://clubedasleitoras.com.br/og-image.png" />
       </head>
       <body
         className="font-alice antialiased"
@@ -125,6 +166,17 @@ export default function RootLayout({
         
         
         {!isAuthPage && <Footer />}
+
+        {showInstallButton && !isAuthPage && (
+          <div className="fixed bottom-5 right-5 z-50">
+            <button
+              onClick={onInstallClick}
+              className="rounded-full bg-red-600 px-5 py-3 text-sm text-white shadow-lg transition hover:bg-red-700"
+            >
+              Instalar Clube das Leitoras
+            </button>
+          </div>
+        )}
         
         <Toaster richColors position="top-right" />
         <Analytics />
