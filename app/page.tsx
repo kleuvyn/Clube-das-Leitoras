@@ -64,8 +64,6 @@ export default function HomeJornalClubeLeitoras() {
           const mesAtual = new Date().getMonth() + 1;
           const mesAtualNome = MESES_PT[mesAtual - 1];
 
-          // Prioriza o livro cujo número do mês corresponde ao mês atual.
-          // Se não houver, tenta casar pelo nome do mês. Se ainda não, pega o primeiro registrado.
           const monthMatch = data.find((item: any) => {
             const num = typeof item.num === 'number' ? item.num : Number(item.num);
             const mes = String(item.mes || '').toLowerCase();

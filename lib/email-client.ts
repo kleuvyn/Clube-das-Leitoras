@@ -1,12 +1,29 @@
-export type EmailMessage = { from: string; to: string; subject: string; html: string };
+export type EmailMessage = { from: string; to: string; subject: string; html: string; text?: string };
 
 function parseFrom(from: string) {
   if (!from) return { name: undefined, email: undefined } as any;
   const m = from.match(/^([^<>]+)<\s*([^<>@\s]+@[^<>@\s]+\.[^<>@\s]+)\s*>$/);
   if (m) return { name: m[1].trim(), email: m[2].toLowerCase() };
-  // fallback: try to extract bare email
   const email = String(from).trim();
   return { name: undefined, email } as any;
+}
+
+function htmlToText(html: string) {
+  if (!html) return '';
+  return String(html)
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n')
+    .replace(/<li>/gi, '• ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n\s+/g, '\n')
+    .replace(/\n{2,}/g, '\n\n')
+    .trim();
 }
 
 export async function sendEmail(msg: EmailMessage) {
@@ -20,6 +37,7 @@ export async function sendEmail(msg: EmailMessage) {
     to: [{ email: msg.to }],
     subject: msg.subject,
     htmlContent: msg.html,
+    textContent: msg.text ?? htmlToText(msg.html),
   };
 
   const res = await fetch(url, {

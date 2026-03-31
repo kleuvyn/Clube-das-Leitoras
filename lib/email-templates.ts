@@ -44,10 +44,11 @@ function getLogoSrc(siteUrl: string) {
  * CSS Base - Estilo Lacre de Cera e Carta Acadêmica
  */
 const baseStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Alice&display=swap');
+  /* Avoid remote font import in email clients that block external CSS.
+     Keep simple fallback font stack for better compatibility. */
 
   body { 
-    font-family: 'Alice', Georgia, serif; 
+    font-family: Georgia, serif; 
     background-color: ${CORES.papelFundo}; 
     margin: 0; 
     padding: 30px 10px !important; 
