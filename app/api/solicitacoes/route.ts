@@ -218,7 +218,7 @@ export async function POST(request: Request) {
             nome,
             data: requestDate,
             detalhesHtml,
-            siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
+            siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.clubedasleitoras.com.br',
           }),
         });
         emailStatus.admin = true;
@@ -236,7 +236,7 @@ export async function POST(request: Request) {
                 tipo,
                 data: requestDate,
                 resumoHtml: `<ul style="margin:0 0 0 18px"><li>Nome: ${nome}</li><li>Tipo: ${tipo}</li><li>E-mail: ${userEmail}</li><li>Telefone: ${telefone || 'Não informado'}</li></ul>`,
-                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
+                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.clubedasleitoras.com.br',
               }),
             });
             emailStatus.user = true;
@@ -308,7 +308,7 @@ export async function PATCH(request: Request) {
                 nome: solicitacao.nome,
                 email: solicitacao.email,
                 senha: plainPassword || 'Sua conta já existia, use sua senha atual',
-                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
+                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.clubedasleitoras.com.br',
               }),
             });
             emailStatus.user = true;
@@ -331,7 +331,7 @@ export async function PATCH(request: Request) {
               html: (await import('@/lib/email-templates')).cartaAprovacaoSimples({
                 nome: solicitacao.nome,
                 tipo: solicitacao.tipo,
-                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
+                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://www.clubedasleitoras.com.br',
               }),
             });
             emailStatus.user = true;

@@ -4,7 +4,7 @@ import { sendEmail, getFromAddressFallback } from '../lib/email-client';
 
 async function run() {
   const TEST_EMAIL = process.env.TEST_EMAIL || 'test.kleuvyn@gmail.com';
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.clubedasleitoras.com.br';
   const from = getFromAddressFallback();
 
   const tipos: Array<'leitora' | 'empreendedora' | 'escritora' | 'parceria'> = ['leitora', 'empreendedora', 'escritora', 'parceria'];

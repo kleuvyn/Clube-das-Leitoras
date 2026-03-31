@@ -1,5 +1,5 @@
 {
-  "id": "https://clubedasleitoras.com.br",
+  "id": "https://www.clubedasleitoras.com.br",
   "name": "Clube das Leitoras",
   "short_name": "ClubeLeitoras",
   "description": "Clube de leitura em Brasília com encontros, dicas e livro do mês.",
@@ -67,7 +67,7 @@
     }
   },
   "protocol_handlers": [
-    { "protocol": "web+clubedasleitoras", "url": "https://clubedasleitoras.com.br/?url=%s" }
+    { "protocol": "web+clubedasleitoras", "url": "https://www.clubedasleitoras.com.br/?url=%s" }
   ],
   "file_handlers": [
     {
@@ -83,7 +83,7 @@
   },
   "prefer_related_applications": false,
   "related_applications": [
-    { "platform": "webapp", "url": "https://clubedasleitoras.com.br" }
+    { "platform": "webapp", "url": "https://www.clubedasleitoras.com.br" }
   ],
   "iarc_rating_id": "e1e6f123-4567-89ab-cdef-0123456789ab",
   "display_override": ["standalone", "fullscreen"],
@@ -96,7 +96,7 @@
     }
   ],
   "edge_side_panel": {
-    "edge_side_panel_page": "https://clubedasleitoras.com.br/side-panel"
+    "edge_side_panel_page": "https://www.clubedasleitoras.com.br/side-panel"
   },
   "note_taking": { "id": "clube-notes", "name": "Clube Notes" },
   "lang": "pt-BR",

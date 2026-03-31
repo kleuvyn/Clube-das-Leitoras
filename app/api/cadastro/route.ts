@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       emailStatus.errors.push('BREVO_API_KEY não configurada');
     } else {
       const { sendEmail } = await import('@/lib/email-client');
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br';
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.clubedasleitoras.com.br';
       const effectiveFrom = getFromAddress();
       const requestDate = new Date().toLocaleString('pt-BR', {
         timeZone: 'America/Sao_Paulo',

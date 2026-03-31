@@ -27,7 +27,7 @@ const LOGO_FILENAME = 'logo-clube-leitoras.png';
 function getLogoSrc(siteUrl: string) {
   // Use a URL pública em vez de base64 embutido para evitar que emails ultrapassem o tamanho limite do Gmail
   // e apareçam como “[Mensagem cortada]” em vez do conteúdo completo.
-  const finalSiteUrl = (siteUrl || 'https://clubedasleitoras.com.br').replace(/\/+$/, '');
+  const finalSiteUrl = (siteUrl || 'https://www.clubedasleitoras.com.br').replace(/\/+/g, '');
   return `${finalSiteUrl}/${LOGO_FILENAME}`;
 }
 
@@ -167,7 +167,7 @@ function renderLacre(siteUrl: string) {
  * 1. CARTA: INSCRIÇÃO EM ANÁLISE
  */
 export function cartaInscricaoEmAnalise(params: { nome: string; tipo: string; data: string; resumoHtml?: string; siteUrl?: string }) {
-  const { nome, tipo, data, resumoHtml = '', siteUrl = 'https://clubedasleitoras.com.br' } = params;
+  const { nome, tipo, data, resumoHtml = '', siteUrl = 'https://www.clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -200,7 +200,7 @@ export function cartaInscricaoEmAnalise(params: { nome: string; tipo: string; da
  * 2. CARTA: APROVAÇÃO COM SENHA
  */
 export function cartaAprovacaoComSenha(params: { nome: string; email: string; senha: string; siteUrl?: string }) {
-  const { nome, email, senha, siteUrl = 'https://clubedasleitoras.com.br' } = params;
+  const { nome, email, senha, siteUrl = 'https://www.clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -237,7 +237,7 @@ export function cartaAprovacaoComSenha(params: { nome: string; email: string; se
  * 3. CARTA: APROVAÇÃO SIMPLES
  */
 export function cartaAprovacaoSimples(params: { nome: string; tipo: string; siteUrl?: string }) {
-  const { nome, tipo, siteUrl = 'https://clubedasleitoras.com.br' } = params;
+  const { nome, tipo, siteUrl = 'https://www.clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -268,7 +268,7 @@ export function cartaAprovacaoSimples(params: { nome: string; tipo: string; site
  * 4. CARTA: NOTIFICAÇÃO ADMIN
  */
 export function cartaNotificacaoAdmin(params: { tipo: string; nome: string; data: string; detalhesHtml: string; siteUrl?: string }) {
-  const { tipo, nome, data, detalhesHtml, siteUrl = 'https://clubedasleitoras.com.br' } = params;
+  const { tipo, nome, data, detalhesHtml, siteUrl = 'https://www.clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
 <head>
