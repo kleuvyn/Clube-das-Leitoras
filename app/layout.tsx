@@ -89,6 +89,62 @@ export default function RootLayout({
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    async function setupAdvancedPWA() {
+      if (!('serviceWorker' in navigator)) return;
+
+      try {
+        const registration = await navigator.serviceWorker.ready;
+
+        // Periodic Sync (onde suportado)
+        if ('periodicSync' in registration) {
+          try {
+            // 24h interval
+            await (registration as any).periodicSync.register('clube-leitoras-periodic-sync', {
+              minInterval: 24 * 60 * 60 * 1000,
+            });
+          } catch (error) {
+            console.warn('Periodic sync não disponível:', error);
+          }
+        }
+
+        // Background Sync (offline que sincroniza quando voltar)
+        if ('sync' in registration) {
+          try {
+            await (registration as any).sync.register('clube-leitoras-background-sync');
+          } catch (error) {
+            console.warn('Background sync não disponível:', error);
+          }
+        }
+
+        // Push Notifications (permissão se suportado)
+        if ('Notification' in window && Notification.permission === 'default') {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted' && 'PushManager' in window) {
+            try {
+              // substitua pela chave VAPID real na produção
+              const vapidPublicKey = 'BBOF2...YOUR_PUBLIC_KEY_HERE...';
+              const convertedKey = Uint8Array.from(window.atob(vapidPublicKey), (c) => c.charCodeAt(0));
+              await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: convertedKey,
+              });
+            } catch (error) {
+              console.warn('Inscrição em Push não foi possível:', error);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('SW ready failed', err);
+      }
+    }
+
+    setupAdvancedPWA();
+  }, []);
+
+
   const onInstallClick = async () => {
     if (!installPromptEvent) return;
     installPromptEvent.prompt();

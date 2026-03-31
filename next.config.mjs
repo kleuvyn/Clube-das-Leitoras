@@ -3,6 +3,7 @@ import runtimeCaching from 'next-pwa/cache.js';
 
 const withPWA = nextPWA({
   dest: 'public',
+  swSrc: 'service-worker.js',
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
