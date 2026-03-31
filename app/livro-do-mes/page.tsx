@@ -44,7 +44,7 @@ export default function CalendarioJornal() {
   useEffect(() => {
     async function carregar() {
       try {
-        const res = await fetch('/api/livro-do-mes');
+        const res = await fetch('/api/livro-do-mes', { cache: 'no-store' });
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           const lista: RodaLiteraria[] = data.map((r: any) => ({
@@ -68,7 +68,20 @@ export default function CalendarioJornal() {
           
           const mesAtualNome = new Date().toLocaleString('pt-BR', { month: 'long' });
           const doAnoAtual = lista.filter(r => r.ano === anoAtual).sort((a, b) => mesNum(a) - mesNum(b));
-          const current = doAnoAtual.find(r => r.mes?.toLowerCase() === mesAtualNome.toLowerCase()) || null;
+          let current = doAnoAtual.find(r => r.mes?.toLowerCase() === mesAtualNome.toLowerCase()) || null;
+
+          if (!current) {
+            if (doAnoAtual.length > 0) {
+              const nextFuture = doAnoAtual.find(r => mesNum(r) > mesAtual);
+              current = nextFuture || doAnoAtual.slice().reverse()[0];
+            } else {
+              const todoPorAno = lista
+                .slice()
+                .sort((a, b) => (b.ano ?? anoAtual) - (a.ano ?? anoAtual) || mesNum(b) - mesNum(a));
+              current = todoPorAno[0] || null;
+            }
+          }
+
           setAtivo(current);
         }
       } catch (err) {

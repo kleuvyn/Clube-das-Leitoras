@@ -102,26 +102,26 @@ export async function POST(request: Request) {
       }
 
       try {
+        const adminDetailsHtml = `
+          <p><strong>E-mail:</strong> ${email}</p>
+          <p><strong>WhatsApp:</strong> ${phone}</p>
+          <p><strong>Data de nascimento:</strong> ${birthdate}</p>
+          <p><strong>Tempo no clube:</strong> ${tempoClube || 'Não informado'}</p>
+          <p><strong>Endereço para mimos:</strong> ${enderecoCompleto || 'Não informado'}</p>
+          <p><strong>Carta para mimo:</strong> ${cartaMimo ? 'Sim' : 'Não'}</p>
+        `;
+
         await sendEmail({
           from: getFromAddress(),
           to: ADMIN_EMAIL,
           subject: 'Nova Solicitação de Leitora',
-          html: `
-            <div style="font-family: serif; color: #2C3E50; max-width: 600px; margin: auto;">
-              <h1 style="color: #967BB6; font-style: italic;">Nova solicitação recebida!</h1>
-              <p>Uma nova leitora se inscreveu no Clube das Leitoras:</p>
-              <ul>
-                <li><strong>Nome:</strong> ${name}</li>
-                <li><strong>E-mail:</strong> ${email}</li>
-                <li><strong>WhatsApp:</strong> ${phone}</li>
-                <li><strong>Data de nascimento:</strong> ${birthdate}</li>
-                <li><strong>Tempo no clube:</strong> ${tempoClube || 'Não informado'}</li>
-                <li><strong>Endereço para mimos:</strong> ${enderecoCompleto || 'Não informado'}</li>
-                <li><strong>Carta para mimo:</strong> ${cartaMimo ? 'Sim' : 'Não'}</li>
-              </ul>
-              <p>Verifique a solicitação no painel de admin.</p>
-            </div>
-          `,
+          html: (await import('@/lib/email-templates')).cartaNotificacaoAdmin({
+            tipo: 'leitora',
+            nome: name,
+            data: requestDate,
+            detalhesHtml: adminDetailsHtml,
+            siteUrl,
+          }),
         });
         emailStatus.admin = true;
         console.log(`[cadastro] E-mail de aviso enviado para admin: ${ADMIN_EMAIL}`);

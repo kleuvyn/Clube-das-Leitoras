@@ -27,7 +27,7 @@ const mapToUiEvent = (r: any) => ({
 
 export async function GET() {
   try {
-    const rows = await db.select().from(encontros).orderBy(desc(encontros.data));
+    const rows = await db.select().from(encontros).orderBy(desc(encontros.createdAt));
 
     
     const countMap: Record<string, { vou: number; nao_vou: number }> = {};

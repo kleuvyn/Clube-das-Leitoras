@@ -26,6 +26,12 @@ interface LivroItem {
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
+function mesParaNumero(mes: string | null | undefined): number | null {
+  if (!mes) return null;
+  const idx = MESES.findIndex(m => m.toLowerCase() === mes.toString().trim().toLowerCase());
+  return idx >= 0 ? idx + 1 : null;
+}
+
 export default function LivroDoMesAdmin() {
   const { isAdmin } = useAdmin();
   const router = useRouter();
@@ -47,7 +53,7 @@ export default function LivroDoMesAdmin() {
 
   const loadDados = async () => {
     try {
-      const res = await fetch('/api/livro-do-mes');
+      const res = await fetch('/api/livro-do-mes', { cache: 'no-store' });
       const data = await res.json();
       setRodas(Array.isArray(data) ? data : []);
     } catch (e) { console.error("Erro ao carregar:", e); }
@@ -80,7 +86,11 @@ export default function LivroDoMesAdmin() {
     }
     setLoading(true);
     try {
-      const payload = { ...formData, ano: Number(formData.ano) };
+      const payload = {
+        ...formData,
+        ano: Number(formData.ano),
+        num: mesParaNumero(formData.mes),
+      };
       let res: Response;
 
       if (editandoId) {

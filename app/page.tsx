@@ -27,14 +27,14 @@ export default function HomeJornalClubeLeitoras() {
   const anoAtual = new Date().getFullYear();
   const anoRomano = ROMANOS[anoAtual - ANO_FUNDACAO] ?? `${anoAtual - ANO_FUNDACAO + 1}`;
 
-  const fotosEncontros = ["/0.jpeg", "/1.jpeg", "/2.jpeg", "/3.jpeg", "/3.1.jpeg", "/4.jpeg", "/5.jpeg", "/6.jpeg", "/7.jpeg", "/8.jpeg", "/9.jpeg", "/10.jpeg", "/11.jpeg"];
+  const fotosEncontros = ["/1.jpeg", "/2.jpeg", "/3.jpeg", "/3.1.jpeg", "/4.jpeg", "/5.jpeg", "/6.jpeg", "/7.jpg", "/8.jpg", "/9.jpg", "/10.jpg", "/11.jpeg", "/12.jpeg", "/13.jpeg", "/14.jpeg", "/15.jpeg", "/16.jpeg", "/17.jpeg"];
 
   const anoCuradoria = anoAtual - 1;
 
   useEffect(() => {
     async function buscarMemoria() {
       try {
-        const res = await fetch(`/api/livro-do-mes?ano=${anoAtual - 1}`);
+        const res = await fetch(`/api/livro-do-mes?ano=${anoAtual - 1}`, { cache: 'no-store' });
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setCuradoriaMemoria(data.map((l: any) => ({
@@ -58,7 +58,7 @@ export default function HomeJornalClubeLeitoras() {
   useEffect(() => {
     async function buscarLivroAtual() {
       try {
-        const res = await fetch(`/api/livro-do-mes?ano=${new Date().getFullYear()}`);
+        const res = await fetch(`/api/livro-do-mes?ano=${new Date().getFullYear()}`, { cache: 'no-store' });
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           const mesAtual = new Date().getMonth() + 1;
@@ -66,18 +66,30 @@ export default function HomeJornalClubeLeitoras() {
 
           // Prioriza o livro cujo número do mês corresponde ao mês atual.
           // Se não houver, tenta casar pelo nome do mês. Se ainda não, pega o primeiro registrado.
-          const match = data.find((item: any) => {
+          const monthMatch = data.find((item: any) => {
             const num = typeof item.num === 'number' ? item.num : Number(item.num);
             const mes = String(item.mes || '').toLowerCase();
             return num === mesAtual || mes === mesAtualNome.toLowerCase();
-          }) ?? data[0];
+          });
+
+          const fallback = (monthMatch || data
+            .slice()
+            .sort((a: any, b: any) => {
+              const ana = typeof a.ano === 'number' ? a.ano : Number(a.ano);
+              const bna = typeof b.ano === 'number' ? b.ano : Number(b.ano);
+              if (ana !== bna) return bna - ana;
+              const anum = typeof a.num === 'number' ? a.num : Number(a.num);
+              const bnum = typeof b.num === 'number' ? b.num : Number(b.num);
+              return (bnum || 0) - (anum || 0);
+            })[0]);
+          const chosen = monthMatch || fallback;
 
           setLivroDoMes({
-            titulo: match.livro || '',
-            autor: match.autora || '',
-            mes: match.mes || '',
-            capa: match.foto || '',
-            descricao_curta: match.sinopse || '',
+            titulo: chosen.livro || '',
+            autor: chosen.autora || '',
+            mes: chosen.mes || '',
+            capa: chosen.foto || '',
+            descricao_curta: chosen.sinopse || '',
           });
         }
       } catch (err) {

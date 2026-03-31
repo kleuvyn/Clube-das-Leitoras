@@ -10,7 +10,7 @@ function escapeHtml(s: string) {
     .replace(/'/g, '&#39;');
 }
 
-// Configurações de Identidade Visual (Baseadas no seu Login)
+// Configurações de Identidade Visual
 const CORES = {
   rosaGabi: "#B04D4A",
   marromPapel: "#8C7A66",
@@ -20,113 +20,134 @@ const CORES = {
 };
 
 /**
- * CSS Base para todos os e-mails do Clube
- * Focado em legibilidade e estética acadêmica
+ * CSS Base - Estilo Lacre de Cera e Carta Acadêmica
  */
 const baseStyles = `
+  @import url('https://fonts.googleapis.com/css2?family=Alice&display=swap');
+
   body { 
     font-family: 'Alice', Georgia, serif; 
     background-color: ${CORES.papelFundo}; 
     margin: 0; 
-    padding: 40px 10px; 
+    padding: 30px 10px !important; 
     -webkit-font-smoothing: antialiased; 
   }
   .card { 
     max-width: 580px; 
     margin: 0 auto; 
     background-color: ${CORES.papelCard}; 
-    border-radius: 45px; 
+    border-radius: 4px; /* Bordas mais retas para parecer papel de carta */
     overflow: hidden; 
-    border: 1px solid rgba(0,0,0,0.04); 
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08); 
+    border: 1px solid rgba(0,0,0,0.06); 
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05); 
   }
   .mast { 
     padding: 50px 30px 20px; 
     text-align: center; 
   }
-  .heart-icon {
-    background: ${CORES.rosaGabi};
-    width: 48px;
-    height: 48px;
+  
+  /* O Lacre de Cera (Brasão) */
+  .lacre-container {
+    display: inline-block;
+    background-color: ${CORES.rosaGabi};
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
     margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(176, 77, 74, 0.4), inset 0 0 15px rgba(0,0,0,0.1);
+    border: 2px solid rgba(255,255,255,0.1);
+    text-align: center;
+    vertical-align: middle;
   }
+  .lacre-img {
+    width: 35px;
+    height: 35px;
+    margin-top: 17px;
+    filter: brightness(0) invert(1); /* Deixa a logo branca para contrastar com o lacre */
+    display: inline-block;
+  }
+
   h1 { 
     margin: 0; 
-    font-weight: 300; 
+    font-weight: normal; 
     font-style: italic; 
-    color: ${CORES.textoEscuro}; 
-    font-size: 32px; 
-    letter-spacing: -1px; 
+    color: ${CORES.textoEscuro} !important; 
+    font-size: 28px; 
+    letter-spacing: -0.5px;
   }
   .tagline { 
     font-size: 10px; 
     font-weight: bold; 
     text-transform: uppercase; 
-    letter-spacing: 0.5em; 
+    letter-spacing: 5px; 
     color: ${CORES.marromPapel}; 
-    opacity: 0.7; 
     margin-top: 10px; 
+    opacity: 0.7;
   }
   .divider { 
-    width: 40px; 
+    width: 60px; 
     height: 1px; 
-    background: ${CORES.rosaGabi}; 
+    background-color: ${CORES.rosaGabi}; 
     margin: 25px auto; 
-    opacity: 0.3; 
+    opacity: 0.4;
   }
   .body { 
-    padding: 0 45px 45px; 
+    padding: 0 50px 50px; 
     color: ${CORES.textoEscuro}; 
     line-height: 1.8; 
     font-size: 16px; 
     text-align: center;
   }
   .creds-box { 
-    background: ${CORES.papelFundo}; 
-    padding: 25px; 
-    border-radius: 25px; 
-    margin: 25px 0; 
-    text-align: left;
-    border: 1px solid rgba(0,0,0,0.02);
+    background-color: #F9F4EE; 
+    padding: 30px; 
+    border-radius: 12px; 
+    margin: 30px 0; 
+    border: 1px dashed ${CORES.marromPapel};
   }
   .footer { 
-    background: #FBF8F6; 
+    background-color: #FBF8F6; 
     padding: 30px; 
     text-align: center; 
-    color: ${CORES.marromPapel}; 
+    color: ${CORES.marromPapel} !important; 
     font-size: 9px; 
     font-weight: bold; 
     text-transform: uppercase; 
-    letter-spacing: 0.4em; 
-    border-top: 1px solid rgba(0,0,0,0.02); 
+    letter-spacing: 4px; 
   }
   .cta-button { 
     display: inline-block; 
     margin-top: 25px; 
-    padding: 18px 35px; 
+    padding: 18px 36px; 
     background-color: ${CORES.rosaGabi}; 
     color: #ffffff !important; 
-    border-radius: 40px; 
-    text-decoration: none; 
+    border-radius: 2px; /* Botão mais clássico/quadrado */
+    text-decoration: none !important; 
     font-size: 11px; 
     font-weight: bold; 
     text-transform: uppercase; 
-    letter-spacing: 0.2em; 
+    letter-spacing: 2px; 
   }
   .quote-box {
     font-style: italic;
     border-left: 2px solid ${CORES.rosaGabi};
-    padding: 10px 20px;
-    margin: 20px 0;
+    padding: 15px 25px;
+    margin: 25px 0;
     text-align: left;
-    background: rgba(176, 77, 74, 0.03);
+    background-color: rgba(176, 77, 74, 0.03);
     color: ${CORES.marromPapel};
   }
 `;
+
+/**
+ * Renderiza o Lacre (Brasão)
+ */
+function renderLacre(siteUrl: string) {
+  return `
+    <div class="lacre-container">
+      <img src="${siteUrl}/logo-clube-leitoras.png" alt="Selo" class="lacre-img" />
+    </div>`;
+}
 
 /**
  * 1. CARTA: INSCRIÇÃO EM ANÁLISE
@@ -135,24 +156,25 @@ export function cartaInscricaoEmAnalise(params: { nome: string; tipo: string; da
   const { nome, tipo, data, resumoHtml = '', siteUrl = 'https://clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
-<head><style>${baseStyles}</style></head>
+<head>
+  <meta charset="UTF-8">
+  <style>${baseStyles}</style>
+</head>
 <body>
   <div class="card">
     <div class="mast">
-      <div class="heart-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 21s-7.5-4.5-9-7.5C1 10.5 4.5 6 8.5 6 10 6 12 7.5 12 7.5S14 6 15.5 6C19.5 6 23 10.5 21 13.5 19.5 16.5 12 21 12 21z"/></svg>
-      </div>
+      ${renderLacre(siteUrl)}
       <h1>Clube das Leitoras</h1>
-      <div class="tagline">Sua jornada começa aqui</div>
+      <div class="tagline">Correspondência Oficial</div>
       <div class="divider"></div>
     </div>
     <div class="body">
-      <p>Olá, <strong>${escapeHtml(nome)}</strong>.</p>
-      <p>Recebemos sua solicitação para <strong>${escapeHtml(tipo)}</strong> enviada em ${escapeHtml(data)}.</p>
-      <p>Nossa curadoria recebeu seu pedido com carinho e já iniciou o processo de leitura.</p>
+      <p>Estimada, <strong>${escapeHtml(nome)}</strong>.</p>
+      <p>Acusamos o recebimento de sua solicitação para <strong>${escapeHtml(tipo)}</strong> enviada em ${escapeHtml(data)}.</p>
+      <p>Sua mensagem já repousa em nossa curadoria para uma leitura atenta e afetuosa.</p>
       ${resumoHtml ? `<div class="quote-box">${resumoHtml}</div>` : ''}
-      <p>Assim que finalizarmos a análise, você receberá uma nova carta por aqui.</p>
-      <a class="cta-button" href="${siteUrl}">Conhecer o Acervo</a>
+      <p>Em breve, uma nova carta chegará com a nossa resposta.</p>
+      <a class="cta-button" href="${siteUrl}">Visitar a Biblioteca</a>
     </div>
     <div class="footer">Brasília • Curadoria de Afeto</div>
   </div>
@@ -161,33 +183,34 @@ export function cartaInscricaoEmAnalise(params: { nome: string; tipo: string; da
 }
 
 /**
- * 2. CARTA: APROVAÇÃO COM SENHA (BOAS-VINDAS)
+ * 2. CARTA: APROVAÇÃO COM SENHA
  */
 export function cartaAprovacaoComSenha(params: { nome: string; email: string; senha: string; siteUrl?: string }) {
   const { nome, email, senha, siteUrl = 'https://clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
-<head><style>${baseStyles}</style></head>
+<head>
+  <meta charset="UTF-8">
+  <style>${baseStyles}</style>
+</head>
 <body>
   <div class="card">
     <div class="mast">
-      <div class="heart-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 21s-7.5-4.5-9-7.5C1 10.5 4.5 6 8.5 6 10 6 12 7.5 12 7.5S14 6 15.5 6C19.5 6 23 10.5 21 13.5 19.5 16.5 12 21 12 21z"/></svg>
-      </div>
+      ${renderLacre(siteUrl)}
       <h1>Seja bem-vinda</h1>
-      <div class="tagline">A Próxima Página espera</div>
+      <div class="tagline">O portal está aberto</div>
       <div class="divider"></div>
     </div>
     <div class="body">
-      <p>Olá, <strong>${escapeHtml(nome)}</strong>. É um prazer abrir nossas portas para você.</p>
-      <p>Sua entrada foi aprovada! Guarde seus dados de acesso em um lugar seguro:</p>
+      <p>Olá, <strong>${escapeHtml(nome)}</strong>. É com alegria que confirmamos sua entrada em nosso círculo.</p>
+      <p>Suas credenciais de acesso foram geradas e devem ser mantidas em segurança:</p>
       <div class="creds-box">
-        <div style="font-size: 10px; color: ${CORES.marromPapel}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">E-mail de leitora</div>
+        <div style="font-size: 10px; color: ${CORES.marromPapel}; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Identificação</div>
         <div style="font-weight: bold; margin-bottom: 20px; font-size: 18px;">${escapeHtml(email)}</div>
-        <div style="font-size: 10px; color: ${CORES.marromPapel}; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px;">Chave de Acesso</div>
-        <code style="color: ${CORES.rosaGabi}; font-weight: bold; font-size: 18px;">${escapeHtml(senha)}</code>
+        <div style="font-size: 10px; color: ${CORES.marromPapel}; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Chave de Acesso</div>
+        <div style="color: ${CORES.rosaGabi}; font-weight: bold; font-size: 26px; font-family: monospace;">${escapeHtml(senha)}</div>
       </div>
-      <p style="font-size: 14px; opacity: 0.7;"><em>Dica: Ao entrar, sinta-se à vontade para criar uma senha definitiva no seu perfil.</em></p>
+      <p style="font-size: 13px;"><em>Recomendamos a alteração desta senha em seu primeiro acesso.</em></p>
       <a class="cta-button" href="${siteUrl}/login">Entrar no Clube</a>
     </div>
     <div class="footer">Brasília • Curadoria de Afeto</div>
@@ -197,28 +220,29 @@ export function cartaAprovacaoComSenha(params: { nome: string; email: string; se
 }
 
 /**
- * 3. CARTA: APROVAÇÃO SIMPLES (sem senha)
+ * 3. CARTA: APROVAÇÃO SIMPLES
  */
 export function cartaAprovacaoSimples(params: { nome: string; tipo: string; siteUrl?: string }) {
   const { nome, tipo, siteUrl = 'https://clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
-<head><style>${baseStyles}</style></head>
+<head>
+  <meta charset="UTF-8">
+  <style>${baseStyles}</style>
+</head>
 <body>
   <div class="card">
     <div class="mast">
-      <div class="heart-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 21s-7.5-4.5-9-7.5C1 10.5 4.5 6 8.5 6 10 6 12 7.5 12 7.5S14 6 15.5 6C19.5 6 23 10.5 21 13.5 19.5 16.5 12 21 12 21z"/></svg>
-      </div>
+      ${renderLacre(siteUrl)}
       <h1>Solicitação Aprovada</h1>
-      <div class="tagline">Você está no time</div>
+      <div class="tagline">Novas páginas esperam</div>
       <div class="divider"></div>
     </div>
     <div class="body">
       <p>Olá, <strong>${escapeHtml(nome)}</strong>.</p>
-      <p>Parabéns! Sua solicitação de <strong>${escapeHtml(tipo)}</strong> foi aprovada.</p>
-      <p>Acesse o painel para finalizar seu cadastro ou ver seus próximos passos.</p>
-      <a class="cta-button" href="${siteUrl}">Ir para o site</a>
+      <p>Temos o prazer de informar que sua solicitação de <strong>${escapeHtml(tipo)}</strong> foi deferida.</p>
+      <p>Tudo está pronto para sua próxima jornada.</p>
+      <a class="cta-button" href="${siteUrl}">Ir para o Clube</a>
     </div>
     <div class="footer">Brasília • Curadoria de Afeto</div>
   </div>
@@ -233,22 +257,23 @@ export function cartaNotificacaoAdmin(params: { tipo: string; nome: string; data
   const { tipo, nome, data, detalhesHtml, siteUrl = 'https://clubedasleitoras.com.br' } = params;
   return `<!doctype html>
 <html lang="pt-BR">
-<head><style>${baseStyles}</style></head>
+<head>
+  <meta charset="UTF-8">
+  <style>${baseStyles}</style>
+</head>
 <body>
   <div class="card">
     <div class="mast">
-      <div class="heart-icon">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 21s-7.5-4.5-9-7.5C1 10.5 4.5 6 8.5 6 10 6 12 7.5 12 7.5S14 6 15.5 6C19.5 6 23 10.5 21 13.5 19.5 16.5 12 21 12 21z"/></svg>
-      </div>
-      <h1>Nova Solicitação</h1>
-      <div class="tagline">Curadoria Pendente</div>
+      ${renderLacre(siteUrl)}
+      <h1>Nova Curadoria</h1>
+      <div class="tagline">Urgente</div>
       <div class="divider"></div>
     </div>
     <div class="body">
-      <p style="font-size: 13px; color: ${CORES.marromPapel};">Recebido em: ${escapeHtml(data)}</p>
-      <h2 style="margin: 10px 0;">${escapeHtml(nome)}</h2>
-      <p>Enviou uma solicitação de: <strong>${escapeHtml(tipo)}</strong></p>
-      <div class="creds-box">
+      <p style="font-size: 12px; color: ${CORES.marromPapel};">Data de Registro: ${escapeHtml(data)}</p>
+      <h2 style="margin: 10px 0; font-weight: normal;">${escapeHtml(nome)}</h2>
+      <p>Enviou uma nova solicitação de <strong>${escapeHtml(tipo)}</strong>.</p>
+      <div class="creds-box" style="text-align: left; font-size: 14px;">
         ${detalhesHtml}
       </div>
       <a class="cta-button" href="${siteUrl}/admin">Abrir Painel</a>
