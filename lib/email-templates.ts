@@ -23,21 +23,12 @@ const CORES = {
 };
 
 const LOGO_FILENAME = 'logo-clube-leitoras.png';
-let cachedLogoDataUri: string | null = null;
 
 function getLogoSrc(siteUrl: string) {
-  if (cachedLogoDataUri) return cachedLogoDataUri;
-  try {
-    const logoPath = path.join(process.cwd(), 'public', LOGO_FILENAME);
-    if (fs.existsSync(logoPath)) {
-      const buffer = fs.readFileSync(logoPath);
-      cachedLogoDataUri = `data:image/png;base64,${buffer.toString('base64')}`;
-      return cachedLogoDataUri;
-    }
-  } catch (error) {
-    console.warn('[email-templates] falha ao ler logo para e-mail:', error);
-  }
-  return `${siteUrl}/${LOGO_FILENAME}`;
+  // Use a URL pública em vez de base64 embutido para evitar que emails ultrapassem o tamanho limite do Gmail
+  // e apareçam como “[Mensagem cortada]” em vez do conteúdo completo.
+  const finalSiteUrl = (siteUrl || 'https://clubedasleitoras.com.br').replace(/\/+$/, '');
+  return `${finalSiteUrl}/${LOGO_FILENAME}`;
 }
 
 /**
