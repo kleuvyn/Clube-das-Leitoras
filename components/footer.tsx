@@ -61,33 +61,23 @@ export function Footer() {
             <h3 className="font-bold text-[10px] uppercase tracking-[0.3em] mb-8 text-black/40">Explorar</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="/livro-do-mes" legacyBehavior>
-                  <a className="text-sm hover:translate-x-1 transition-all flex items-center group font-medium italic text-black">
-                    Livros do Mês <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 ml-1 transition-all" />
-                  </a>
+                <Link href="/livro-do-mes" className="text-sm hover:translate-x-1 transition-all flex items-center group font-medium italic text-black">
+                  Livros do Mês <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 ml-1 transition-all" />
                 </Link>
               </li>
               <li>
-                <Link href="/dicas" legacyBehavior>
-                  <a className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">Dicas da Gabi</a>
+                <Link href="/dicas" className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">Dicas da Gabi</Link>
+              </li>
+              <li>
+                <Link href="/parcerias" className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">Nossas Parcerias</Link>
+              </li>
+              <li>
+                <Link href="/empreendedoras" className="text-sm font-bold hover:opacity-70 transition-all flex items-center gap-2 uppercase tracking-widest text-[10px] pt-2" style={{ color: rosaGabi }}>
+                  <Sparkles className="w-3 h-3" /> Empreendedoras
                 </Link>
               </li>
               <li>
-                <Link href="/parcerias" legacyBehavior>
-                  <a className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">Nossas Parcerias</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/empreendedoras" legacyBehavior>
-                  <a className="text-sm font-bold hover:opacity-70 transition-all flex items-center gap-2 uppercase tracking-widest text-[10px] pt-2" style={{ color: rosaGabi }}>
-                    <Sparkles className="w-3 h-3" /> Empreendedoras
-                  </a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/privacidade" legacyBehavior>
-                  <a className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">Política de Privacidade</a>
-                </Link>
+                <Link href="/privacidade" className="text-sm hover:translate-x-1 transition-all font-medium italic text-black">Política de Privacidade</Link>
               </li>
             </ul>
           </div>

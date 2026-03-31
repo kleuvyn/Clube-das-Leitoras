@@ -57,13 +57,16 @@ export async function POST(request: Request) {
     }).returning();
 
     // Notifica leitoras em background (fire-and-forget)
-    notificarLeitoras({
+    const notificationSent = await notificarLeitoras({
       secao: 'dicas',
       tituloConteudo: body.titulo,
       descricaoConteudo: body.descricao,
-    }).catch(console.error);
+    }).catch((err) => {
+      console.error('[dicas] Falha na notificação de leitoras:', err);
+      return false;
+    });
 
-    return NextResponse.json({ success: true, data: inserted }, { status: 201 });
+    return NextResponse.json({ success: true, data: inserted, notificationSent }, { status: 201 });
   } catch (err: any) {
     console.error('Erro POST /api/dicas:', err);
     return NextResponse.json({ error: 'Erro ao criar dica' }, { status: 500 });

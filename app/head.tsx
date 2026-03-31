@@ -3,7 +3,6 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 export default function Head() {
   const title = 'Clube das Leitoras — Leituras, encontros e curadoria';
   const description = 'Clube das Leitoras: leituras compartilhadas, encontros em Brasília, resenhas e atividades culturais. Junte‑se à nossa comunidade.';
-  const image = `${siteUrl}/og-image.svg`;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -13,6 +12,9 @@ export default function Head() {
     logo: `${siteUrl}/logo.png`,
     sameAs: ['https://instagram.com/elaeasviagens']
   };
+
+  // Prefer PNG for widest Open Graph compatibility; keep SVG in public for manual use.
+  const image = `${siteUrl}/og-image.png`;
 
   return (
     <>

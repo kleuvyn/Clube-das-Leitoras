@@ -227,7 +227,10 @@ export async function notificarLeitoras(params: {
       .from(colaboradoras)
       .where(and(eq(colaboradoras.active, true)));
 
-    if (!leitoras.length) return;
+    if (!leitoras.length) {
+      console.warn('[notificacao] Nenhuma leitora ativa encontrada em colaboradoras. Nenhum e-mail será enviado.');
+      return false;
+    }
 
     const effectiveFrom = getFromAddress();
     const emails = leitoras.map((l) => ({
@@ -246,6 +249,8 @@ export async function notificarLeitoras(params: {
       }),
     }));
 
+    console.log(`[notificacao] Preparando envio de ${emails.length} emails para a seção '${secao}' (from: ${effectiveFrom}).`);
+
     // Envia em lotes via o cliente central (Brevo)
     const { sendBatch } = await import('@/lib/email-client');
     for (let i = 0; i < emails.length; i += 100) {
@@ -253,7 +258,9 @@ export async function notificarLeitoras(params: {
     }
 
     console.log(`[notificacao] ${emails.length} emails enviados — seção: ${secao}`);
+    return true;
   } catch (err) {
     console.error('[notificacao] Erro ao enviar notificações:', err);
+    return false;
   }
 }

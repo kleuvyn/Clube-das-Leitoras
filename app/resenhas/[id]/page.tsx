@@ -37,7 +37,7 @@ export default async function ResenhaByIdPage({ params }: { params: { id: string
 
   const imageSrc = r.imageUrl
     ? r.imageUrl.startsWith('http') ? r.imageUrl : `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}${r.imageUrl}`
-    : '/og-image.svg';
+    : '/og-image.png';
 
   return (
     <div className="min-h-screen font-alice pb-40 relative overflow-hidden" style={{ background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}>

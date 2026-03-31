@@ -11,39 +11,62 @@ import {
 const ocreDestaque = "var(--page-color)";
 
 const fotosClubeDoLivro = [
-  "/Clube%20do%20Livro/20260222_103046.jpg",
-  "/Clube%20do%20Livro/20260222_103050.jpg",
-  "/Clube%20do%20Livro/05cc4bfe-a161-4e28-8ab0-d8c237e3c352.jpg",
-  "/Clube%20do%20Livro/16556b6a-79c0-4f6b-aad7-51060b8bea3b.jpg",
-  "/Clube%20do%20Livro/23bcdf68-eecc-451c-9b3f-f915ac64758f.jpg",
-  "/Clube%20do%20Livro/25e39576-54b3-4511-90fb-b35429a7268f.jpg",
-  "/Clube%20do%20Livro/3e440074-a493-45b8-82af-315254a52778.jpg",
-  "/Clube%20do%20Livro/47011e31-a35a-4d75-b581-a6fcd0a29a58.jpg",
-  "/Clube%20do%20Livro/54263aa5-18ea-4e3c-ae4c-92beb3d3a917.jpg",
-  "/Clube%20do%20Livro/8db3fd79-26e0-40d1-a5d2-af5b9d4c1653.jpg",
-  "/Clube%20do%20Livro/96764b63-fa3a-4b3a-81d2-c4193d5f56ac.jpg",
-  "/Clube%20do%20Livro/a19ae900-4873-412f-ab48-49a9ff536cd6.jpg",
-  "/Clube%20do%20Livro/c0907d86-7c41-42e4-9cb0-1756f560a0df.jpg",
-  "/Clube%20do%20Livro/c120a400-cad2-4baf-ac15-322299acfbe7.jpg",
-  "/Clube%20do%20Livro/d94864d3-50b1-4559-ab74-30539fae8f7a.jpg",
-  "/Clube%20do%20Livro/dc9234b0-5ab1-4d61-9ea4-d36b63c7fda9.jpg",
-  "/Clube%20do%20Livro/e50fbd41-56ad-4b64-a45d-e2037cc1d438.jpg",
-  "/Clube%20do%20Livro/f0b29818-1aeb-40bf-a389-1b506922c442.jpg",
-  "/Clube%20do%20Livro/faeb0a68-254a-45e7-bb28-69318f2580e3.jpg",
-  "/Clube%20do%20Livro/F98E7F83-DC7E-4426-AAE6-E63DAACB0E6D.png",
-  "/Clube%20do%20Livro/IMG_4233.JPG",
-  "/Clube%20do%20Livro/IMG_4394.JPG",
-  "/Clube%20do%20Livro/IMG_4427.PNG",
-  "/Clube%20do%20Livro/IMG_4428.PNG",
-  "/Clube%20do%20Livro/IMG_4429.PNG",
-  "/Clube%20do%20Livro/IMG_4430.PNG",
-  "/Clube%20do%20Livro/IMG_4431.PNG",
-  "/Clube%20do%20Livro/IMG_4432.PNG",
-  "/Clube%20do%20Livro/IMG_4433.PNG",
-  "/Clube%20do%20Livro/IMG_4434.PNG",
-  "/Clube%20do%20Livro/IMG_4435.PNG",
-  "/Clube%20do%20Livro/IMG_4436.PNG",
-  "/Clube%20do%20Livro/IMG_4437.PNG",
+  "/Clube das Leitoras/10.JPG",
+  "/Clube das Leitoras/12.jpg",
+  "/Clube das Leitoras/13.jpeg",
+  "/Clube das Leitoras/14.jpeg",
+  "/Clube das Leitoras/15.jpeg",
+  "/Clube das Leitoras/16.jpeg",
+  "/Clube das Leitoras/17.jpeg",
+  "/Clube das Leitoras/18.jpeg",
+  "/Clube das Leitoras/19.jpeg",
+  "/Clube das Leitoras/1.jpeg",
+  "/Clube das Leitoras/20.jpeg",
+  "/Clube das Leitoras/21.jpeg",
+  "/Clube das Leitoras/22.jpeg",
+  "/Clube das Leitoras/23.jpg",
+  "/Clube das Leitoras/2.jpeg",
+  "/Clube das Leitoras/3.jpg",
+  "/Clube das Leitoras/4.jpeg",
+  "/Clube das Leitoras/5.jpeg",
+  "/Clube das Leitoras/6.jpeg",
+  "/Clube das Leitoras/7.jpg",
+  "/Clube das Leitoras/8.jpg",
+  "/Clube das Leitoras/20260222_103046.jpg",
+  "/Clube das Leitoras/20260222_103050.jpg",
+  "/Clube das Leitoras/05cc4bfe-a161-4e28-8ab0-d8c237e3c352.jpg",
+  "/Clube das Leitoras/16556b6a-79c0-4f6b-aad7-51060b8bea3b.jpg",
+  "/Clube das Leitoras/23bcdf68-eecc-451c-9b3f-f915ac64758f.jpg",
+  "/Clube das Leitoras/25e39576-54b3-4511-90fb-b35429a7268f.jpg",
+  "/Clube das Leitoras/3e440074-a493-45b8-82af-315254a52778.jpg",
+  "/Clube das Leitoras/47011e31-a35a-4d75-b581-a6fcd0a29a58.jpg",
+  "/Clube das Leitoras/54263aa5-18ea-4e3c-ae4c-92beb3d3a917.jpg",
+  "/Clube das Leitoras/8db3fd79-26e0-40d1-a5d2-af5b9d4c1653.jpg",
+  "/Clube das Leitoras/96764b63-fa3a-4b3a-81d2-c4193d5f56ac.jpg",
+  "/Clube das Leitoras/a19ae900-4873-412f-ab48-49a9ff536cd6.jpg",
+  "/Clube das Leitoras/IMG_4233.JPG",
+  "/Clube das Leitoras/IMG_4394.JPG",
+  "/Clube das Leitoras/IMG_4427.PNG",
+  "/Clube das Leitoras/IMG_4428.PNG",
+  "/Clube das Leitoras/IMG_4429.PNG",
+  "/Clube das Leitoras/IMG_4430.PNG",
+  "/Clube das Leitoras/IMG_4431.PNG",
+  "/Clube das Leitoras/IMG_4432.PNG",
+  "/Clube das Leitoras/IMG_4433.PNG",
+  "/Clube das Leitoras/IMG_4434.PNG",
+  "/Clube das Leitoras/IMG_4435.PNG",
+  "/Clube das Leitoras/IMG_4436.PNG",
+  "/Clube das Leitoras/IMG_4437.PNG",
+  "/Clube das Leitoras/IMG_7284.jpg",
+  "/Clube das Leitoras/IMG_7306.jpg",
+  "/Clube das Leitoras/IMG_7360.JPG",
+  "/Clube das Leitoras/IMG_7361.JPG",
+  "/Clube das Leitoras/WhatsApp Image 2026-03-29 at 09.49.54.jpeg",
+  "/Clube das Leitoras/WhatsApp Image 2026-03-29 at 09.50.02.jpeg",
+  "/Clube das Leitoras/WhatsApp Image 2026-03-29 at 16.04.40.jpeg",
+  "/Clube das Leitoras/WhatsApp Image 2026-03-29 at 16.39.40.jpeg",
+  "/Clube das Leitoras/WhatsApp Image 2026-03-29 at 20.15.15.jpeg",
+  "/Clube das Leitoras/WhatsApp Image 2026-03-30 at 19.32.53.jpeg",
 ];
 
 interface Evento {
@@ -119,12 +142,15 @@ export default function EventosPage() {
     }
     carregarDados();
 
-    const sortear = () => {
-      setFotosGaleria([...fotosClubeDoLivro].sort(() => Math.random() - 0.5).slice(0, 4));
-    };
-    sortear();
-    const intervalo = setInterval(sortear, 5000);
-    return () => clearInterval(intervalo);
+    // fixar imagens desejadas (sem trocar aleatoriamente)
+    const preferredFotos = [
+      "/Clube das Leitoras/IMG_7360.JPG",
+      "/Clube das Leitoras/IMG_7361.JPG",
+      "/Clube das Leitoras/10.JPG",
+      "/Clube das Leitoras/12.jpg",
+    ];
+    setFotosGaleria(preferredFotos);
+    return () => undefined;
   }, []);
 
   const handleRsvp = useCallback(async (eventoId: string, status: 'vou' | 'nao_vou') => {

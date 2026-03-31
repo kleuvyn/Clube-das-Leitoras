@@ -27,7 +27,7 @@ export default function HomeJornalClubeLeitoras() {
   const anoAtual = new Date().getFullYear();
   const anoRomano = ROMANOS[anoAtual - ANO_FUNDACAO] ?? `${anoAtual - ANO_FUNDACAO + 1}`;
 
-  const fotosEncontros = ["/1.jpeg", "/2.jpeg", "/3.jpg", "/4.jpeg", "/5.jpeg", "/6.jpeg", "/7.jpg", "/8.jpg", "/9.jpg", "/10.jpg", "/11.jpeg", "/12.jpg", "/13.jpeg", "/14.jpeg", "/15.jpeg", "/16.jpeg", "/17.jpeg"];
+  const fotosEncontros = ["/1.jpeg", "/2.jpeg", "/3.jpg", "/4.jpeg", "/5.jpeg", "/6.jpeg", "/7.jpg", "/8.jpg", "/9.jpg", "/10.jpg", "/11.jpeg", "/12.jpg", "/13.jpeg", "/14.jpeg", "/15.jpeg", "/16.jpeg", "/17.jpeg", "/18.jpeg", "/19.jpeg", "/20.jpeg", "/21.jpeg", "/22.jpeg", "/23.jpeg"];
 
   const anoCuradoria = anoAtual - 1;
 
