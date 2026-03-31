@@ -152,13 +152,13 @@ export default function HomeJornalClubeLeitoras() {
                   />
                </div>
                <div className="space-y-8">
-                  <span className="font-bold text-[10px] uppercase tracking-[0.4em] px-4 py-1.5 border border-[#B04D4A] rounded-full inline-block text-[#B04D4A]">
+                  <span className="font-bold text-[10px] uppercase tracking-[0.4em] px-4 py-1.5 border border-rosa-gabi rounded-full inline-block text-rosa-gabi">
                       Leitura em Foco • {livroDoMes.mes}
                   </span>
                   
                   <h2 className="text-6xl md:text-7xl tracking-tighter leading-none">
                       <span className="text-[#2C3E50]">{livroDoMes.titulo?.split(' ')[0]}</span> <br/>
-                      <span className="italic font-light text-[#B04D4A]">
+                      <span className="italic font-light text-rosa-gabi">
                         {livroDoMes.titulo?.split(' ').slice(1).join(' ')}
                       </span>
                   </h2>
@@ -166,7 +166,7 @@ export default function HomeJornalClubeLeitoras() {
                   <p className="text-base md:text-lg italic leading-snug opacity-85 text-black text-justify font-serif tracking-tight max-w-3xl">
                     De {livroDoMes.autor}. {livroDoMes.descricao_curta}
                   </p>
-                  <a href="/livro-do-mes" className="flex items-center gap-6 font-bold text-xs uppercase tracking-widest text-[#B04D4A] hover:gap-8 transition-all">
+                  <a href="/livro-do-mes" className="flex items-center gap-6 font-bold text-xs uppercase tracking-widest text-rosa-gabi hover:gap-8 transition-all">
                     Guia de Leitura <ArrowRight />
                   </a>
                </div>

@@ -7,6 +7,7 @@ import {
   empreendedoras,
   escritoras,
   resenhas,
+  solicitacoes,
 } from '@/lib/db/schema';
 import React from 'react';
 import Link from 'next/link';
@@ -26,7 +27,7 @@ import {
 const rosaGabi = "#B04D4A"; 
 
 export default async function DashboardPage() {
-  const [livrosRes, encontrosRes, colabsRes, empreendedorasRes, livroDoMesRes, escritorasRes, resenhasRes] = await Promise.all([
+  const [livrosRes, encontrosRes, colabsRes, empreendedorasRes, livroDoMesRes, escritorasRes, resenhasRes, solicitacoesRes] = await Promise.all([
     db.select({ value: count() }).from(livros),
     db.select({ value: count() }).from(encontros),
     db.select({ value: count() }).from(colaboradoras),
@@ -34,25 +35,31 @@ export default async function DashboardPage() {
     db.select({ value: count() }).from(livroDoMes),
     db.select({ value: count() }).from(escritoras),
     db.select({ value: count() }).from(resenhas),
+    db.select({ value: count() }).from(solicitacoes),
   ]);
 
   const stats = {
     livros: Number(livrosRes[0]?.value || 0),
     eventos: Number(encontrosRes[0]?.value || 0),
     comunidade: Number(colabsRes[0]?.value || 0),
+    leitoras: Number(colabsRes[0]?.value || 0),
     empreendedoras: Number(empreendedorasRes[0]?.value || 0),
     livroDoMes: Number(livroDoMesRes[0]?.value || 0),
     escritoras: Number(escritorasRes[0]?.value || 0),
     resenhas: Number(resenhasRes[0]?.value || 0),
+    solicitacoes: Number(solicitacoesRes[0]?.value || 0),
   };
 
-  const cards = [
+  const dashboardCards = [
     { label: 'Livros do Mês', value: stats.livroDoMes, color: 'border-l-[#B04D4A]', icon: Book, href: '/admin/livro-do-mes', desc: 'Acervo curado' },
     { label: 'Eventos', value: stats.eventos, color: 'border-l-[#4F5E46]', icon: Calendar, href: '/admin/cronograma/eventos', desc: 'Cronograma ativo' },
     { label: 'Comunidade', value: stats.comunidade, color: 'border-l-[#967BB6]', icon: Users, href: '/admin/colaboradores', desc: 'Membros ativos' },
     { label: 'Empreendedoras', value: stats.empreendedoras, color: 'border-l-[#D4A373]', icon: Briefcase, href: '/admin/empreendedoras', desc: 'Feminino & Negócios' },
     { label: 'Escritoras', value: stats.escritoras, color: 'border-l-[#6B705C]', icon: PenTool, href: '/admin/escritoras', desc: 'Autoras catalogadas' },
     { label: 'Resenhas', value: stats.resenhas, color: 'border-l-[#A5A5A5]', icon: BookOpen, href: '/admin/livro-do-mes', desc: 'Registros literários' },
+    { label: 'Leitoras', value: stats.leitoras, color: 'border-l-[#B04D4A]', icon: Book, href: '/admin/leitoras', desc: 'Leitoras' },
+    { label: 'Solicitações', value: stats.solicitacoes, color: 'border-l-[#B04D4A]', icon: Calendar, href: '/admin/solicitacoes', desc: 'Solicitações de curadoria' },
+    
   ];
 
   return (
@@ -71,7 +78,7 @@ export default async function DashboardPage() {
         </header>
 
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cards.map((c) => (
+          {dashboardCards.map((c) => (
             <Link key={c.label} href={c.href} className="group">
               <div className={`h-full bg-white rounded-[2rem] p-8 border border-[#E5E1DA] border-l-4 ${c.color} hover:shadow-lg transition-all duration-300 hover:-translate-y-1`}>
                 <div className="flex justify-between items-start mb-6">

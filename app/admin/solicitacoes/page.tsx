@@ -56,10 +56,11 @@ export default function SolicitacoesAdmin() {
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar');
 
       if (status === 'aprovada') {
-        if (data?.emailStatus?.sent) {
-          toast.success('Aprovada! E-mail com senha enviado.');
+        const sent = data?.emailStatus?.sent || data?.emailStatus?.user;
+        if (sent) {
+          toast.success('Aprovada! E-mail de aprovação enviado com sucesso.');
         } else {
-          toast.warning('Aprovada, mas houve problema no envio do e-mail para a leitora. Verifique os logs.');
+          toast.warning('Aprovada, mas houve problema no envio de notificação. Verifique os logs.');
           console.warn('Resposta de emailStatus:', data?.emailStatus);
         }
       } else {

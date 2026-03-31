@@ -14,6 +14,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const { logout, currentUser, isAdmin } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const isAdminOrColab = isAdmin || currentUser?.role === 'colaboradora';
 
   useEffect(() => {
     document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -87,7 +88,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 p-6 overflow-y-auto space-y-8">
-          {menuSections.filter(s => isAdmin || s.category !== 'Gestão').map((section) => (
+          {menuSections.filter(s => isAdminOrColab || s.category !== 'Gestão').map((section) => (
             <div key={section.category}>
               <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 ml-4 opacity-30 text-slate-800">
                 {section.category}

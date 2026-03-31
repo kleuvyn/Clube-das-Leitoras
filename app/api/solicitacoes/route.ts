@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { solicitacoes, colaboradoras } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireAdminOrColaboradora } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
 // Se possível use o remetente já configurado na conta Resend (mesmo que já esteja validado no DNS)
@@ -23,7 +23,7 @@ const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com';
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminOrColaboradora();
     const rows = await db.select().from(solicitacoes).orderBy(desc(solicitacoes.createdAt));
     return NextResponse.json(rows);
   } catch (error: any) {
@@ -261,7 +261,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdminOrColaboradora();
     const body = await request.json();
     const { id, status } = body;
 
@@ -349,10 +349,13 @@ export async function PATCH(request: Request) {
       }
     }
 
+    // Alinha o objeto para a UI do admin que verificava `emailStatus.sent`.
+    emailStatus.sent = !!emailStatus.user;
+
     return NextResponse.json({ success: true, emailStatus }, { status: 200 });
   } catch (e) {
     const details = e instanceof Error ? e.message : (typeof e === 'object' && e !== null ? JSON.stringify(e, Object.getOwnPropertyNames(e), 2) : String(e));
     console.error('Erro ao processar aprovação:', e, details);
-    return NextResponse.json({ error: 'Erro ao processar', details }, { status: 500 });
+    return NextResponse.json({ error: 'Erro ao processar', detalhes: details }, { status: 500 });
   }
 }
