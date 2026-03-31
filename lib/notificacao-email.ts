@@ -218,7 +218,7 @@ export async function notificarLeitoras(params: {
     return;
   }
   const cfg = CONFIG[secao];
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.clubedasleitoras.com.br';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
   const urlDestino = `${siteUrl}${cfg.path}`;
 
   try {

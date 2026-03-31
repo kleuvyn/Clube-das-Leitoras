@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     if (apiKey) {
       try {
         const { sendEmail } = await import('@/lib/email-client');
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.clubedasleitoras.com.br';
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
 
         const effectiveFrom = getFromAddress();
         await sendEmail({
