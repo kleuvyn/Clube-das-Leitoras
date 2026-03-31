@@ -25,6 +25,10 @@ export async function GET() {
         cartaMimo: colaboradoras.cartaMimo,
         enviosRealizados: colaboradoras.enviosRealizados,
         ultimaInteracao: colaboradoras.ultimaInteracao,
+        gdprConsentido: colaboradoras.gdprConsentido,
+        gdprConsentidoEm: colaboradoras.gdprConsentidoEm,
+        gdprConsentimentoVersao: colaboradoras.gdprConsentimentoVersao,
+        gdprConsentimentoFinalidade: colaboradoras.gdprConsentimentoFinalidade,
         createdAt: colaboradoras.createdAt,
       })
       .from(colaboradoras)
@@ -75,6 +79,10 @@ export async function POST(request: Request) {
       role: role || 'leitora', 
       avatarUrl: imageUrl || null,
       active: true,
+      gdprConsentido: true,
+      gdprConsentidoEm: new Date(),
+      gdprConsentimentoVersao: '1.0',
+      gdprConsentimentoFinalidade: 'Cadastro pela administração',
     }).returning();
 
     const { password: _, ...userWithoutPassword } = inserted[0];

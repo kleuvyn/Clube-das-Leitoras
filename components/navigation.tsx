@@ -96,8 +96,9 @@ export function Navigation() {
             <Image 
               src="/logo-clube-leitoras.png" 
               alt="Logo Clube das Leitoras" 
-              fill
-              className="object-contain transition-transform group-hover:scale-105" 
+              width={64}
+              height={64}
+              className="object-contain transition-transform group-hover:scale-105"
               priority
             />
           </div>
@@ -158,6 +159,12 @@ export function Navigation() {
                   Olá, {userName}!
                 </span>
               )}
+              <Link
+                href="/usuario"
+                className="font-inter text-[10px] font-bold uppercase tracking-widest text-amber-800 px-4 py-2 rounded-full border border-amber-200 hover:bg-amber-50"
+              >
+                Meu Perfil
+              </Link>
               <button
                 onClick={handleLogout}
                 className="font-inter flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white px-8 py-3.5 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all"
@@ -225,6 +232,13 @@ export function Navigation() {
                       Olá, {userName}!
                     </p>
                   )}
+                  <Link
+                    href="/usuario"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full inline-flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-amber-700 py-3 rounded-full border border-amber-200 hover:bg-amber-50"
+                  >
+                    <User size={14} /> Meu Perfil
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-lg"

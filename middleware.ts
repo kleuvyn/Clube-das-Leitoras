@@ -26,11 +26,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Proteger /nova-senha: precisa de sessão ativa
+  // Proteger /nova-senha: deve ser rotas de leitora (token de convidada)
   if (pathname === '/nova-senha') {
-    const adminToken = request.cookies.get('clube-admin-token')?.value;
     const convidadaToken = request.cookies.get('clube-sessao')?.value;
-    if (!adminToken && !convidadaToken) {
+    if (!convidadaToken) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }

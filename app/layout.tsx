@@ -90,6 +90,30 @@ export default function RootLayout({
   }, []);
 
   useEffect(() => {
+    // Mecanismo desejado: sair da sessão quando o usuário fecha a aba/janela
+    // (potencialmente forçando re-login em nova aba/instância do navegador).
+    // É baseado em `beforeunload` e `keepalive`, não garante 100% noéricas em todos browsers.
+    const handleBeforeUnload = () => {
+      try {
+        if (typeof navigator !== 'undefined' && 'sendBeacon' in navigator) {
+          navigator.sendBeacon('/api/auth/logout');
+        } else {
+          // keepalive ajuda a executar a requisição em unload
+          fetch('/api/auth/logout', { method: 'POST', keepalive: true });
+        }
+      } catch {
+        // Ignore errors: é apenas tentativa de garantir logout.
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     async function setupAdvancedPWA() {

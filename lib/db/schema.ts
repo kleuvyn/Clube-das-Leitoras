@@ -72,6 +72,13 @@ export const colaboradoras = sqliteTable('colaboradoras', {
   cartaMimo: integer('carta_mimo', { mode: 'boolean' }).default(false),
   enviosRealizados: integer('envios_realizados').default(0),
   ultimaInteracao: integer('ultima_interacao', { mode: 'timestamp' }),
+
+  // LGPD: consentimento de tratamento de dados
+  gdprConsentido: integer('gdpr_consentido', { mode: 'boolean' }).default(false),
+  gdprConsentidoEm: integer('gdpr_consentido_em', { mode: 'timestamp' }),
+  gdprConsentimentoVersao: text('gdpr_consentimento_versao'),
+  gdprConsentimentoFinalidade: text('gdpr_consentimento_finalidade'),
+
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
   lastLogin: integer('last_login', { mode: 'timestamp' }),
 });

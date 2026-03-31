@@ -17,7 +17,7 @@ export async function GET() {
     
     let userData;
     try {
-      const tokenData = adminToken || convidadaToken;
+      const tokenData = convidadaToken || adminToken;
       userData = typeof tokenData === 'string' ? JSON.parse(tokenData) : tokenData;
     } catch {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });

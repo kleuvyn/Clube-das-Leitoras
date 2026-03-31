@@ -32,7 +32,7 @@ export default function LoginCafeFuncional() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: senha }),
+        body: JSON.stringify({ email, password: senha, consentimento: aceitouTermos ? true : false, consentimentoVersao: '1.0', consentimentoFinalidade: 'Acesso e uso de serviços do Clube das Leitoras'}),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Credenciais incorretas.');

@@ -11,9 +11,7 @@ export const dynamic = 'force-dynamic';
 // (mustChangePassword = true). Não exige a senha antiga.
 export async function POST(req: Request) {
   const cookieStore = await cookies();
-  const rawToken =
-    cookieStore.get('clube-admin-token')?.value ??
-    cookieStore.get('clube-sessao')?.value;
+  const rawToken = cookieStore.get('clube-sessao')?.value;
 
   if (!rawToken) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
@@ -26,6 +24,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Sessão inválida' }, { status: 401 });
   }
 
+  if (!tokenData || tokenData.role !== 'convidada') {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+  }
+
   const [user] = await db
     .select()
     .from(colaboradoras)
@@ -33,6 +35,10 @@ export async function POST(req: Request) {
 
   if (!user) {
     return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
+  }
+
+  if (!user.mustChangePassword) {
+    return NextResponse.json({ error: 'Senha já foi definida' }, { status: 400 });
   }
 
   const body = await req.json().catch(() => ({}));

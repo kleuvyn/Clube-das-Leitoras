@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+
 /**
  * Utilitário para evitar Injeção de Código nos e-mails
  */
@@ -18,6 +21,24 @@ const CORES = {
   papelCard: "#FDFCFB",
   textoEscuro: "#2C3E50"
 };
+
+const LOGO_FILENAME = 'logo-clube-leitoras.png';
+let cachedLogoDataUri: string | null = null;
+
+function getLogoSrc(siteUrl: string) {
+  if (cachedLogoDataUri) return cachedLogoDataUri;
+  try {
+    const logoPath = path.join(process.cwd(), 'public', LOGO_FILENAME);
+    if (fs.existsSync(logoPath)) {
+      const buffer = fs.readFileSync(logoPath);
+      cachedLogoDataUri = `data:image/png;base64,${buffer.toString('base64')}`;
+      return cachedLogoDataUri;
+    }
+  } catch (error) {
+    console.warn('[email-templates] falha ao ler logo para e-mail:', error);
+  }
+  return `${siteUrl}/${LOGO_FILENAME}`;
+}
 
 /**
  * CSS Base - Estilo Lacre de Cera e Carta Acadêmica
@@ -143,9 +164,10 @@ const baseStyles = `
  * Renderiza o Lacre (Brasão)
  */
 function renderLacre(siteUrl: string) {
+  const src = getLogoSrc(siteUrl);
   return `
     <div class="lacre-container">
-      <img src="${siteUrl}/logo-clube-leitoras.png" alt="Selo" class="lacre-img" />
+      <img src="${src}" alt="Selo" class="lacre-img" />
     </div>`;
 }
 

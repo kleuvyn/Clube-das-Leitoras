@@ -25,6 +25,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Credenciais inválidas ou conta desativada' }, { status: 401 });
     }
 
+    const consentimento = body.consentimento === true;
+    const consentimentoVersao = body.consentimentoVersao ?? '1.0';
+    const consentimentoFinalidade = body.consentimentoFinalidade ?? 'Acesso e uso do serviço';
+
+    if (consentimento) {
+      try {
+        await db.update(colaboradoras).set({
+          gdprConsentido: true,
+          gdprConsentidoEm: new Date(),
+          gdprConsentimentoVersao: consentimentoVersao,
+          gdprConsentimentoFinalidade: consentimentoFinalidade,
+        }).where(eq(colaboradoras.id, user.id));
+      } catch (err) {
+        console.warn('Falha ao gravar consentimento:', err);
+      }
+    }
+
+
     const passwordMatch = await bcrypt.compare(password, user.password!);
     if (!passwordMatch) {
       return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
@@ -35,12 +53,23 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     const isAdminOrColaboradora = user.role === 'admin' || user.role === 'colaboradora';
 
-    cookieStore.set(isAdminOrColaboradora ? 'clube-admin-token' : 'clube-sessao', JSON.stringify(userWithoutPassword), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-    });
+    if (isAdminOrColaboradora) {
+      cookieStore.set('clube-admin-token', JSON.stringify(userWithoutPassword), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+      cookieStore.delete('clube-sessao');
+    } else {
+      cookieStore.set('clube-sessao', JSON.stringify(userWithoutPassword), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+      });
+      cookieStore.delete('clube-admin-token');
+    }
 
     cookieStore.set('clube-user-email', user.email, {
       httpOnly: false,

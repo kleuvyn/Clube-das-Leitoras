@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     
     const cookieStore = await cookies();
-    const token = cookieStore.get('clube-admin-token')?.value ?? cookieStore.get('clube-sessao')?.value;
+    const token = cookieStore.get('clube-sessao')?.value ?? cookieStore.get('clube-admin-token')?.value;
     if (!token) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     let tokenData: any;
