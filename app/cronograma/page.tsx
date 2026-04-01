@@ -277,11 +277,13 @@ export default function CronogramaPage() {
                             ))}
                           </div>
                           <Button
-                            className="w-full text-white h-16 rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:brightness-110 transition-all"
+                            className="w-full text-white h-16 rounded-2xl font-bold uppercase text-[9px] sm:text-[10px] tracking-[0.2em] sm:tracking-[0.3em] shadow-lg hover:brightness-110 transition-all whitespace-normal leading-snug"
                             style={{ backgroundColor: 'var(--page-color)' }}
                             onClick={() => handleAddCalendar(crono.eventos, crono.ano)}
                           >
-                            Anotar Próximo Encontro <Calendar className="ml-3 w-4 h-4" />
+                            <span className="block sm:inline">Anotar</span>{' '}
+                            <span className="block sm:inline">Próximo Encontro</span>
+                            <Calendar className="ml-0 sm:ml-3 w-4 h-4 inline-block" />
                           </Button>
                         </div>
 
@@ -290,10 +292,10 @@ export default function CronogramaPage() {
                             <p className="text-[9px] font-bold uppercase tracking-[0.4em] opacity-40 text-black">Arte do Mês</p>
                             <div
                               onClick={() => handleDownload(crono.imageUrl!)}
-                              className="relative group border-12 border-white shadow-xl rotate-1 hover:rotate-0 transition-transform bg-white overflow-hidden rounded-sm cursor-pointer"
+                              className="relative group border-12 border-white shadow-xl rotate-1 hover:rotate-0 transition-transform bg-white overflow-hidden rounded-sm cursor-pointer w-full max-w-[520px]"
                             >
-                              <div className="relative w-105 max-w-full">
-                                <img src={crono.imageUrl} alt="Arte do Mês" className="w-full h-auto block object-cover" />
+                              <div className="relative w-full">
+                                <img src={crono.imageUrl} alt="Arte do Mês" className="w-full h-auto block object-cover max-h-[480px] sm:max-h-[540px]" />
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
                                   <Download size={24} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </div>

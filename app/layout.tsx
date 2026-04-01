@@ -25,42 +25,47 @@ const alice = Alice({
 
 const inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 
+const laranjaFolha = "#B06543";
+
+const routeColors: Record<string, string> = {
+  "/admin": "#B04D4A",
+  "/": "#B04D4A",
+  "/cronograma": "#967BB6",
+  "/dicas": "#5B7C99",
+  "/empreendedoras": "#967BB6",
+  "/eventos": "#CC7222",
+  "/livro-do-mes": "#8C7A66",
+  "/login": "#F4F1EE",
+  "/parcerias": "#B04D4A",
+  "/podcast": "#C08081",
+  "/resenhas": "#E9C46A",
+  "/rodaonline": "#4F5E46",
+  "/votacao": "#B06543",
+};
+
+function getPageColor(pathname?: string | null) {
+  if (!pathname) return laranjaFolha;
+  for (const route of Object.keys(routeColors)) {
+    if (route === "/" && pathname === "/") return routeColors[route];
+    if (route !== "/" && pathname.startsWith(route)) return routeColors[route];
+  }
+  return laranjaFolha;
+}
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname?.startsWith("/admin");
-  const laranjaFolha = "#B06543";
-  
-  const routeColors: Record<string, string> = {
-    "/admin": "#B04D4A", 
-    "/": "#B04D4A", 
-    "/cronograma": "#967BB6", 
-    "/dicas": "#5B7C99", 
-    "/empreendedoras": "#967BB6", 
-    "/eventos": "#CC7222", 
-    "/livro-do-mes": "#8C7A66", 
-    "/login": "#F4F1EE", 
-    "/parcerias": "#B04D4A", 
-    "/podcast": "#C08081", 
-    "/resenhas": "#E9C46A", 
-    "/rodaonline": "#4F5E46", 
-    "/votacao": "#B06543", 
-  };
-
-  const pageColor = (() => {
-    if (!pathname) return laranjaFolha;
-    for (const route of Object.keys(routeColors)) {
-      if (route === "/" && pathname === "/") return routeColors[route];
-      if (route !== "/" && pathname.startsWith(route)) return routeColors[route];
-    }
-    return laranjaFolha;
-  })();
-
+  const isAuthPage = pathname === "/login" || pathname === "/nova-senha" || pathname?.startsWith("/admin");
+  const [pageColor, setPageColor] = useState(laranjaFolha);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
+
+  useEffect(() => {
+    setPageColor(getPageColor(pathname));
+  }, [pathname]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: any) => {
@@ -190,8 +195,8 @@ export default function RootLayout({
 
         {!isAuthPage && <Navigation />}
         
-        {/* Adicionado padding-top para o conteúdo não ficar atrás da nav fixa */}
-        <main className="min-h-screen relative z-1 max-w-6xl mx-auto pt-24 px-4">
+        {/* O layout raiz não deve limitar a largura das páginas; cada rota controla seu próprio container */}
+        <main className="min-h-screen relative z-1 w-full">
           {children}
         </main>
         

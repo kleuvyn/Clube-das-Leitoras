@@ -148,7 +148,7 @@ export default function PaginaParceriasDNA() {
 
               <Button 
                  onClick={() => setParceriaModalOpen(true)}
-                 className="h-20 px-12 text-white rounded-[2rem] font-bold uppercase text-[10px] tracking-[0.5em] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#B04D4A]/20"
+                 className="h-16 w-full max-w-[280px] mx-auto px-8 text-white rounded-[2rem] font-bold uppercase text-[10px] tracking-[0.4em] transition-all hover:scale-105 active:scale-95 shadow-xl shadow-[#B04D4A]/20"
                  style={{ backgroundColor: rosaGabi }}
               >
                 Falar com a Gabi
@@ -158,15 +158,15 @@ export default function PaginaParceriasDNA() {
 
         {/* ─── MODAL REFINADO ─── */}
         {parceriaModalOpen && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 pt-20 md:pt-0 overflow-y-auto">
             <div className="absolute inset-0 bg-[#2C3E50]/40 backdrop-blur-sm" onClick={() => setParceriaModalOpen(false)} />
             
-            <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-              <button onClick={() => setParceriaModalOpen(false)} className="absolute right-8 top-8 p-2 hover:bg-black/5 rounded-full transition-colors z-10">
+            <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[95vh] mt-20 md:mt-0">
+              <button onClick={() => setParceriaModalOpen(false)} className="absolute right-4 top-4 p-2 hover:bg-black/5 rounded-full transition-colors z-10">
                 <X size={20} className="opacity-40" />
               </button>
 
-              <div className="grid md:grid-cols-5 h-full max-h-[90vh]">
+              <div className="grid md:grid-cols-5 min-h-[80vh] max-h-[95vh] overflow-hidden">
                 {/* Coluna Lateral Editorial */}
                 <div className="hidden md:flex md:col-span-2 bg-[#B04D4A]/5 p-12 flex-col justify-between border-r border-black/5">
                   <div className="space-y-8">
@@ -187,7 +187,7 @@ export default function PaginaParceriasDNA() {
                 </div>
 
                 {/* Coluna do Formulário */}
-                <div className="md:col-span-3 p-10 md:p-14 overflow-y-auto">
+                <div className="md:col-span-3 p-6 md:p-14 overflow-y-auto max-h-[90vh]">
                   {parceriaEnviado ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20">
                       <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center">

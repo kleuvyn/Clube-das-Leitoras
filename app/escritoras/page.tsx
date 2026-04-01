@@ -309,17 +309,17 @@ export default function EscritorasPage() {
 
       {/* ─── MODAL DE CADASTRO REFINADO ─── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[999999] flex items-center justify-center p-2">
+        <div className="fixed inset-0 z-[999999] flex items-start md:items-center justify-center p-4 pt-10 overflow-y-auto">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
           
-          <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[95vh]">
             <button onClick={() => setModalOpen(false)} className="absolute right-8 top-8 p-2 hover:bg-black/5 rounded-full transition-colors z-10">
               <X size={20} className="opacity-40" />
             </button>
 
-            <div className="grid md:grid-cols-5 h-full max-h-[86vh]">
-              <div className="hidden md:flex md:col-span-2 bg-[#C47E8A]/10 p-10 flex-col justify-between border-r border-black/5">
-                <div className="space-y-6">
+            <div className="grid md:grid-cols-5 h-full min-h-0">
+              <div className="hidden md:flex md:col-span-2 bg-[#C47E8A]/10 p-8 pt-12 flex-col justify-start border-r border-black/5">
+                <div className="space-y-5">
                   <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
                      <Heart size={24} style={{ color: rosaPrincipal }} />
                   </div>
@@ -329,7 +329,17 @@ export default function EscritorasPage() {
                 <div className="text-[8px] uppercase tracking-widest opacity-30 italic font-bold">Curadoria Literária</div>
               </div>
 
-              <div className="md:col-span-3 p-8 md:p-10 overflow-y-auto">
+              <div className="md:col-span-3 p-8 md:p-10 flex flex-col min-h-0">
+                {/* Cabeçalho sticky para manter título visível */}
+                <div className="sticky top-0 left-0 right-0 z-20 bg-[#FDFCFB] pt-3 pb-4 md:pt-0 md:pb-0 border-b border-black/5">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-2xl font-serif italic">Nova Escritora</h3>
+                    <button onClick={() => setModalOpen(false)} className="p-2 md:hidden">
+                      <X size={20} className="opacity-60" />
+                    </button>
+                  </div>
+                </div>
+
                 {solEnviado ? (
                   <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-20">
                     <CheckCircle2 size={48} className="text-green-500 animate-bounce" />
@@ -337,8 +347,9 @@ export default function EscritorasPage() {
                     <p className="text-sm text-slate-500">Obrigada por confiar sua história ao clube.</p>
                   </div>
                 ) : (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <>
+                    <div className="space-y-6 flex-1 overflow-y-auto pr-2 pb-28 min-h-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-1">
                         <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Nome da Escritora</label>
                         <input type="text" value={solNome} onChange={e => setSolNome(e.target.value)} className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#C47E8A] outline-none transition-colors" />
@@ -387,14 +398,13 @@ export default function EscritorasPage() {
                       <textarea value={solSinopse} onChange={e => setSolSinopse(e.target.value)} className="w-full bg-black/5 rounded-xl p-4 text-sm focus:ring-1 focus:ring-[#C47E8A] outline-none" rows={3} />
                     </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Bio da Escritora</label>
-                      <textarea value={solBio} onChange={e => setSolBio(e.target.value)} className="w-full bg-black/5 rounded-xl p-4 text-sm focus:ring-1 focus:ring-[#C47E8A] outline-none" rows={2} />
+                      <div className="space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Bio da Escritora</label>
+                        <textarea value={solBio} onChange={e => setSolBio(e.target.value)} className="w-full bg-black/5 rounded-xl p-4 text-sm focus:ring-1 focus:ring-[#C47E8A] outline-none" rows={2} />
+                      </div>
                     </div>
 
-
-
-                    <div className="sticky bottom-0 left-0 right-0 bg-[#FDFCFB] border-t border-black/10 p-4">
+                    <div className="sticky bottom-0 left-0 right-0 z-30 border-t border-black/10 p-4 bg-[#FDFCFB] backdrop-blur-sm">
                       <button
                         onClick={enviarSolicitacaoEscritora}
                         disabled={solEnviando}
@@ -403,7 +413,7 @@ export default function EscritorasPage() {
                         {solEnviando ? 'Submetendo...' : 'Submeter Obra'}
                       </button>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

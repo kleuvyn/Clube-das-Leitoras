@@ -118,13 +118,13 @@ export default function DicasPage() {
                   </div>
 
                   
-                  <h3 className="text-2xl leading-tight tracking-tighter border-l-2 pl-5 py-1 text-[#2C3E50] group-hover:italic transition-all"
+                  <h3 className="text-2xl leading-tight tracking-tighter border-l-2 pl-5 py-1 text-[#2C3E50] group-hover:italic transition-all text-justify"
                       style={{ borderColor: `${azulSereno}40` }}>
                     {item.titulo}
                   </h3>
 
                   
-                  <p className="text-sm leading-relaxed italic opacity-60 text-black pl-5 flex-1">
+                  <p className="text-sm leading-relaxed italic opacity-60 text-black pl-5 flex-1 text-justify">
                     {item.descricao}
                   </p>
 
@@ -208,17 +208,17 @@ export default function DicasPage() {
             </div>
 
             
-            <h2 className="text-4xl leading-tight tracking-tighter text-[#2C3E50] mb-3 font-serif italic">
+            <h2 className="text-4xl leading-tight tracking-tighter text-[#2C3E50] mb-3 font-serif italic text-justify">
               {dicaAberta.titulo}
             </h2>
-            <p className="text-sm italic text-slate-400 mb-8 leading-relaxed">
+            <p className="text-sm italic text-slate-400 mb-8 leading-relaxed text-justify">
               {dicaAberta.descricao}
             </p>
 
             <div className="h-px w-full bg-black/5 mb-8" />
 
             
-            <div className="space-y-5 text-[15px] leading-[1.85] text-slate-700">
+            <div className="space-y-5 text-[15px] leading-[1.85] text-slate-700 text-justify">
               {dicaAberta.textoCompleto!.split(/\n\n+/).map((paragrafo, i) => (
                 <p key={i}>{paragrafo.trim()}</p>
               ))}

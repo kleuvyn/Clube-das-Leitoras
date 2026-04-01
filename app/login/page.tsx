@@ -54,10 +54,9 @@ export default function LoginCafeFuncional() {
       {/* Textura de Fundo Sutil */}
       <div className="absolute inset-0 opacity-[0.06] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/cream-paper.png')]" />
 
-      <div className="max-w-6xl w-full grid lg:grid-cols-2 gap-12 items-center relative z-10">
-        
+      <div className="max-w-6xl w-full mx-auto grid lg:grid-cols-[minmax(0,1fr)_minmax(24rem,30rem)] lg:gap-16 xl:gap-24 items-center justify-items-center relative z-10">
         {/* LADO ESQUERDO: TEXTOS E ÍCONES ANIMADOS */}
-        <div className="space-y-12 text-center lg:text-left p-4 md:p-8">
+        <div className="space-y-12 text-center lg:text-left p-4 md:p-8 w-full max-w-xl lg:justify-self-end">
           <header className="space-y-6">
             <div className="flex items-center justify-center lg:justify-start gap-4 opacity-40">
               <Coffee size={18} style={{ color: marromPapel }} className="animate-bounce" />
@@ -98,7 +97,7 @@ export default function LoginCafeFuncional() {
         </div>
 
         {/* LADO DIREITO: CARD DE LOGIN (O ENVELOPE) */}
-        <main className="w-full max-w-md mx-auto">
+        <main className="w-full max-w-md mx-auto lg:justify-self-start">
           <div className="bg-[#FDFBF9]/90 backdrop-blur-sm p-8 md:p-14 rounded-[4rem] relative border border-black/5 group transition-all duration-700 hover:shadow-[0_30px_60px_rgba(0,0,0,0.1)]">
             
             {/* O Coração que Gira e Pulsa no Hover do Card */}

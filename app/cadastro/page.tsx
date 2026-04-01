@@ -24,6 +24,7 @@ export default function CadastroLeitoraPage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [birthdate, setBirthdate] = useState('');
+  const [manualBirthdate, setManualBirthdate] = useState(false);
   const [tempoClube, setTempoClube] = useState('Desde a primeira roda 2/2025');
   const [enderecoCompleto, setEnderecoCompleto] = useState('');
   const [cartaMimo, setCartaMimo] = useState(false);
@@ -34,6 +35,15 @@ export default function CadastroLeitoraPage() {
     if (!email || !name || !phone || !birthdate) {
       toast.error('Por favor preencha todos os campos obrigatórios.');
       return;
+    }
+
+    if (manualBirthdate) {
+      const regex = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[012])\/([0-9]{4})$/;
+      if (!regex.test(birthdate)) {
+        toast.error('Data de nascimento inválida. Use o formato DD/MM/AAAA.');
+        setSubmitting(false);
+        return;
+      }
     }
     setSubmitting(true);
 
@@ -145,14 +155,35 @@ export default function CadastroLeitoraPage() {
 
               <div className="space-y-1">
                 <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Data de Nascimento *</label>
+                <div className="flex items-center gap-2 text-[10px] mb-1">
+                  <span className="text-slate-500">Modo:</span>
+                  <button
+                    type="button"
+                    onClick={() => setManualBirthdate(false)}
+                    className={`px-2 py-1 rounded-xl ${!manualBirthdate ? 'bg-[#C47E8A] text-white' : 'bg-slate-100 text-slate-600'}`}
+                  >
+                    Calendário
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManualBirthdate(true)}
+                    className={`px-2 py-1 rounded-xl ${manualBirthdate ? 'bg-[#C47E8A] text-white' : 'bg-slate-100 text-slate-600'}`}
+                  >
+                    Digitar
+                  </button>
+                </div>
+
                 <div className="relative group">
                   <CalendarDays className="absolute left-0 top-2 opacity-20 group-focus-within:opacity-100 transition-opacity" size={16} />
                   <input
-                    type="date"
+                    type={manualBirthdate ? 'text' : 'date'}
+                    inputMode={manualBirthdate ? 'numeric' : undefined}
+                    pattern={manualBirthdate ? "^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/([0-9]{4})$" : undefined}
+                    placeholder={manualBirthdate ? 'DD/MM/AAAA' : 'Selecione a data'}
                     value={birthdate}
                     onChange={(e) => setBirthdate(e.target.value)}
                     required
-                    className="w-full bg-transparent border-b border-black/10 py-2 pl-7 focus:border-[#C47E8A] outline-none transition-colors text-sm font-sans uppercase"
+                    className="w-full bg-transparent border-b border-black/10 py-2 pl-7 focus:border-[#C47E8A] outline-none transition-colors text-sm font-sans"
                   />
                 </div>
               </div>
@@ -173,10 +204,11 @@ export default function CadastroLeitoraPage() {
                 onChange={(e) => setTempoClube(e.target.value)}
                 className="w-full bg-black/[0.03] border-none rounded-xl py-4 px-4 text-sm font-sans appearance-none focus:ring-1 focus:ring-[#C47E8A] outline-none cursor-pointer transition-all"
               >
-                <option>Desde a primeira roda 2/2025</option>
+                <option>1 a 3 meses</option>
+                <option>3 a 6 meses</option>
+                <option>6 meses a 1 ano</option>
                 <option>1 ano ou mais</option>
-                <option>6 meses</option>
-                <option>1 a 5 meses</option>
+                <option>Desde a primeira roda 2/2025</option>
               </select>
             </div>
 

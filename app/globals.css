@@ -22,13 +22,10 @@
     
     @apply font-(--font-geist) min-h-screen relative;
     
-    
-    background-image: url('/logo-clube-leitoras.png');
-    background-repeat: no-repeat;
-    background-position: center 30%;
-    background-attachment: fixed;
-    background-size: 35%;
-    background-blend-mode: multiply;
+    background-image: url('https://www.transparenttextures.com/patterns/fabric-of-squares.png');
+    background-repeat: repeat;
+    background-position: top left;
+    background-size: 220px;
   }
 
   
