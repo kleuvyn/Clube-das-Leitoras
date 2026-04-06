@@ -34,7 +34,7 @@ export default function AdminParcerias() {
       const data = await res.json();
       setParcerias(Array.isArray(data) ? data : []);
     } catch (e) {
-      toast.error("Erro ao carregar parceiros.");
+      toast.error("Erro ao carregar parceiras.");
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export default function AdminParcerias() {
           body: JSON.stringify(novaParceria),
         });
         if (res.ok) {
-          toast.success("Parceiro atualizado!");
+          toast.success("Parceira atualizada!");
           setEditandoId(null);
           setNovaParceria({ nome: '', info: '', link: '', img: '' });
           loadParcerias();
@@ -84,7 +84,7 @@ export default function AdminParcerias() {
           body: JSON.stringify(novaParceria),
         });
         if (res.ok) {
-          toast.success("Parceiro adicionado!");
+          toast.success("Parceira adicionada!");
           setNovaParceria({ nome: '', info: '', link: '', img: '' });
           loadParcerias();
         }
@@ -95,7 +95,7 @@ export default function AdminParcerias() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Remover este parceiro?")) return;
+    if (!confirm("Remover esta parceira?")) return;
     try {
       await fetch(`/api/parcerias?id=${id}`, { method: 'DELETE' });
       toast.success("Removido!");
@@ -113,7 +113,7 @@ export default function AdminParcerias() {
           <h1 className="font-serif text-4xl italic text-slate-900">
             Caderno de <span style={{ color: azulSerenoLogo }}>Parcerias</span>
           </h1>
-          <p className="text-slate-500 mt-1 font-medium italic">Gerencie as editoras e aliados do clube.</p>
+          <p className="text-slate-500 mt-1 font-medium italic">Gerencie as editoras e parceiras do clube.</p>
         </div>
         <div className="flex items-center gap-2 bg-[#8DA4BF] text-white px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-900/10">
             <Star size={12} className="animate-pulse" />
@@ -123,7 +123,7 @@ export default function AdminParcerias() {
 
       <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
-          <Plus size={14} style={{ color: azulSerenoLogo }} /> {editandoId ? 'Editar Parceiro' : 'Nova Aliança'}
+          <Plus size={14} style={{ color: azulSerenoLogo }} /> {editandoId ? 'Editar Parceira' : 'Nova Aliança'}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -203,7 +203,7 @@ export default function AdminParcerias() {
               className="w-full md:w-auto h-14 rounded-2xl text-white font-bold uppercase text-[10px] tracking-widest border-none shadow-lg transition-transform hover:scale-[1.02]"
               style={{ backgroundColor: azulSerenoLogo }}
             >
-              <Save size={16} className="mr-2" /> {editandoId ? 'Salvar Alterações' : 'Publicar Parceiro'}
+              <Save size={16} className="mr-2" /> {editandoId ? 'Salvar Alterações' : 'Publicar Parceira'}
             </Button>
           </div>
 
@@ -222,8 +222,8 @@ export default function AdminParcerias() {
 
       <section className="space-y-4">
         <div className="flex items-center justify-between px-4">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Aliados Cadastrados</h3>
-          <span className="text-[10px] italic text-slate-400">{parcerias.length} parceiros</span>
+          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-300">Parceiras Cadastradas</h3>
+          <span className="text-[10px] italic text-slate-400">{parcerias.length} parceiras</span>
         </div>
 
         {loading ? (
@@ -233,7 +233,7 @@ export default function AdminParcerias() {
             {parcerias.length === 0 && (
               <div className="col-span-full py-20 bg-white rounded-[3rem] border border-dashed border-slate-200 text-center">
                 <Info className="mx-auto mb-2 opacity-20" />
-                <p className="text-slate-400 italic text-sm font-alice">Nenhum parceiro cadastrado.</p>
+                <p className="text-slate-400 italic text-sm font-alice">Nenhuma parceira cadastrada.</p>
               </div>
             )}
             {parcerias.map((parceiro) => (
@@ -288,7 +288,7 @@ export default function AdminParcerias() {
             <Heart size={20} style={{ color: rosaLetrasGabi }} className="opacity-40" />
           </div>
           <p className="text-xs italic text-[#8C7A66] leading-relaxed">
-            As parcerias aparecem automaticamente no rodapé do jornal e na página de Aliados.
+            As parcerias aparecem automaticamente no rodapé do jornal e na página de Parceiras.
           </p>
         </div>
       </section>

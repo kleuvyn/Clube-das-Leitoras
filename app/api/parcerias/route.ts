@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const imagem = body.imagem || body.img;
 
     if (!name) {
-      return NextResponse.json({ error: 'O nome do parceiro é obrigatório' }, { status: 400 });
+      return NextResponse.json({ error: 'O nome da parceria é obrigatório' }, { status: 400 });
     }
 
     const [inserted] = await db.insert(parcerias).values({

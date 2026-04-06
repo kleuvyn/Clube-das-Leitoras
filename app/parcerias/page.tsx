@@ -45,7 +45,7 @@ export default function PaginaParceriasDNA() {
   }, [parceriaModalOpen]);
 
   useEffect(() => {
-    async function carregarAliados() {
+    async function carregarParceiras() {
       try {
         const res = await fetch('/api/parcerias');
         const data = await res.json();
@@ -59,12 +59,12 @@ export default function PaginaParceriasDNA() {
           setEditoras(lista);
         }
       } catch (err) {
-        console.error("Erro ao carregar parceiros:", err);
+        console.error("Erro ao carregar parceiras:", err);
       } finally {
         setLoading(false);
       }
     }
-    carregarAliados();
+    carregarParceiras();
   }, []);
 
   return (
@@ -79,7 +79,7 @@ export default function PaginaParceriasDNA() {
         </div>
 
         <h1 className="text-7xl md:text-[100px] text-[#2C3E50] tracking-tighter leading-[0.8] mb-10">
-          Nossos <span style={{ color: rosaGabi }} className="italic font-light">Aliados</span>
+          Nossas <span style={{ color: rosaGabi }} className="italic font-light">parceiras</span>
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-3xl mx-auto border-t border-black/10 pt-10">
@@ -97,7 +97,7 @@ export default function PaginaParceriasDNA() {
       <main className="max-w-6xl mx-auto px-6 relative z-10">
         
         {loading ? (
-          <div className="text-center py-20 italic opacity-40 text-[#2C3E50]">Reunindo nossos parceiros...</div>
+          <div className="text-center py-20 italic opacity-40 text-[#2C3E50]">Reunindo nossas parceiras...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             {editoras.map((editora, idx) => (
@@ -174,7 +174,7 @@ export default function PaginaParceriasDNA() {
                        <Coffee size={28} style={{ color: rosaGabi }} />
                     </div>
                     <div className="space-y-4">
-                      <h3 className="text-4xl font-serif italic leading-tight text-[#2C3E50]">Novo <br/>Aliado</h3>
+                      <h3 className="text-4xl font-serif italic leading-tight text-[#2C3E50]">Nova <br/>Aliada</h3>
                       <div className="h-[1px] w-12 bg-[#B04D4A]/30" />
                       <p className="text-[10px] text-slate-500 leading-relaxed uppercase tracking-[0.2em] font-bold">
                         Buscamos conexões que compartilham o propósito de florescer a literatura feminina.
