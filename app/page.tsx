@@ -142,7 +142,7 @@ export default function HomeJornalClubeLeitoras() {
 
       <main className="max-w-7xl mx-auto px-6 md:px-12 space-y-16 relative z-10">
         
-        {/* SEÇÃO 1: LIVRO DO MÊS */}
+        {/* SEÇÃO 1: LIVRO DO MÊS */} 
         <section className="pb-20 group border-b-2 border-black/5">
           {!loading && livroDoMes && livroDoMes.titulo ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
