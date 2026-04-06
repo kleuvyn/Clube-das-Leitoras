@@ -20,7 +20,11 @@ type DicaRow = {
 export async function GET() {
   try {
     const rows = await db.select().from(dicas).orderBy(desc(dicas.createdAt));
-    return NextResponse.json(rows);
+    return NextResponse.json(rows, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+      },
+    });
   } catch (err: any) {
     
     if (err.message?.includes('column') || err.message?.includes('does not exist')) {
@@ -28,7 +32,11 @@ export async function GET() {
         const rows = await db.execute(
           sql`SELECT id, categoria, titulo, descricao, created_at as "createdAt" FROM dicas ORDER BY created_at DESC`
         );
-        return NextResponse.json(rows.rows ?? []);
+        return NextResponse.json(rows.rows ?? [], {
+          headers: {
+            'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+          },
+        });
       } catch (e2: any) {
         console.error('Erro fallback GET /api/dicas:', e2);
       }

@@ -27,6 +27,10 @@ const mapToUiEvent = (r: any) => ({
 
 export async function GET() {
   try {
+    const cacheHeaders = {
+      'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    };
+
     const rows = await db.select().from(encontros).orderBy(desc(encontros.createdAt));
 
     
@@ -52,7 +56,7 @@ export async function GET() {
       ...r,
       totalVou: countMap[r.id]?.vou ?? 0,
       totalNaoVou: countMap[r.id]?.nao_vou ?? 0,
-    })));
+    })), { headers: cacheHeaders });
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
     return NextResponse.json({ error: 'Erro ao carregar a agenda.' }, { status: 500 });

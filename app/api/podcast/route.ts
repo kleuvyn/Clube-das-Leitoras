@@ -26,7 +26,12 @@ export async function GET() {
     
     
     const rows = await db.select().from(podcasts).orderBy(desc(podcasts.createdAt));
-    return NextResponse.json(rows, { status: 200 });
+    return NextResponse.json(rows, {
+      status: 200,
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+      },
+    });
   } catch (err) {
     console.error('Erro GET /api/podcast:', err);
     return NextResponse.json({ error: 'Erro ao buscar podcasts' }, { status: 500 });

@@ -109,22 +109,6 @@ export default function RootClient({
             console.warn('Background sync não disponível:', error);
           }
         }
-
-        if ('Notification' in window && Notification.permission === 'default') {
-          const permission = await Notification.requestPermission();
-          if (permission === 'granted' && 'PushManager' in registration) {
-            try {
-              const vapidPublicKey = 'BBOF2...YOUR_PUBLIC_KEY_HERE...';
-              const convertedKey = Uint8Array.from(window.atob(vapidPublicKey), (c) => c.charCodeAt(0));
-              await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: convertedKey,
-              });
-            } catch (error) {
-              console.warn('Inscrição em Push não foi possível:', error);
-            }
-          }
-        }
       } catch (err) {
         console.error('SW ready failed', err);
       }
@@ -161,7 +145,7 @@ export default function RootClient({
       }}
     >
       <div className="fixed inset-0 z-[-1] opacity-[0.06] pointer-events-none flex items-center justify-center scale-125">
-        <Image src="/logo.png" alt="Logo" width={900} height={900} priority className="object-contain max-w-275 opacity-100" />
+        <Image src="/logo.png" alt="Logo" width={900} height={900} className="object-contain max-w-275 opacity-100" />
       </div>
 
       {!isAuthPage && <Navigation />}

@@ -34,7 +34,7 @@ export default function HomeJornalClubeLeitoras() {
   useEffect(() => {
     async function buscarMemoria() {
       try {
-        const res = await fetch(`/api/livro-do-mes?ano=${anoAtual - 1}`, { cache: 'no-store' });
+        const res = await fetch(`/api/livro-do-mes?ano=${anoAtual - 1}&summary=1`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setCuradoriaMemoria(data.map((l: any) => ({
@@ -58,7 +58,7 @@ export default function HomeJornalClubeLeitoras() {
   useEffect(() => {
     async function buscarLivroAtual() {
       try {
-        const res = await fetch(`/api/livro-do-mes?ano=${new Date().getFullYear()}`, { cache: 'no-store' });
+        const res = await fetch(`/api/livro-do-mes?ano=${new Date().getFullYear()}&summary=1`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           const mesAtual = new Date().getMonth() + 1;
@@ -82,12 +82,16 @@ export default function HomeJornalClubeLeitoras() {
             })[0]);
           const chosen = monthMatch || fallback;
 
+          const detailRes = await fetch(`/api/livro-do-mes?id=${chosen.id}`);
+          const detail = await detailRes.json();
+          const full = detail && detail.id ? detail : chosen;
+
           setLivroDoMes({
-            titulo: chosen.livro || '',
-            autor: chosen.autora || '',
-            mes: chosen.mes || '',
-            capa: chosen.foto || '',
-            descricao_curta: chosen.sinopse || '',
+            titulo: full.livro || '',
+            autor: full.autora || '',
+            mes: full.mes || '',
+            capa: full.foto || '',
+            descricao_curta: full.sinopse || '',
           });
         }
       } catch (err) {

@@ -9,6 +9,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
+    const cacheHeaders = {
+      'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    };
+
     const rows = await db.select()
       .from(leituras)
       .orderBy(desc(leituras.createdAt));
@@ -27,7 +31,7 @@ export async function GET() {
     return NextResponse.json({
       encontros: rows.filter(r => r.status === 'ativo').map(mapRow),
       encerrados: rows.filter(r => r.status === 'encerrado').map(mapRow),
-    }, { status: 200 });
+    }, { status: 200, headers: cacheHeaders });
 
   } catch (err) {
     console.error('Erro GET /api/leitura:', err);

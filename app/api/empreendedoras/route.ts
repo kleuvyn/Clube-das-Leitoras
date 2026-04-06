@@ -21,7 +21,11 @@ export async function GET() {
       categoria: row.categoria ?? null
     }));
 
-    return NextResponse.json(formattedRows);
+    return NextResponse.json(formattedRows, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+      },
+    });
   } catch (err: any) {
     console.error('Erro GET /api/empreendedoras:', err);
     return NextResponse.json({ error: 'Erro ao buscar empreendedoras' }, { status: 500 });

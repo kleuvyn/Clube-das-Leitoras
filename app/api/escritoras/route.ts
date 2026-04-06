@@ -9,7 +9,11 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const rows = await db.select().from(escritoras).orderBy(desc(escritoras.createdAt));
-    return NextResponse.json(rows);
+    return NextResponse.json(rows, {
+      headers: {
+        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+      },
+    });
   } catch (err: any) {
     console.error('Erro GET /api/escritoras:', err);
     return NextResponse.json({ error: 'Erro ao buscar escritoras' }, { status: 500 });

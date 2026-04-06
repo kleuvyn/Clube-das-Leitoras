@@ -9,6 +9,7 @@ import {
   PenTool, Loader2, Sparkles, Save, BookMarked, Pencil, X
 } from 'lucide-react';
 import { useAdmin } from '@/lib/admin-context';
+import { uploadFile } from '@/lib/upload-client';
 
 const verdeSalvia = "#B04D4A";
 const anoAtual = new Date().getFullYear();
@@ -16,6 +17,7 @@ const anoAtual = new Date().getFullYear();
 interface LivroItem {
   id: string;
   mes: string | null;
+  num?: number | null;
   ano: number | null;
   livro: string | null;
   autora: string | null;
@@ -37,6 +39,7 @@ export default function LivroDoMesAdmin() {
   const router = useRouter();
   const [rodas, setRodas] = useState<LivroItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [deletando, setDeletando] = useState<string | null>(null);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -53,7 +56,7 @@ export default function LivroDoMesAdmin() {
 
   const loadDados = async () => {
     try {
-      const res = await fetch('/api/livro-do-mes', { cache: 'no-store' });
+      const res = await fetch('/api/livro-do-mes?summary=1', { cache: 'no-store' });
       const data = await res.json();
       setRodas(Array.isArray(data) ? data : []);
     } catch (e) { console.error("Erro ao carregar:", e); }
@@ -66,18 +69,30 @@ export default function LivroDoMesAdmin() {
     setEditandoId(null);
   };
 
-  const handleEdit = (item: LivroItem) => {
-    setFormData({
-      mes: item.mes || 'Janeiro',
-      ano: String(item.ano || anoAtual),
-      livro: item.livro || '',
-      autora: item.autora || '',
-      sinopse: item.sinopse || '',
-      tag: item.tag || 'Futura Leitura',
-      foto: item.foto || '',
-    });
-    setEditandoId(item.id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const handleEdit = async (item: LivroItem) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/livro-do-mes?id=${item.id}`, { cache: 'no-store' });
+      const full = await res.json();
+      const source = full && full.id ? full : item;
+
+      setFormData({
+        mes: source.mes || 'Janeiro',
+        ano: String(source.ano || anoAtual),
+        livro: source.livro || '',
+        autora: source.autora || '',
+        sinopse: source.sinopse || '',
+        tag: source.tag || 'Futura Leitura',
+        foto: source.foto || '',
+      });
+      setEditandoId(item.id);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err) {
+      console.error('Erro ao carregar item para edição:', err);
+      toast.error('Não foi possível carregar o item para edição.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
@@ -256,20 +271,24 @@ export default function LivroDoMesAdmin() {
               <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => setFormData({...formData, foto: reader.result as string});
-                  reader.readAsDataURL(file);
+                  setUploading(true);
+                  uploadFile(file)
+                    .then((url) => setFormData(prev => ({ ...prev, foto: url })))
+                    .catch((err: any) => toast.error(err?.message || 'Erro ao enviar imagem'))
+                    .finally(() => setUploading(false));
                 }
               }} />
             </div>
 
             <Button
               onClick={handleSave}
-              disabled={loading}
+              disabled={loading || uploading}
               className="w-full h-16 rounded-4xl text-white font-bold uppercase text-[10px] tracking-[0.3em] shadow-xl hover:scale-105 transition-all border-none"
               style={{ backgroundColor: verdeSalvia }}
             >
-              {loading ? <Loader2 className="animate-spin" /> : <><Save size={16} className="mr-2" /> {editandoId ? 'Salvar' : 'Publicar'}</>}
+              {(loading || uploading)
+                ? <Loader2 className="animate-spin" />
+                : <><Save size={16} className="mr-2" /> {editandoId ? 'Salvar' : 'Publicar'}</>}
             </Button>
           </div>
 

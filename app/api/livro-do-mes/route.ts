@@ -11,18 +11,54 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const anoParam = searchParams.get('ano');
+    const idParam = searchParams.get('id');
+    const summaryParam = searchParams.get('summary') === '1';
+    const listCacheHeaders = {
+      'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    };
 
-    let rows;
-    if (anoParam) {
-      rows = await db
+    if (idParam) {
+      const rows = await db
         .select()
         .from(livroDoMes)
-        .where(eq(livroDoMes.ano, Number(anoParam)))
-        .orderBy(desc(livroDoMes.updatedAt));
-    } else {
-      rows = await db.select().from(livroDoMes).orderBy(desc(livroDoMes.updatedAt));
+        .where(eq(livroDoMes.id, idParam))
+        .limit(1);
+      return NextResponse.json(rows[0] ?? null, {
+        headers: {
+          'Cache-Control': 'public, max-age=30, s-maxage=120, stale-while-revalidate=300',
+        },
+      });
     }
-    return NextResponse.json(rows);
+
+    let rows;
+    if (summaryParam) {
+      const query = db
+        .select({
+          id: livroDoMes.id,
+          mes: livroDoMes.mes,
+          num: livroDoMes.num,
+          ano: livroDoMes.ano,
+          livro: livroDoMes.livro,
+          autora: livroDoMes.autora,
+          tag: livroDoMes.tag,
+          updatedAt: livroDoMes.updatedAt,
+        })
+        .from(livroDoMes);
+
+      rows = anoParam
+        ? await query.where(eq(livroDoMes.ano, Number(anoParam))).orderBy(desc(livroDoMes.updatedAt))
+        : await query.orderBy(desc(livroDoMes.updatedAt));
+    } else {
+      rows = anoParam
+        ? await db
+            .select()
+            .from(livroDoMes)
+            .where(eq(livroDoMes.ano, Number(anoParam)))
+            .orderBy(desc(livroDoMes.updatedAt))
+        : await db.select().from(livroDoMes).orderBy(desc(livroDoMes.updatedAt));
+    }
+
+    return NextResponse.json(rows, { headers: listCacheHeaders });
   } catch (err: any) {
     console.error('Erro GET /api/livro-do-mes:', err);
     return NextResponse.json({ error: 'Erro ao carregar o livro do mês' }, { status: 500 });

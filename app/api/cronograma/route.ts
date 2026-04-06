@@ -9,6 +9,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    const cacheHeaders = {
+      'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    };
+
     const { searchParams } = new URL(request.url);
     const anoParam = searchParams.get('ano');
     const todosParam = searchParams.get('todos');
@@ -20,18 +24,18 @@ export async function GET(request: Request) {
         .where(eq(cronograma.ano, Number(anoParam)))
         .orderBy(desc(cronograma.createdAt))
         .limit(1);
-      return NextResponse.json(rows[0] || null);
+      return NextResponse.json(rows[0] || null, { headers: cacheHeaders });
     }
 
     
     if (todosParam) {
       const rows = await db.select().from(cronograma).orderBy(desc(cronograma.createdAt));
-      return NextResponse.json(rows);
+      return NextResponse.json(rows, { headers: cacheHeaders });
     }
 
     
     const rows = await db.select().from(cronograma).orderBy(desc(cronograma.createdAt));
-    return NextResponse.json(rows);
+    return NextResponse.json(rows, { headers: cacheHeaders });
   } catch (err: any) {
     console.error('Erro GET /api/cronograma:', err);
     return NextResponse.json({ error: 'Erro ao carregar cronograma' }, { status: 500 });
