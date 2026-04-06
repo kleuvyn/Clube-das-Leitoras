@@ -51,7 +51,7 @@ export default function EmpreendedorasAdmin() {
 
   const loadDados = async () => {
     try {
-      const res = await fetch('/api/empreendedoras');
+      const res = await fetch('/api/empreendedoras', { cache: 'no-store' });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLista(Array.isArray(data) ? data : []);
@@ -122,7 +122,8 @@ export default function EmpreendedorasAdmin() {
       const res = await fetch(`/api/empreendedoras?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       toast.success('Removida da vitrine.');
-      loadDados();
+      setLista(prev => prev.filter(emp => emp.id !== id));
+      await loadDados();
     } catch {
       toast.error('Erro ao remover.');
     }
