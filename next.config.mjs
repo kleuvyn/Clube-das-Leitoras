@@ -3,10 +3,13 @@ import runtimeCaching from 'next-pwa/cache.js';
 
 const withPWA = nextPWA({
   dest: 'public',
-  swSrc: 'service-worker.js',
+  // swSrc: 'service-worker.js', // Removido para usar o Service Worker otimizado gerado pelo next-pwa
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  fallbacks: { // Fallback robusto offline do next-pwa
+    document: '/offline.html',
+  },
   runtimeCaching: [
     // API routes: tentar a rede primeiro, fallback no cache
     {
