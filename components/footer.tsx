@@ -108,7 +108,15 @@ export function Footer() {
             © {anoAtual} Clube das Leitoras <Star className="w-3 h-3" style={{ color: rosaGabi }} /> Brasília • DF
           </p>
           <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.2em] text-black/30">
-            Feito com <Heart className="h-3 w-3 mx-1" style={{ color: rosaGabi, fill: rosaGabi }} /> para leitoras apaixonadas
+            Feito com <Heart className="h-3 w-3 mx-1" style={{ color: rosaGabi, fill: rosaGabi }} />
+            <a
+              href="https://portfolio.kleuvyn.tec.br"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="font-bold uppercase tracking-[0.2em] text-black/30"
+            >
+              Kleuvyn
+            </a>
           </div>
         </div>
       </div>
