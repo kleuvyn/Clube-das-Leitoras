@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { solicitacoes, colaboradoras } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { requireAdmin, requireAdminOrColaboradora } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
@@ -21,11 +21,26 @@ function getFromAddress() {
 }
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com'; 
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireAdminOrColaboradora();
-    const rows = await db.select().from(solicitacoes).orderBy(desc(solicitacoes.createdAt));
-    return NextResponse.json(rows);
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
+    const offset = (page - 1) * limit;
+
+    const [rows, countResult] = await Promise.all([
+      db.select().from(solicitacoes).orderBy(desc(solicitacoes.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(solicitacoes),
+    ]);
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages }
+    });
   } catch (error: any) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }

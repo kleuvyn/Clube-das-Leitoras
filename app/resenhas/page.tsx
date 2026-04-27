@@ -71,14 +71,21 @@ export default function ResenhasPage() {
   const [resenhas, setResenhas] = useState<Resenha[]>([]);
   const [loading, setLoading] = useState(true);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
 
   useEffect(() => {
-    fetch('/api/resenhas')
+    setLoading(true);
+    fetch(`/api/resenhas?page=${page}&limit=${limit}`)
       .then(r => r.json())
-      .then(data => setResenhas(Array.isArray(data) ? data : []))
+      .then(data => {
+        setResenhas(Array.isArray(data.data) ? data.data : []);
+        setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [page]);
 
   // Add BreadcrumbList JSON-LD to head after resenhas load (client-side)
   useEffect(() => {
@@ -217,6 +224,39 @@ export default function ResenhasPage() {
           ))
         )}
       </main>
+
+      {/* Paginação */}
+      {!loading && resenhas.length > 0 && pagination.pages > 1 && (
+        <div className="max-w-4xl mx-auto px-6 mt-24 pb-12 flex items-center justify-center gap-6">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-6 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: page === 1 ? '#ddd' : azulPetroleo,
+              color: page === 1 ? '#999' : 'white',
+            }}
+          >
+            ← Anterior
+          </button>
+          
+          <span className="text-sm text-[#2C3E50] opacity-60 italic">
+            Página {page} de {pagination.pages}
+          </span>
+          
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={!pagination.hasMore}
+            className="px-6 py-3 rounded-2xl font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+            style={{
+              backgroundColor: !pagination.hasMore ? '#ddd' : azulPetroleo,
+              color: !pagination.hasMore ? '#999' : 'white',
+            }}
+          >
+            Próxima →
+          </button>
+        </div>
+      )}
     </div>
   );
 }

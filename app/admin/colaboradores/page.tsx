@@ -24,17 +24,24 @@ export default function LeitorasAdmin() {
   const [statusFilter, setStatusFilter] = useState('todas');
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 15;
 
-  const load = async () => {
+  const load = async (pageNum = 1) => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/colaboradores');
+      const res = await fetch(`/api/colaboradores?page=${pageNum}&limit=${limit}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setLista(Array.isArray(data) ? data : []);
+      setLista(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
+      setPage(pageNum);
     } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(1); }, []);
 
   const scrollTop = () => document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -72,7 +79,7 @@ export default function LeitorasAdmin() {
       }
       setEmail(''); setName(''); setInviteRole('convidada');
       scrollTop();
-      load();
+      await load(1);
     } catch (err: any) {
       toast.error(err.message ?? 'Erro ao processar convite.');
     } finally {
@@ -91,7 +98,7 @@ export default function LeitorasAdmin() {
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Falha ao bloquear');
       toast.success(`${u.name} bloqueada com sucesso.`);
-      load();
+      await load(page);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao bloquear.');
     } finally {
@@ -110,7 +117,7 @@ export default function LeitorasAdmin() {
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Falha ao desbloquear');
       toast.success(`${u.name} reativada com sucesso.`);
-      load();
+      await load(page);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao desbloquear.');
     } finally {
@@ -129,7 +136,7 @@ export default function LeitorasAdmin() {
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Falha ao excluir');
       toast.success(`${u.name} marcada como excluída.`);
-      load();
+      await load(page);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao excluir.');
     } finally {
@@ -144,7 +151,7 @@ export default function LeitorasAdmin() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Erro ao remover');
       toast.success(`${u.name} removida do clube.`);
-      load();
+      await load(page);
     } catch (err: any) {
       toast.error(err.message ?? 'Erro ao remover.');
     }
@@ -162,7 +169,7 @@ export default function LeitorasAdmin() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao aprovar');
       toast.success('Leitora aprovada com sucesso!');
-      load();
+      await load(page);
     } catch (err: any) {
       toast.error(err.message ?? 'Erro na aprovação.');
     } finally {
@@ -182,7 +189,7 @@ export default function LeitorasAdmin() {
       if (!res.ok) throw new Error();
       toast.success('Perfil atualizado!');
       setEditing(null);
-      load();
+      await load(page);
     } catch {
       toast.error('Erro ao salvar alterações.');
     } finally {
@@ -423,6 +430,29 @@ export default function LeitorasAdmin() {
             </div>
           </div>
         </section>
+
+        {/* Paginação */}
+        {!loading && filteredList.length > 0 && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-4 mt-12 mb-8">
+            <button
+              onClick={() => load(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : corLeitora, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-xs text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => load(page + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : corLeitora, color: 'white' }}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

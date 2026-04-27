@@ -93,7 +93,7 @@ export default function ResenhaComments({ resenhaId, tituloResenha, aberto: aber
             <p className="text-lg italic font-light leading-tight" style={{ color: primaryFaded }}>Comentários</p>
           ) : (
             <Link href={`/resenhas/${resenhaId}#comentarios`} className="text-lg italic font-light leading-tight underline" style={{ color: primaryFaded }}>
-              Abrir comentários
+              Abrir Caderno Proibido
             </Link>
           )}
         </div>

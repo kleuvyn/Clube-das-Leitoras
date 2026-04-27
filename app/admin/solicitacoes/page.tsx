@@ -24,16 +24,20 @@ export default function SolicitacoesAdmin() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [filtro, setFiltro] = useState('todas');
   const [carregando, setCarregando] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
 
-  const load = async () => {
+  const load = async (pageNum = 1) => {
     setCarregando(true);
     try {
-      const res = await fetch('/api/solicitacoes', { cache: 'no-store' }); // Evita cache do navegador
+      const res = await fetch(`/api/solicitacoes?page=${pageNum}&limit=${limit}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Erro ao buscar');
       
-      // Garantimos que data seja um array
-      setSolicitacoes(Array.isArray(data) ? data : []);
+      setSolicitacoes(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
+      setPage(pageNum);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || 'Erro ao carregar solicitações.');
@@ -42,7 +46,7 @@ export default function SolicitacoesAdmin() {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(1); }, []);
 
   const atualizarStatus = async (id: string, status: string) => {
     const loadingToast = toast.loading("Atualizando status...");
@@ -58,15 +62,15 @@ export default function SolicitacoesAdmin() {
       if (status === 'aprovada') {
         const sent = data?.emailStatus?.sent || data?.emailStatus?.user;
         if (sent) {
-          toast.success('Aprovada! E-mail de aprovação enviado com sucesso.');
+          toast.success('Aprovada! E-mail de aprovação enviado com sucesso.', { id: loadingToast });
         } else {
-          toast.warning('Aprovada, mas houve problema no envio de notificação. Verifique os logs.');
+          toast.warning('Aprovada, mas houve problema no envio de notificação. Verifique os logs.', { id: loadingToast });
           console.warn('Resposta de emailStatus:', data?.emailStatus);
         }
       } else {
-        toast.success('Solicitação rejeitada.');
+        toast.success('Solicitação rejeitada.', { id: loadingToast });
       }
-      load();
+      await load(page);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao atualizar.', { id: loadingToast });
     }
@@ -90,7 +94,7 @@ export default function SolicitacoesAdmin() {
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar leitora');
 
       toast.success(`Leitora ${status === 'ativa' ? 'ativada' : status === 'bloqueada' ? 'bloqueada' : 'excluída'} com sucesso.`, { id: loadingToast });
-      load();
+      await load(page);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao atualizar leitora.', { id: loadingToast });
     }
@@ -218,6 +222,27 @@ export default function SolicitacoesAdmin() {
             </div>
           ))}
         </div>
+
+        {/* Paginação */}
+        {!carregando && itens.length > 0 && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-4 mt-12 mb-8">
+            <button
+              onClick={() => load(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#B04D4A] text-white hover:bg-[#8B3A37]"
+            >
+              ← Anterior
+            </button>
+            <span className="text-xs text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => load(page + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#B04D4A] text-white hover:bg-[#8B3A37]"
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
       )}
     </div>
   );

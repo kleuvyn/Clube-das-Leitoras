@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { resenhas } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { analyzeContentModeration } from '@/lib/content-moderation';
 
 export const dynamic = 'force-dynamic';
@@ -18,10 +18,25 @@ type ResenhaRow = {
   createdAt: string;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const rows = await db.select().from(resenhas).orderBy(desc(resenhas.createdAt));
-    return NextResponse.json(rows);
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
+    const offset = (page - 1) * limit;
+
+    const [rows, countResult] = await Promise.all([
+      db.select().from(resenhas).orderBy(desc(resenhas.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(resenhas),
+    ]);
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages }
+    });
   } catch (err: any) {
     console.error('Erro GET /api/resenhas:', err);
     return NextResponse.json({ error: 'Erro ao carregar resenhas' }, { status: 500 });

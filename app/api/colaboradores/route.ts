@@ -2,39 +2,55 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const allLeitoras = await db
-      .select({
-        id: colaboradoras.id,
-        email: colaboradoras.email,
-        name: colaboradoras.name,
-        avatarUrl: colaboradoras.avatarUrl,
-        role: colaboradoras.role,
-        active: colaboradoras.active,
-        status: colaboradoras.status,
-        phone: colaboradoras.phone,
-        birthdate: colaboradoras.birthdate,
-        tempoClube: colaboradoras.tempoClube,
-        enderecoCompleto: colaboradoras.enderecoCompleto,
-        cartaMimo: colaboradoras.cartaMimo,
-        enviosRealizados: colaboradoras.enviosRealizados,
-        ultimaInteracao: colaboradoras.ultimaInteracao,
-        gdprConsentido: colaboradoras.gdprConsentido,
-        gdprConsentidoEm: colaboradoras.gdprConsentidoEm,
-        gdprConsentimentoVersao: colaboradoras.gdprConsentimentoVersao,
-        gdprConsentimentoFinalidade: colaboradoras.gdprConsentimentoFinalidade,
-        createdAt: colaboradoras.createdAt,
-      })
-      .from(colaboradoras)
-      .orderBy(desc(colaboradoras.createdAt));
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
+    const offset = (page - 1) * limit;
+
+    const [allLeitoras, countResult] = await Promise.all([
+      db
+        .select({
+          id: colaboradoras.id,
+          email: colaboradoras.email,
+          name: colaboradoras.name,
+          avatarUrl: colaboradoras.avatarUrl,
+          role: colaboradoras.role,
+          active: colaboradoras.active,
+          status: colaboradoras.status,
+          phone: colaboradoras.phone,
+          birthdate: colaboradoras.birthdate,
+          tempoClube: colaboradoras.tempoClube,
+          enderecoCompleto: colaboradoras.enderecoCompleto,
+          cartaMimo: colaboradoras.cartaMimo,
+          enviosRealizados: colaboradoras.enviosRealizados,
+          ultimaInteracao: colaboradoras.ultimaInteracao,
+          gdprConsentido: colaboradoras.gdprConsentido,
+          gdprConsentidoEm: colaboradoras.gdprConsentidoEm,
+          gdprConsentimentoVersao: colaboradoras.gdprConsentimentoVersao,
+          gdprConsentimentoFinalidade: colaboradoras.gdprConsentimentoFinalidade,
+          createdAt: colaboradoras.createdAt,
+        })
+        .from(colaboradoras)
+        .orderBy(desc(colaboradoras.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(colaboradoras),
+    ]);
     
-    return NextResponse.json(allLeitoras, { status: 200 });
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: allLeitoras,
+      pagination: { page, limit, total, pages, hasMore: page < pages }
+    }, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar leitoras:', error);
     return NextResponse.json({ error: 'Erro ao buscar leitoras' }, { status: 500 });
