@@ -221,28 +221,28 @@ export default function SolicitacoesAdmin() {
               </div>
             </div>
           ))}
-        </div>
 
-        {/* Paginação */}
-        {!carregando && itens.length > 0 && pagination.pages > 1 && (
-          <div className="flex items-center justify-center gap-4 mt-12 mb-8">
-            <button
-              onClick={() => load(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#B04D4A] text-white hover:bg-[#8B3A37]"
-            >
-              ← Anterior
-            </button>
-            <span className="text-xs text-slate-500 italic">Página {page} de {pagination.pages}</span>
-            <button
-              onClick={() => load(page + 1)}
-              disabled={!pagination.hasMore}
-              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#B04D4A] text-white hover:bg-[#8B3A37]"
-            >
-              Próxima →
-            </button>
-          </div>
-        )}
+          {/* Paginação */}
+          {pagination.pages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-12 mb-8">
+              <button
+                onClick={() => load(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#B04D4A] text-white hover:bg-[#8B3A37]"
+              >
+                ← Anterior
+              </button>
+              <span className="text-xs text-slate-500 italic">Página {page} de {pagination.pages}</span>
+              <button
+                onClick={() => load(page + 1)}
+                disabled={!pagination.hasMore}
+                className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed bg-[#B04D4A] text-white hover:bg-[#8B3A37]"
+              >
+                Próxima →
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
