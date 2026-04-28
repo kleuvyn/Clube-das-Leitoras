@@ -5,9 +5,32 @@ import { sql } from 'drizzle-orm';
 
 type AuthError = { status: number; message: string };
 
-export async function requireAdminOrColaboradora() {
+function parseCookieHeader(cookieHeader: string | null | undefined) {
+  if (!cookieHeader) return {};
+  return cookieHeader.split(';').reduce<Record<string, string>>((acc, cookiePart) => {
+    const [name, ...rest] = cookiePart.split('=');
+    if (!name) return acc;
+    acc[name.trim()] = decodeURIComponent(rest.join('=').trim());
+    return acc;
+  }, {});
+}
+
+async function getTokenFromCookieStore(request?: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get('clube-admin-token')?.value ?? cookieStore.get('clube-sessao')?.value;
+  if (token) return token;
+
+  if (request) {
+    const raw = request.headers.get('cookie');
+    const parsed = parseCookieHeader(raw);
+    return parsed['clube-admin-token'] ?? parsed['clube-sessao'];
+  }
+
+  return undefined;
+}
+
+export async function requireAdminOrColaboradora(request?: Request) {
+  const token = await getTokenFromCookieStore(request);
   if (!token) throw { status: 401, message: 'Não autorizado' } as AuthError;
 
   let tokenData: any;
@@ -24,9 +47,8 @@ export async function requireAdminOrColaboradora() {
   return user;
 }
 
-export async function requireMember() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('clube-admin-token')?.value ?? cookieStore.get('clube-sessao')?.value;
+export async function requireMember(request?: Request) {
+  const token = await getTokenFromCookieStore(request);
   if (!token) throw { status: 401, message: 'Não autorizado' } as AuthError;
 
   let tokenData: any;
@@ -42,9 +64,8 @@ export async function requireMember() {
   return user;
 }
 
-export async function requireAdmin() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('clube-admin-token')?.value ?? cookieStore.get('clube-sessao')?.value;
+export async function requireAdmin(request?: Request) {
+  const token = await getTokenFromCookieStore(request);
   if (!token) throw { status: 401, message: 'Não autorizado' } as AuthError;
 
   let tokenData: any;

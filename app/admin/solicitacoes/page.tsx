@@ -17,12 +17,16 @@ type Solicitacao = {
   mensagem?: string;
   enderecoCompleto?: string;
   status: string;
-  createdAt: string;
+  createdAt: string | number;
+  approvedAt?: string | number | null;
 };
 
 export default function SolicitacoesAdmin() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [filtro, setFiltro] = useState('todas');
+  const [statusFiltro, setStatusFiltro] = useState('pendente');
+  const [showAllPendentes, setShowAllPendentes] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const [carregando, setCarregando] = useState(true);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
@@ -31,7 +35,11 @@ export default function SolicitacoesAdmin() {
   const load = async (pageNum = 1) => {
     setCarregando(true);
     try {
-      const res = await fetch(`/api/solicitacoes?page=${pageNum}&limit=${limit}`, { cache: 'no-store' });
+      const effectiveLimit = statusFiltro === 'pendente' && showAllPendentes ? 100 : limit;
+      const params = new URLSearchParams({ page: String(pageNum), limit: String(effectiveLimit) });
+      if (statusFiltro !== 'todos') params.append('status', statusFiltro);
+      if (filtro !== 'todas') params.append('tipo', filtro);
+      const res = await fetch(`/api/solicitacoes?${params.toString()}`, { cache: 'no-store', credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Erro ao buscar');
       
@@ -46,13 +54,14 @@ export default function SolicitacoesAdmin() {
     }
   };
 
-  useEffect(() => { load(1); }, []);
+  useEffect(() => { load(1); }, [filtro, statusFiltro, showAllPendentes]);
 
   const atualizarStatus = async (id: string, status: string) => {
     const loadingToast = toast.loading("Atualizando status...");
     try {
       const res = await fetch('/api/solicitacoes', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, status }),
       });
@@ -79,7 +88,7 @@ export default function SolicitacoesAdmin() {
   const updateLeitoraStatus = async (email: string, status: 'ativa'|'bloqueada'|'excluida') => {
     const loadingToast = toast.loading('Atualizando status da leitora...');
     try {
-      const resList = await fetch('/api/colaboradores');
+      const resList = await fetch('/api/colaboradores', { credentials: 'include' });
       if (!resList.ok) throw new Error('Erro ao buscar colaboradoras');
       const colaboradorasData = await resList.json();
       const leitora = colaboradorasData.find((u:any) => u.email?.toLowerCase() === email?.toLowerCase());
@@ -87,6 +96,7 @@ export default function SolicitacoesAdmin() {
 
       const res = await fetch('/api/colaboradores', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: leitora.id, status }),
       });
@@ -132,6 +142,50 @@ export default function SolicitacoesAdmin() {
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-xl w-fit">
+        {['todos', 'pendente', 'aprovada', 'rejeitada'].map(status => (
+          <button
+            key={status}
+            onClick={() => setStatusFiltro(status)}
+            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+              statusFiltro === status ? 'bg-white shadow-sm text-[#B04D4A]' : 'text-slate-500 hover:text-slate-700'
+            }`}
+          >
+            {status === 'todos' ? 'Todos' : status === 'pendente' ? 'Pendentes' : status === 'aprovada' ? 'Aprovadas' : 'Rejeitadas'}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-4 py-2">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            onKeyDown={(event) => event.key === 'Enter' && load(1)}
+            placeholder="Buscar por nome ou e-mail"
+            className="bg-transparent outline-none text-sm text-slate-700 placeholder:text-slate-400"
+          />
+          <Button onClick={() => load(1)} variant="outline" className="text-xs uppercase tracking-widest">
+            Buscar
+          </Button>
+        </div>
+        <div className="text-slate-500 text-sm italic">
+          Exibindo <strong>{statusFiltro === 'todos' ? 'todas' : statusFiltro}</strong> solicitações {filtro !== 'todas' ? `de ${filtro}` : 'de todos os tipos'}.
+        </div>
+      </div>
+      {statusFiltro === 'pendente' && (
+        <div className="text-slate-500 text-sm italic">
+          As barras de tipo mostram apenas pendentes enquanto o filtro de status estiver ativo.
+          <button
+            onClick={() => setShowAllPendentes(prev => !prev)}
+            className="ml-2 underline text-[#B04D4A] hover:text-[#8B3A37]"
+          >
+            {showAllPendentes ? 'Limitar para páginas de 10' : 'Mostrar até 100 pendentes de uma vez'}
+          </button>
+        </div>
+      )}
+
       {carregando ? (
         <div className="flex flex-col items-center py-20 opacity-20">
           <Loader2 className="animate-spin mb-4" size={40} />
@@ -139,7 +193,9 @@ export default function SolicitacoesAdmin() {
         </div>
       ) : itens.length === 0 ? (
         <div className="text-center py-20 border-2 border-dashed border-slate-200 rounded-[3rem]">
-          <p className="text-slate-400 italic">Nenhuma solicitação de "{filtro}" encontrada.</p>
+          <p className="text-slate-400 italic">
+            Nenhuma solicitação de "{filtro}" com status "{statusFiltro}" encontrada.
+          </p>
         </div>
       ) : (
         <div className="grid gap-6">
@@ -167,7 +223,8 @@ export default function SolicitacoesAdmin() {
                     {item.telefone && <div className="flex items-center gap-2"><Phone size={14} className="opacity-40" /> {item.telefone}</div>}
                     {item.instagram && <div className="flex items-center gap-2"><Instagram size={14} className="opacity-40" /> <a href={item.instagram.startsWith('http') ? item.instagram : `https://instagram.com/${item.instagram.replace('@','')}`} target="_blank" className="text-blue-600 underline">{item.instagram}</a></div>}
                     {item.site && <div className="flex items-center gap-2"><MapPin size={14} className="opacity-40" /> <a href={item.site.startsWith('http') ? item.site : `https://${item.site}`} target="_blank" className="text-blue-600 underline">{item.site}</a></div>}
-                    <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> {normalizeDateValue(item.createdAt).toLocaleDateString('pt-BR')}</div>
+                    <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> Enviado em {normalizeDateValue(item.createdAt).toLocaleDateString('pt-BR')}</div>
+                    {item.approvedAt && <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> Aceito em {normalizeDateValue(item.approvedAt).toLocaleDateString('pt-BR')}</div>}
                   </div>
                 </div>
 

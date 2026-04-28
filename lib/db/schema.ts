@@ -133,6 +133,7 @@ export const solicitacoes = sqliteTable('solicitacoes', {
   mensagem: text('mensagem'),
   enderecoCompleto: text('endereco_completo'),
   status: text('status').default('pendente'),
+  approvedAt: integer('approved_at', { mode: 'timestamp' }),
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 

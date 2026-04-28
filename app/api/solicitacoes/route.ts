@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { cookies } from 'next/headers';
+import { client, db } from '@/lib/db';
 import { solicitacoes, colaboradoras } from '@/lib/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
-import { requireAdmin, requireAdminOrColaboradora } from '@/lib/auth';
+import { and, eq, desc, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
 // Se possível use o remetente já configurado na conta Resend (mesmo que já esteja validado no DNS)
@@ -21,18 +21,110 @@ function getFromAddress() {
 }
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com'; 
 
+function parseCookieHeader(cookieHeader: string | null | undefined) {
+  if (!cookieHeader) return {};
+  return cookieHeader.split(';').reduce<Record<string, string>>((acc, cookiePart) => {
+    const [name, ...rest] = cookiePart.split('=');
+    if (!name) return acc;
+    acc[name.trim()] = decodeURIComponent(rest.join('=').trim());
+    return acc;
+  }, {});
+}
+
+async function requireSolicitacoesAdmin(request: Request) {
+  const cookieStore = await cookies();
+  const adminToken = cookieStore.get('clube-admin-token')?.value;
+  const convidadaToken = cookieStore.get('clube-sessao')?.value;
+  let tokenValue = adminToken ?? convidadaToken;
+
+  if (!tokenValue) {
+    const rawCookie = request.headers.get('cookie');
+    const parsed = parseCookieHeader(rawCookie);
+    tokenValue = parsed['clube-admin-token'] ?? parsed['clube-sessao'];
+  }
+
+  if (!tokenValue) {
+    throw new Error('Não autorizado');
+  }
+
+  let tokenData: any;
+  try {
+    tokenData = typeof tokenValue === 'string' ? JSON.parse(tokenValue) : tokenValue;
+  } catch {
+    throw new Error('Token inválido');
+  }
+
+  const [user] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${tokenData.email})`);
+  if (!user || user.active === false) throw new Error('Não autorizado');
+  if (user.role !== 'admin' && user.role !== 'colaboradora') throw new Error('Permissão insuficiente');
+  return user;
+}
+
+async function hasApprovedAtColumn() {
+  const result = await client.execute('PRAGMA table_info(solicitacoes)');
+  return result.rows.some((row: any) => row?.name === 'approved_at');
+}
+
 export async function GET(request: Request) {
   try {
-    await requireAdminOrColaboradora();
+    await requireSolicitacoesAdmin(request);
     const { searchParams } = new URL(request.url);
     const hasPagination = searchParams.has('page') || searchParams.has('limit');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const offset = (page - 1) * limit;
+    const status = searchParams.get('status')?.toLowerCase();
+    const tipo = searchParams.get('tipo')?.toLowerCase();
+    const search = searchParams.get('search')?.trim().toLowerCase();
+
+    const filters = [] as any[];
+    if (status && status !== 'todos') filters.push(eq(solicitacoes.status, status));
+    if (tipo && tipo !== 'todas') filters.push(eq(solicitacoes.tipo, tipo));
+    if (search) {
+      const likePattern = `%${search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
+      filters.push(sql`(lower(${solicitacoes.nome}) LIKE ${likePattern} OR lower(${solicitacoes.email}) LIKE ${likePattern})`);
+    }
+
+    const whereClause = filters.length === 0
+      ? undefined
+      : filters.length === 1
+        ? filters[0]
+        : and(...filters);
+
+    const includeApprovedAt = await hasApprovedAtColumn();
+    const selectFields = includeApprovedAt
+      ? {
+          id: solicitacoes.id,
+          tipo: solicitacoes.tipo,
+          nome: solicitacoes.nome,
+          email: solicitacoes.email,
+          telefone: solicitacoes.telefone,
+          site: solicitacoes.site,
+          instagram: solicitacoes.instagram,
+          mensagem: solicitacoes.mensagem,
+          enderecoCompleto: solicitacoes.enderecoCompleto,
+          status: solicitacoes.status,
+          createdAt: solicitacoes.createdAt,
+          approvedAt: solicitacoes.approvedAt,
+        }
+      : {
+          id: solicitacoes.id,
+          tipo: solicitacoes.tipo,
+          nome: solicitacoes.nome,
+          email: solicitacoes.email,
+          telefone: solicitacoes.telefone,
+          site: solicitacoes.site,
+          instagram: solicitacoes.instagram,
+          mensagem: solicitacoes.mensagem,
+          enderecoCompleto: solicitacoes.enderecoCompleto,
+          status: solicitacoes.status,
+          createdAt: solicitacoes.createdAt,
+          approvedAt: sql<null>`null`.as('approvedAt'),
+        };
 
     const [rows, countResult] = await Promise.all([
-      db.select().from(solicitacoes).orderBy(desc(solicitacoes.createdAt)).limit(limit).offset(offset),
-      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(solicitacoes),
+      db.select(selectFields).from(solicitacoes).where(whereClause).orderBy(desc(solicitacoes.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(solicitacoes).where(whereClause),
     ]);
 
     if (!hasPagination) {
@@ -47,7 +139,10 @@ export async function GET(request: Request) {
       pagination: { page, limit, total, pages, hasMore: page < pages }
     });
   } catch (error: any) {
-    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
+    console.error('[solicitacoes][GET] erro ao listar solicitações:', error);
+    const message = error instanceof Error ? error.message : 'Erro ao listar solicitações';
+    const statusCode = message === 'Não autorizado' ? 401 : message === 'Permissão insuficiente' ? 403 : 500;
+    return NextResponse.json({ error: statusCode >= 500 ? 'Erro ao listar solicitações' : message }, { status: statusCode });
   }
 }
 
@@ -281,14 +376,15 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await requireAdminOrColaboradora();
+    await requireSolicitacoesAdmin(request);
     const body = await request.json();
     const { id, status } = body;
 
     const [solicitacao] = await db.select().from(solicitacoes).where(eq(solicitacoes.id, id));
     if (!solicitacao) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
-    await db.update(solicitacoes).set({ status }).where(eq(solicitacoes.id, id));
+    const includeApprovedAt = await hasApprovedAtColumn();
+    await db.update(solicitacoes).set(includeApprovedAt ? { status, approvedAt: status === 'aprovada' ? new Date() : null } : { status }).where(eq(solicitacoes.id, id));
 
     const emailStatus: { adminAction: boolean; user: boolean; hasKey: boolean; errors: string[] } = { adminAction: true, user: false, hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY), errors: [] };
     if (status === 'aprovada') {
