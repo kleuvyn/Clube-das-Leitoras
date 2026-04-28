@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Mic, RefreshCw, Users, Link2 } from 'lucide-react';
+import { Mic, RefreshCw, Users } from 'lucide-react';
 
 interface Participante {
   id: string;
@@ -41,13 +42,35 @@ export default function AdminRodaVozesPage() {
     }
   };
 
+  const handleToggleRodaStatus = async () => {
+    if (!rodaId) return;
+
+    const novoStatus = status === 'ativa' ? 'pausada' : 'ativa';
+    try {
+      const res = await fetch('/api/roda-vozes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: rodaId, status: novoStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar status.');
+
+      setStatus(data.roda?.status || novoStatus);
+      toast.success(`Roda ${novoStatus === 'ativa' ? 'ativada' : 'desativada'} com sucesso.`);
+      carregarRoda();
+    } catch (err: any) {
+      console.error('Erro ao alterar status da roda:', err);
+      toast.error(err?.message || 'Erro ao alterar o status da roda.');
+    }
+  };
+
   useEffect(() => {
     carregarRoda();
   }, []);
 
   return (
-    <div className="min-h-screen p-8 space-y-8 bg-[#FAF7F1] text-slate-900 font-alice">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="max-w-6xl mx-auto py-10 px-6 space-y-10 font-alice text-slate-900">
+      <header className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between border-b border-[#E9E4DD] pb-6">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full bg-[#f8efe0] px-3 py-1 text-[10px] uppercase tracking-[0.35em] text-slate-700 font-bold">
             <Mic size={14} /> Roda de Vozes
@@ -62,13 +85,11 @@ export default function AdminRodaVozesPage() {
           <Button onClick={carregarRoda} variant="outline" className="flex items-center gap-2">
             <RefreshCw size={16} /> Atualizar
           </Button>
-          <Button asChild>
-            <a href="/roda-vozes" target="_blank" rel="noreferrer" className="flex items-center gap-2">
-              <Link2 size={16} /> Abrir público
-            </a>
+          <Button onClick={handleToggleRodaStatus} className="flex items-center gap-2 bg-[#B04D4A] text-white hover:bg-[#8B3A37]">
+            {status === 'ativa' ? 'Desativar Roda' : 'Ativar Roda'}
           </Button>
         </div>
-      </div>
+      </header>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-3xl border border-[#E9E4DD] bg-white p-6 shadow-sm">
@@ -81,12 +102,12 @@ export default function AdminRodaVozesPage() {
         </div>
         <div className="rounded-3xl border border-[#E9E4DD] bg-white p-6 shadow-sm">
           <p className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Roda ativa</p>
-          <p className="mt-3 text-sm leading-relaxed text-slate-700 break-words">{rodaId ?? 'Nenhuma roda encontrada'}</p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-700 wrap-break-word">{rodaId ?? 'Nenhuma roda encontrada'}</p>
         </div>
       </div>
 
-      <section className="rounded-3xl border border-[#E9E4DD] bg-white p-6 shadow-sm">
-        <div className="flex items-center justify-between gap-3 mb-4">
+      <section className="rounded-4xl border border-[#E9E4DD] bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>
             <h2 className="text-xl font-semibold text-slate-900">Lista de Participantes</h2>
             <p className="text-sm text-slate-500">Ordem de fala atual e histórico de presença.</p>
@@ -105,12 +126,12 @@ export default function AdminRodaVozesPage() {
         ) : (
           <div className="space-y-3">
             {participantes.map((participante) => (
-              <div key={participante.id} className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#F0ECE7] bg-[#FCFAF6] p-4">
+              <div key={participante.id} className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[#F0ECE7] bg-white p-4">
                 <div>
                   <p className="text-base font-semibold text-slate-900">{participante.nome}</p>
                   <p className="text-sm text-slate-500">Ordem #{participante.ordem}</p>
                 </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-slate-700 border border-slate-200">
+                <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-slate-700 border border-slate-200">
                   {participante.falou ? 'Já falou' : 'Ainda não falou'}
                 </div>
               </div>

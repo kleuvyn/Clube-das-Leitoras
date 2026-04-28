@@ -35,6 +35,7 @@ export default function SorteiosPage() {
   const [vencedora, setVencedora] = useState<string | null>(null);
   const [premioAtual, setPremioAtual] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [rodaStatus, setRodaStatus] = useState('ativa');
   const [isAdmin, setIsAdmin] = useState(false);
 
   const carregarDados = async () => {
@@ -44,6 +45,7 @@ export default function SorteiosPage() {
       if (data.participantes) setParticipantes(data.participantes);
       if (data.historico) setHistorico(data.historico);
       if (data.urnaAberta !== undefined) setUrnaAberta(data.urnaAberta);
+      if (data.roda?.status) setRodaStatus(data.roda.status);
       if (data.premios) {
         const premiosDoMes = data.premios
           .filter((item: any) => item.mesBase === mesAtualRef)
@@ -88,6 +90,11 @@ export default function SorteiosPage() {
 
     if (!urnaAberta) {
       toast.error("A urna está fechada e não recebe novos nomes no momento.");
+      return;
+    }
+
+    if (rodaStatus !== 'ativa') {
+      toast.error('Roda de Vozes está desativada. Não é possível cadastrar novos nomes.');
       return;
     }
 

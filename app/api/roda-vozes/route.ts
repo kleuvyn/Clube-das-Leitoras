@@ -43,17 +43,15 @@ export async function GET() {
   try {
     await ensureRodaVozesSchema();
 
-    // Buscar roda ativa
-    const ativa = await db
+    // Buscar a última roda criada
+    const ultimaRoda = await db
       .select()
       .from(rodaVozes)
-      .where(eq(rodaVozes.status, 'ativa'))
       .orderBy(desc(rodaVozes.createdAt))
       .limit(1);
 
-    let roda = ativa[0];
+    let roda = ultimaRoda[0];
 
-    // Se não houver roda ativa, criar uma nova
     if (!roda) {
       const novaRoda = {
         sessionId: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -64,7 +62,6 @@ export async function GET() {
       roda = insert[0];
     }
 
-    // Buscar participantes da roda
     const participantes = await db
       .select()
       .from(participantesRodaVozes)
@@ -110,15 +107,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Buscar ou criar roda ativa
-    const ativa = await db
+    const ultimaRoda = await db
       .select()
       .from(rodaVozes)
-      .where(eq(rodaVozes.status, 'ativa'))
       .orderBy(desc(rodaVozes.createdAt))
       .limit(1);
 
-    let roda = ativa[0];
+    let roda = ultimaRoda[0];
 
     if (!roda) {
       const novaRoda = {
@@ -128,6 +123,13 @@ export async function POST(request: Request) {
       };
       const insert = await db.insert(rodaVozes).values(novaRoda).returning();
       roda = insert[0];
+    }
+
+    if (roda.status !== 'ativa') {
+      return NextResponse.json(
+        { success: false, error: 'Roda de Vozes está desativada' },
+        { status: 403 }
+      );
     }
 
     // Contar participantes existentes para definir a ordem
@@ -170,6 +172,51 @@ export async function POST(request: Request) {
     console.error('Erro ao adicionar participante:', error);
     return NextResponse.json(
       { success: false, error: 'Erro ao adicionar participante' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    await ensureRodaVozesSchema();
+    const body = await request.json();
+    const { id, status } = body;
+
+    if (!id || !status || typeof status !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'ID e status são obrigatórios' },
+        { status: 400 }
+      );
+    }
+
+    const normalizedStatus = status.toLowerCase();
+    const allowedStatuses = ['ativa', 'pausada', 'encerrada'];
+    if (!allowedStatuses.includes(normalizedStatus)) {
+      return NextResponse.json(
+        { success: false, error: 'Status inválido' },
+        { status: 400 }
+      );
+    }
+
+    const updated = await db
+      .update(rodaVozes)
+      .set({ status: normalizedStatus, updatedAt: new Date() })
+      .where(eq(rodaVozes.id, id))
+      .returning();
+
+    if (!updated.length) {
+      return NextResponse.json(
+        { success: false, error: 'Roda não encontrada' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, roda: updated[0] });
+  } catch (error) {
+    console.error('Erro ao atualizar status da roda:', error);
+    return NextResponse.json(
+      { success: false, error: 'Erro ao atualizar status da roda' },
       { status: 500 }
     );
   }

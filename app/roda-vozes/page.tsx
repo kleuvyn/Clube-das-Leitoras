@@ -24,6 +24,7 @@ export default function RodaDeVozes() {
 
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const participantesRef = useRef<Participante[]>([]);
+  const [rodaStatus, setRodaStatus] = useState<'ativa' | 'pausada' | 'encerrada'>('ativa');
   const [novoNome, setNovoNome] = useState('');
   const [falando, setFalando] = useState<number | null>(null);
   const [tempo, setTempo] = useState(120); // 2 minutos
@@ -91,6 +92,7 @@ export default function RodaDeVozes() {
         throw new Error(message);
       }
       setParticipantesState(reorderParticipants(data.participantes || []));
+      setRodaStatus(data.roda?.status || 'ativa');
       setErro('');
     } catch (err: any) {
       console.error('Erro:', err);
@@ -154,6 +156,11 @@ export default function RodaDeVozes() {
 
   const adicionarParticipante = async () => {
     if (novoNome.trim() === '') return;
+
+    if (rodaStatus !== 'ativa') {
+      setErro('A Roda de Vozes está desativada e não aceita novos participantes.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/roda-vozes', {
@@ -347,11 +354,11 @@ export default function RodaDeVozes() {
           <div className="flex gap-4 flex-col sm:flex-row max-w-3xl pt-6">
             <input
               type="text"
-              placeholder="digite seu nome..."
+              placeholder={rodaStatus !== 'ativa' ? 'Roda de Vozes desativada' : 'digite seu nome...'}
               value={novoNome}
               onChange={(e) => setNovoNome(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && adicionarParticipante()}
-              disabled={carregando}
+              disabled={carregando || rodaStatus !== 'ativa'}
               className="flex-1 px-8 py-5 rounded-[2rem] border border-black/5 focus:outline-none focus:ring-4 focus:ring-black/5 text-lg"
               style={{
                 backgroundColor: palette.surface,
@@ -360,7 +367,7 @@ export default function RodaDeVozes() {
             />
             <button
               onClick={adicionarParticipante}
-              disabled={carregando}
+              disabled={carregando || rodaStatus !== 'ativa'}
               className="px-10 py-5 rounded-[2rem] font-medium flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ backgroundColor: palette.accent, color: palette.bg }}
             >
@@ -368,6 +375,11 @@ export default function RodaDeVozes() {
               <span className="tracking-wide">entrar na roda</span>
             </button>
           </div>
+          {rodaStatus !== 'ativa' && (
+            <div className="text-sm text-rose-600 italic mt-2">
+              Roda de Vozes está atualmente desativada. Inscrições fechadas.
+            </div>
+          )}
         </section>
 
         <div className="grid md:grid-cols-2 gap-16 lg:gap-24 pt-12">

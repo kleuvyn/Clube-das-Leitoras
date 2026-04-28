@@ -39,6 +39,7 @@ export default function SolicitacoesAdmin() {
       const params = new URLSearchParams({ page: String(pageNum), limit: String(effectiveLimit) });
       if (statusFiltro !== 'todos') params.append('status', statusFiltro);
       if (filtro !== 'todas') params.append('tipo', filtro);
+      if (searchTerm.trim()) params.append('search', searchTerm.trim());
       const res = await fetch(`/api/solicitacoes?${params.toString()}`, { cache: 'no-store', credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Erro ao buscar');
