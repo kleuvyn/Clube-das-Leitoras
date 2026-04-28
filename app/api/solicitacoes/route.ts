@@ -548,6 +548,7 @@ export async function PATCH(request: Request) {
   } catch (e) {
     const details = e instanceof Error ? e.message : (typeof e === 'object' && e !== null ? JSON.stringify(e, Object.getOwnPropertyNames(e), 2) : String(e));
     console.error('Erro ao processar aprovação:', e, details);
-    return NextResponse.json({ error: 'Erro ao processar', detalhes: details }, { status: 500 });
+    const status = details === 'Não autorizado' ? 401 : details === 'Permissão insuficiente' ? 403 : 500;
+    return NextResponse.json({ error: status >= 500 ? 'Erro ao processar' : details, detalhes: details }, { status });
   }
 }
