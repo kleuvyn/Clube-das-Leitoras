@@ -70,6 +70,12 @@ export async function POST(req: Request) {
     }
 
     if (action === 'addParticipante') {
+      const configRows = await db.select().from(sorteiosConfig).where(eq(sorteiosConfig.mesBase, payload.mesBase)).orderBy(desc(sorteiosConfig.updatedAt)).limit(1);
+      const urnaAberta = configRows.length === 0 || configRows[0].urnaAberta === 1;
+      if (!urnaAberta) {
+        return NextResponse.json({ error: 'A urna está fechada para novos nomes.' }, { status: 403 });
+      }
+
       const result = await db.insert(sorteiosParticipantes).values({
         nome: payload.nome,
         mesBase: payload.mesBase,

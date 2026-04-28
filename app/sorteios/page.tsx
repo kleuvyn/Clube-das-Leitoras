@@ -100,19 +100,25 @@ export default function SorteiosPage() {
       return;
     }
 
-    setNome("");
-    setParticipantes((prev) => [{ nome: limpo }, ...prev]);
-
     try {
-      await fetch("/api/sorteios", {
+      const res = await fetch("/api/sorteios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "addParticipante", payload: { nome: limpo, mesBase: mesAtualRef } }),
       });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.error || 'Erro ao salvar participante na urna.');
+      }
+
+      setNome("");
+      setParticipantes((prev) => [{ nome: limpo }, ...prev]);
       toast.success("Adicionada à urna com sucesso!");
       carregarDados();
-    } catch {
-      toast.error("Erro ao salvar participante na urna.");
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao salvar participante na urna.");
+      await carregarDados();
     }
   }
 

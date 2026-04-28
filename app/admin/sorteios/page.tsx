@@ -138,6 +138,7 @@ export default function AdminSorteiosPage() {
       }
       setUrnaAberta(open);
       toast.success(`Urna ${open ? 'aberta' : 'fechada'} com sucesso.`);
+      carregarDados();
     } catch (error) {
       console.error('Erro ao alterar o estado da urna:', error);
       toast.error('Erro ao alterar o estado da urna.');
