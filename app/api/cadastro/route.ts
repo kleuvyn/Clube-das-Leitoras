@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { db } from '@/lib/db';
+import { client, db } from '@/lib/db';
 import { colaboradoras, solicitacoes } from '@/lib/db/schema';
 import { eq, or, sql } from 'drizzle-orm';
 
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com';
+
+async function hasApprovedAtColumn() {
+  const result = await client.execute('PRAGMA table_info(solicitacoes)');
+  return result.rows.some((row: any) => row?.name === 'approved_at');
+}
 
 function normalizeEmail(value?: string | null) {
   return value?.toString().trim().toLowerCase() || '';
@@ -31,12 +36,12 @@ function getFromAddress() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const email = body.email?.toLowerCase().trim();
-    const name = body.name?.trim();
-    const phone = body.phone?.trim();
-    const birthdate = body.birthdate;
-    const tempoClube = body.tempoClube?.trim();
-    const enderecoCompleto = body.enderecoCompleto?.trim();
+    const email = typeof body.email === 'string' ? body.email.toLowerCase().trim() : '';
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
+    const phone = body.phone != null ? String(body.phone).trim() : '';
+    const birthdate = body.birthdate != null ? String(body.birthdate).trim() : '';
+    const tempoClube = body.tempoClube != null ? String(body.tempoClube).trim() : '';
+    const enderecoCompleto = body.enderecoCompleto != null ? String(body.enderecoCompleto).trim() : '';
     const cartaMimo = body.cartaMimo === true;
 
     if (!email || !name || !phone || !birthdate) {
@@ -60,7 +65,8 @@ export async function POST(request: Request) {
     if (normalizedName) duplicateConditions.push(sql`LOWER(${solicitacoes.nome}) = ${normalizedName}`);
 
     if (duplicateConditions.length > 0) {
-      const [existingSolicitacao] = await db.select().from(solicitacoes).where(or(...duplicateConditions));
+      const duplicateWhere = duplicateConditions.length === 1 ? duplicateConditions[0] : or(...duplicateConditions);
+      const [existingSolicitacao] = await db.select({ id: solicitacoes.id }).from(solicitacoes).where(duplicateWhere);
       if (existingSolicitacao) {
         return NextResponse.json({ error: 'Já existe um cadastro em análise com este e-mail, telefone ou nome. Aguarde a aprovação antes de enviar novamente.' }, { status: 409 });
       }
@@ -72,15 +78,32 @@ export async function POST(request: Request) {
     const placeholderPassword = `clube-${Math.random().toString(36).slice(2, 10)}`;
     const hashedPassword = await bcrypt.hash(placeholderPassword, 10);
 
-    await db.insert(solicitacoes).values({
-      tipo: 'leitora',
-      nome: name,
-      email,
-      telefone: phone,
-      enderecoCompleto: enderecoCompleto || null,
-      mensagem,
-      status: 'pendente',
-    });
+    const hasApprovedAt = await hasApprovedAtColumn();
+    if (hasApprovedAt) {
+      await db.insert(solicitacoes).values({
+        tipo: 'leitora',
+        nome: name,
+        email,
+        telefone: phone,
+        enderecoCompleto: enderecoCompleto || null,
+        mensagem,
+        status: 'pendente',
+      });
+    } else {
+      await client.execute({
+        sql: `insert into solicitacoes (id, tipo, nome, email, telefone, endereco_completo, mensagem, status, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, (cast((julianday('now') - 2440587.5)*86400000 as integer)))`,
+        args: [
+          crypto.randomUUID(),
+          'leitora',
+          name,
+          email,
+          phone || null,
+          enderecoCompleto || null,
+          mensagem,
+          'pendente',
+        ],
+      });
+    }
 
     const emailStatus: { user: boolean; admin: boolean; hasKey: boolean; errors: string[] } = { user: false, admin: false, hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY), errors: [] };
     const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
