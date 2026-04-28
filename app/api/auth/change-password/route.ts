@@ -45,11 +45,25 @@ export async function PATCH(req: Request) {
     }
 
     const previousHashes = await getRecentPasswordHistory(user.id, PASSWORD_HISTORY_LIMIT);
-    if (await bcrypt.compare(newPass, user.password) || await Promise.all(previousHashes.map(hash => bcrypt.compare(newPass, hash))).then(results => results.some(Boolean))) {
+    let isReused = false;
+    try {
+      const isSameAsCurrent = user.password ? await bcrypt.compare(newPass, user.password) : false;
+      const isSameAsPrevious = await Promise.all(
+        previousHashes.map(async hash => {
+          try { return await bcrypt.compare(newPass, hash); } catch { return false; }
+        })
+      ).then(results => results.some(Boolean));
+      isReused = isSameAsCurrent || isSameAsPrevious;
+    } catch (e) {
+      console.error(e);
+    }
+    if (isReused) {
       return NextResponse.json({ error: 'Não é permitido reutilizar senhas recentes.' }, { status: 400 });
     }
 
-    await insertPasswordHistory(user.id, user.password, user.mustChangePassword ? 'temporary' : 'permanent');
+    if (user.password) {
+      await insertPasswordHistory(user.id, user.password, user.mustChangePassword ? 'temporary' : 'permanent');
+    }
     const hashed = await bcrypt.hash(newPass, 10);
 
     await db.update(colaboradoras).set({ password: hashed, mustChangePassword: false, tempPasswordExpiresAt: null }).where(eq(colaboradoras.id, user.id));

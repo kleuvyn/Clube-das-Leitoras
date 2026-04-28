@@ -17,8 +17,13 @@ export function gerarSenhaTemporaria(): string {
 
 export async function isPasswordReused(password: string, hashes: string[]) {
   for (const hash of hashes) {
-    if (await bcrypt.compare(password, hash)) {
-      return true;
+    if (!hash) continue;
+    try {
+      if (await bcrypt.compare(password, hash)) {
+        return true;
+      }
+    } catch (err) {
+      console.warn("Invalid hash encountered while comparing passwords", err);
     }
   }
   return false;
@@ -35,20 +40,29 @@ export async function generateUniqueTempPassword(existingHashes: string[]) {
 }
 
 export async function insertPasswordHistory(userId: string, passwordHash: string, type: 'permanent' | 'temporary') {
-  await db.insert(colaboradorasPasswordHistory).values({
-    id: crypto.randomUUID(),
-    colaboradoraId: userId,
-    passwordHash,
-    type,
-  });
+  try {
+    await db.insert(colaboradorasPasswordHistory).values({
+      id: crypto.randomUUID(),
+      colaboradoraId: userId,
+      passwordHash,
+      type,
+    });
+  } catch (error) {
+    console.error('Failed to insert password history. Maybe table does not exist:', error);
+  }
 }
 
 export async function getRecentPasswordHistory(userId: string, limit = PASSWORD_HISTORY_LIMIT) {
-  const rows = await db
-    .select({ passwordHash: colaboradorasPasswordHistory.passwordHash })
-    .from(colaboradorasPasswordHistory)
-    .where(eq(colaboradorasPasswordHistory.colaboradoraId, userId))
-    .orderBy(desc(colaboradorasPasswordHistory.createdAt))
-    .limit(limit);
-  return rows.map(r => r.passwordHash);
+  try {
+    const rows = await db
+      .select({ passwordHash: colaboradorasPasswordHistory.passwordHash })
+      .from(colaboradorasPasswordHistory)
+      .where(eq(colaboradorasPasswordHistory.colaboradoraId, userId))
+      .orderBy(desc(colaboradorasPasswordHistory.createdAt))
+      .limit(limit);
+    return rows.map(r => r.passwordHash);
+  } catch (error) {
+    console.error('Failed to fetch password history:', error);
+    return [];
+  }
 }
