@@ -2,9 +2,17 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { colaboradoras, solicitacoes } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, or, sql } from 'drizzle-orm';
 
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com';
+
+function normalizeEmail(value?: string | null) {
+  return value?.toString().trim().toLowerCase() || '';
+}
+
+function normalizePhone(value?: string | null) {
+  return value?.toString().replace(/\D/g, '').trim() || '';
+}
 
 function getFromAddress() {
   const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
@@ -35,13 +43,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Nome, e-mail, telefone e data de nascimento são obrigatórios.' }, { status: 400 });
     }
 
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedPhone = normalizePhone(phone);
+    const normalizedName = name.toLowerCase().trim();
+
+    if (normalizedEmail) {
+      const [existingColaboradora] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedEmail})`);
+      if (existingColaboradora) {
+        return NextResponse.json({ error: 'Este e-mail já está cadastrado no sistema. Use o acesso existente ou contate a curadoria.' }, { status: 409 });
+      }
+    }
+
+    const duplicateConditions: any[] = [];
+    if (normalizedEmail) duplicateConditions.push(sql`LOWER(${solicitacoes.email}) = ${normalizedEmail}`);
+    if (normalizedPhone) duplicateConditions.push(sql`replace(replace(replace(replace(${solicitacoes.telefone}, ' ', ''), '(', ''), ')', ''), '-', '') = ${normalizedPhone}`);
+    if (normalizedName) duplicateConditions.push(sql`LOWER(${solicitacoes.nome}) = ${normalizedName}`);
+
+    if (duplicateConditions.length > 0) {
+      const [existingSolicitacao] = await db.select().from(solicitacoes).where(or(...duplicateConditions));
+      if (existingSolicitacao) {
+        return NextResponse.json({ error: 'Já existe um cadastro em análise com este e-mail, telefone ou nome. Aguarde a aprovação antes de enviar novamente.' }, { status: 409 });
+      }
+    }
+
     // Monta mensagem completa para curadoria
     const mensagem = `Novo cadastro de leitora:\n\nNome completo: ${name}\nE-mail: ${email}\nWhatsApp: ${phone}\nData de nascimento: ${birthdate}\nTempo no clube: ${tempoClube || 'Não informado'}\nEndereço para mimos: ${enderecoCompleto || 'Não informado'}\nCarta/mimo: ${cartaMimo ? 'Sim' : 'Não'}`;
-
-    const [existing] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, email));
-    if (existing) {
-      return NextResponse.json({ error: 'Este e-mail já está cadastrado.' }, { status: 400 });
-    }
 
     const placeholderPassword = `clube-${Math.random().toString(36).slice(2, 10)}`;
     const hashedPassword = await bcrypt.hash(placeholderPassword, 10);

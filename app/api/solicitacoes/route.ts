@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { client, db } from '@/lib/db';
 import { solicitacoes, colaboradoras } from '@/lib/db/schema';
-import { and, eq, desc, sql } from 'drizzle-orm';
+import { and, eq, desc, or, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
 // Se possível use o remetente já configurado na conta Resend (mesmo que já esteja validado no DNS)
@@ -29,6 +29,35 @@ function parseCookieHeader(cookieHeader: string | null | undefined) {
     acc[name.trim()] = decodeURIComponent(rest.join('=').trim());
     return acc;
   }, {});
+}
+
+function normalizeEmail(value?: string | null) {
+  return value?.toString().trim().toLowerCase() || '';
+}
+
+function normalizePhone(value?: string | null) {
+  return value?.toString().replace(/\D/g, '').trim() || '';
+}
+
+function dedupeSolicitacoes(rows: any[]) {
+  const seenEmails = new Set<string>();
+  const seenPhones = new Set<string>();
+  const seenNames = new Set<string>();
+
+  return rows.filter((item) => {
+    const email = normalizeEmail(item.email);
+    const phone = normalizePhone(item.telefone);
+    const name = item.nome?.toString().toLowerCase().trim() || '';
+    const duplicate = (email && seenEmails.has(email))
+      || (phone && seenPhones.has(phone))
+      || (name && seenNames.has(name));
+
+    if (duplicate) return false;
+    if (email) seenEmails.add(email);
+    if (phone) seenPhones.add(phone);
+    if (name) seenNames.add(name);
+    return true;
+  });
 }
 
 async function requireSolicitacoesAdmin(request: Request) {
@@ -127,8 +156,9 @@ export async function GET(request: Request) {
       db.select({ count: sql<number>`cast(count(*) as integer)` }).from(solicitacoes).where(whereClause),
     ]);
 
+    const filteredRows = dedupeSolicitacoes(rows);
     if (!hasPagination) {
-      return NextResponse.json(rows);
+      return NextResponse.json(filteredRows);
     }
 
     const total = countResult[0]?.count || 0;
@@ -155,6 +185,9 @@ export async function POST(request: Request) {
     const nome = (body.nome || body.name)?.trim();
     const rawEmail = (body.email || body.emailAddress || '').toString().toLowerCase().trim();
     const telefone = (body.telefone || body.phone || '').toString().trim();
+    const normalizedEmail = normalizeEmail(rawEmail);
+    const normalizedTelefone = normalizePhone(telefone);
+    const normalizedNome = nome?.toLowerCase().trim();
 
     const responsavel = (body.responsavel || '').toString().trim();
     const livroTitulo = (body.livroTitulo || '').toString().trim();
@@ -232,6 +265,25 @@ export async function POST(request: Request) {
     if (tipo === 'parceria') {
       if (!nome || !telefone || !rawEmail || !site || !editora || !descricao || !linkInstagram) {
         return NextResponse.json({ error: 'Campo Obrigatório: Nome, Telefone, E-mail, Site, Nome da Editora, Descrição, Link/Instagram' }, { status: 400 });
+      }
+    }
+
+    if (normalizedEmail) {
+      const [existingColaboradora] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedEmail})`);
+      if (existingColaboradora) {
+        return NextResponse.json({ error: 'Este e-mail já está cadastrado no sistema. Use o acesso existente ou contate a curadoria.' }, { status: 409 });
+      }
+    }
+
+    const duplicateConditions: any[] = [];
+    if (normalizedEmail) duplicateConditions.push(sql`LOWER(${solicitacoes.email}) = ${normalizedEmail}`);
+    if (normalizedTelefone) duplicateConditions.push(sql`replace(replace(replace(replace(${solicitacoes.telefone}, ' ', ''), '(', ''), ')', ''), '-', '') = ${normalizedTelefone}`);
+    if (normalizedNome) duplicateConditions.push(sql`LOWER(${solicitacoes.nome}) = ${normalizedNome}`);
+
+    if (duplicateConditions.length > 0) {
+      const [existingSolicitacao] = await db.select().from(solicitacoes).where(or(...duplicateConditions));
+      if (existingSolicitacao) {
+        return NextResponse.json({ error: 'Já existe uma solicitação com este e-mail, telefone ou nome. Aguarde a análise antes de enviar novamente.' }, { status: 409 });
       }
     }
 
@@ -380,6 +432,10 @@ export async function PATCH(request: Request) {
     const body = await request.json();
     const { id, status } = body;
 
+    if (!id || !status || !['aprovada', 'rejeitada'].includes(status)) {
+      return NextResponse.json({ error: 'ID e status válidos são obrigatórios.' }, { status: 400 });
+    }
+
     const [solicitacao] = await db.select().from(solicitacoes).where(eq(solicitacoes.id, id));
     if (!solicitacao) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
@@ -397,38 +453,58 @@ export async function PATCH(request: Request) {
 
         if (solicitacao.tipo === 'leitora') {
           try {
-            const [existingUser] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, solicitacao.email));
+            const normalizedUserEmail = normalizeEmail(solicitacao.email);
+            let [existingUser] = normalizedUserEmail
+              ? await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedUserEmail})`)
+              : [null];
 
             let plainPassword = '';
             if (!existingUser) {
+              if (!normalizedUserEmail) {
+                throw new Error('E-mail inválido para aprovação de leitora.');
+              }
               plainPassword = `clube-${Math.random().toString(36).slice(2, 10)}`;
               const hashedPassword = await bcrypt.hash(plainPassword, 10);
-              await db.insert(colaboradoras).values({
-                email: solicitacao.email,
-                password: hashedPassword,
-                name: solicitacao.nome,
-                phone: solicitacao.telefone || null,
-                role: 'convidada',
-                mustChangePassword: true,
-                active: true,
-                tempoClube: solicitacao.mensagem?.match(/Há quanto tempo está no clube: (.*)/)?.[1] ?? null,
-                enderecoCompleto: solicitacao.enderecoCompleto || null,
-              });
+              try {
+                await db.insert(colaboradoras).values({
+                  email: normalizedUserEmail,
+                  password: hashedPassword,
+                  name: solicitacao.nome,
+                  phone: solicitacao.telefone || null,
+                  role: 'convidada',
+                  mustChangePassword: true,
+                  active: true,
+                  tempoClube: solicitacao.mensagem?.match(/Há quanto tempo está no clube: (.*)/)?.[1] ?? null,
+                  enderecoCompleto: solicitacao.enderecoCompleto || null,
+                });
+              } catch (insertError: any) {
+                const insertMessage = insertError instanceof Error ? insertError.message : String(insertError);
+                if (/unique|constraint/i.test(insertMessage)) {
+                  const [foundUser] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedUserEmail})`);
+                  existingUser = foundUser;
+                } else {
+                  throw insertError;
+                }
+              }
             }
 
-            await sendEmail({
-              from: getFromAddress(),
-              to: solicitacao.email,
-              subject: 'Seja bem-vinda ao Clube das Leitoras',
-              html: (await import('@/lib/email-templates')).cartaAprovacaoComSenha({
-                nome: solicitacao.nome,
-                email: solicitacao.email,
-                senha: plainPassword || 'Sua conta já existia, use sua senha atual',
-                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
-              }),
-            });
-            emailStatus.user = true;
-            console.log('✅ E-mail de aprovação para leitora enviado:', solicitacao.email);
+            if (normalizedUserEmail) {
+              await sendEmail({
+                from: getFromAddress(),
+                to: normalizedUserEmail,
+                subject: 'Seja bem-vinda ao Clube das Leitoras',
+                html: (await import('@/lib/email-templates')).cartaAprovacaoComSenha({
+                  nome: solicitacao.nome,
+                  email: normalizedUserEmail,
+                  senha: plainPassword || 'Sua conta já existia, use sua senha atual',
+                  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
+                }),
+              });
+              emailStatus.user = true;
+              console.log('✅ E-mail de aprovação para leitora enviado:', normalizedUserEmail);
+            } else {
+              emailStatus.errors.push('E-mail inválido ou ausente; não foi possível enviar notificação à leitora.');
+            }
           } catch (err: any) {
             const errorMessage = err && err instanceof Error ? err.message : String(err);
             console.error('❌ Erro ao criar conta de leitora ou enviar e-mail:', err);

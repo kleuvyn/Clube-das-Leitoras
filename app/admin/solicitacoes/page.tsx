@@ -122,6 +122,7 @@ export default function SolicitacoesAdmin() {
         <div>
           <h1 className="text-4xl font-serif italic text-slate-900">Curadoria de Acessos</h1>
           <p className="text-slate-500 text-sm mt-1">Gerencie quem entra no Clube das Leitoras.</p>
+          <p className="text-slate-500 text-xs mt-2 italic">Duplicatas por e-mail, telefone ou nome são ocultadas para facilitar a triagem — somente a inscrição mais recente é exibida.</p>
         </div>
         <Button onClick={() => load()} variant="ghost" className="gap-2 text-slate-400 hover:text-slate-900">
           <RefreshCw size={16} className={carregando ? "animate-spin" : ""} /> Atualizar Lista
