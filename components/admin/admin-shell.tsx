@@ -49,7 +49,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     {
       category: 'Momentos do Clube',
       items: [
-        { href: '/admin/podcast', label: 'Podcast', icon: Mic },
+        // { href: '/admin/podcast', label: 'Podcast', icon: Mic },
         { href: '/admin/cronograma', label: 'Cronograma', icon: Calendar },
         { href: '/admin/cronograma/eventos', label: 'Encontros', icon: ImageIcon },
         { href: '/admin/sorteios', label: 'Sorteios', icon: Gift },

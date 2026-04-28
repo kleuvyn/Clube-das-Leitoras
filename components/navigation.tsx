@@ -75,7 +75,7 @@ export function Navigation() {
       label: 'Momentos do Clube',
       items: [
         { label: 'Sorteios do Clube', href: '/sorteios' },
-        { label: 'Podcast', href: '/podcast' },
+        // { label: 'Podcast', href: '/podcast' },
         { label: 'Cronograma Mensal', href: '/cronograma' },
         { label: 'Galeria de Encontros', href: '/eventos' }
       ]

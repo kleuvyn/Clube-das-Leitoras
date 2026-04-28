@@ -35,6 +35,7 @@ export default function SorteiosPage() {
   const [vencedora, setVencedora] = useState<string | null>(null);
   const [premioAtual, setPremioAtual] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const carregarDados = async () => {
     try {
@@ -57,8 +58,21 @@ export default function SorteiosPage() {
     }
   };
 
+  const carregarUsuario = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        setIsAdmin(data.user?.role === 'admin');
+      }
+    } catch (err) {
+      console.error('Erro ao carregar usuário:', err);
+    }
+  };
+
   useEffect(() => {
     carregarDados();
+    carregarUsuario();
   }, []);
 
   const totalParticipantes = useMemo(() => participantes.length, [participantes]);
@@ -128,8 +142,13 @@ export default function SorteiosPage() {
   }
 
   async function iniciarSorteio() {
+    if (!isAdmin) {
+      toast.error('Somente admin pode sortear.');
+      return;
+    }
+
     if (participantes.length === 0 || sorteando) {
-      toast.error("A urna está vazia. Adicione participantes primeiro.");
+      toast.error('A urna está vazia. Adicione participantes primeiro.');
       return;
     }
 
@@ -140,7 +159,7 @@ export default function SorteiosPage() {
     const duracaoMs = 2400;
     const intervaloMs = 100;
     const fim = Date.now() + duracaoMs;
-    const premiosDoMes = premios.length > 0 ? premios : ["Um presente especial"];
+    const premiosDoMes = premios.length > 0 ? premios : ['Um presente especial'];
 
     const ticker = window.setInterval(async () => {
       const i = sortearIndice(participantes.length);
@@ -159,18 +178,18 @@ export default function SorteiosPage() {
         setSorteando(false);
 
         try {
-          await fetch("/api/sorteios", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          await fetch('/api/sorteios', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action: "salvarHistorico",
+              action: 'salvarHistorico',
               payload: { nome: vencedoraFinal.nome, premio: premioFinal, mesBase: mesAtualRef, id: vencedoraFinal.id },
             }),
           });
           toast.success(`Parabéns, ${vencedoraFinal.nome}! Uma nova página se inicia.`);
           carregarDados();
         } catch {
-          toast.error("Erro ao registrar o sorteio.");
+          toast.error('Erro ao registrar o sorteio.');
         }
       }
     }, intervaloMs);
@@ -251,6 +270,20 @@ export default function SorteiosPage() {
                 </button>
               </form>
 
+              {isAdmin && (
+                <div className="mb-8">
+                  <button
+                    type="button"
+                    onClick={iniciarSorteio}
+                    disabled={sorteando || participantes.length === 0 || !!vencedora || loading}
+                    className="w-full rounded-sm px-8 py-3.5 text-white font-bold uppercase tracking-widest text-[10px] transition-all hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: '#285944' }}
+                  >
+                    Sortear Agora como Admin
+                  </button>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-3 mb-6" style={{ borderColor: `${corDestaque}20` }}>
                 <div>
                   <h3 className="text-[9px] font-bold uppercase tracking-[0.35em] opacity-80" style={{ color: corTexto }}>
@@ -308,59 +341,11 @@ export default function SorteiosPage() {
         <aside className="lg:col-span-5 space-y-10">
           <div className="relative group">
             <div className="bg-white border rounded-sm p-8 md:p-10 shadow-sm flex flex-col justify-center items-center text-center relative z-10" style={{ borderColor: `${corDestaque}30` }}>
-              <button
-                type="button"
-                onClick={iniciarSorteio}
-                disabled={sorteando || participantes.length === 0 || !!vencedora || loading}
-                className="w-full rounded-sm px-6 py-5 text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 flex items-center justify-center gap-3 font-bold uppercase tracking-[0.2em] text-[11px]"
-                style={{ backgroundColor: corDestaque }}
-              >
-                <PartyPopper size={14} /> Sortear Agora
-              </button>
-
-              <div className="mt-8 rounded-sm border p-6 w-full min-h-40 flex flex-col items-center justify-center text-center relative" style={{ borderColor: `${corDestaque}20`, backgroundColor: '#FAFAF5' }}>
-                {sorteando && (
-                  <div className="space-y-4 animate-pulse">
-                    <p className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-55">sorteando...</p>
-                    <p className="text-3xl font-alice truncate w-full px-2" style={{ color: corDestaque }}>
-                      {nomeAnimado ?? "..."}
-                    </p>
-                  </div>
-                )}
-
-                {!sorteando && vencedora && (
-                  <div className="space-y-3 w-full">
-                    <p className="text-[9px] uppercase font-bold tracking-[0.35em] opacity-60">
-                      Ganhadora revelada
-                    </p>
-                    <p className="text-4xl font-alice truncate" style={{ color: corDestaque }}>
-                      {vencedora}
-                    </p>
-                    {premioAtual && (
-                      <p className="pt-4 border-t font-serif italic text-[15px] opacity-80" style={{ borderColor: `${corDestaque}20` }}>
-                        Prêmio: <strong>{premioAtual}</strong>
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {!sorteando && !vencedora && (
-                  <p className="text-[14px] italic opacity-50 font-serif">
-                    O momento aguarda revelação.
-                  </p>
-                )}
+              <div className="rounded-sm border p-6 w-full min-h-40 flex flex-col items-center justify-center text-center relative" style={{ borderColor: `${corDestaque}20`, backgroundColor: '#FAFAF5' }}>
+                <p className="text-[14px] italic opacity-50 font-serif">
+                  O momento aguarda revelação.
+                </p>
               </div>
-
-              {vencedora && (
-                <button
-                  type="button"
-                  onClick={resetarResultado}
-                  className="mt-6 w-full rounded-sm border px-6 py-2.5 text-[9px] uppercase tracking-widest font-bold transition-colors opacity-70 hover:opacity-100 hover:bg-black/5"
-                  style={{ borderColor: `${corDestaque}40`, color: corTexto }}
-                >
-                  Preparar nova rodada
-                </button>
-              )}
             </div>
 
             <div

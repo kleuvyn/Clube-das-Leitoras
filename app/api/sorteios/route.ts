@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, client } from '@/lib/db';
 import { sorteiosParticipantes, sorteiosHistorico, sorteiosPremios, sorteiosConfig } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth';
 
 async function ensureTableExists() {
   try {
@@ -63,6 +64,10 @@ export async function POST(req: Request) {
   try {
     await ensureTableExists();
     const { action, payload } = await req.json();
+
+    if (['salvarHistorico', 'addPremio', 'setUrnaStatus', 'removePremio'].includes(action)) {
+      await requireAdmin();
+    }
 
     if (action === 'addParticipante') {
       const result = await db.insert(sorteiosParticipantes).values({
