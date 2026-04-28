@@ -55,7 +55,7 @@ export default function RootClient({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAuthPage = pathname === "/login" || pathname === "/nova-senha" || pathname?.startsWith("/admin");
+  const isAuthPage = pathname === "/login" || pathname === "/recuperar-senha" || pathname === "/nova-senha" || pathname?.startsWith("/admin");
   const [pageColor, setPageColor] = useState(laranjaFolha);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
