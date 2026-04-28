@@ -2,28 +2,56 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { livros, votacoes, votacaoConfig, votacoesHistorico } from '@/lib/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, sql, inArray } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
 // --- BUSCAR DADOS (URNA + HISTÓRICO) ---
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+
     const cfgRows = await db.select().from(votacaoConfig).orderBy(desc(votacaoConfig.createdAt)).limit(1);
     const cfg = cfgRows[0] ?? null;
     const config = { ativa: Boolean(cfg?.ativa ?? false), prazo: cfg?.prazo ?? '' };
 
-    const allLivros = await db.select().from(livros)
-      .where(eq(livros.tipo, 'candidato'))
-      .orderBy(desc(livros.createdAt));
+    const [allLivros, countResult] = await Promise.all([
+      db.select().from(livros)
+        .where(eq(livros.tipo, 'candidato'))
+        .orderBy(desc(livros.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` })
+        .from(livros)
+        .where(eq(livros.tipo, 'candidato')),
+    ]);
       
-    const allVotacoes = await db.select().from(votacoes);
+    const livroIds = allLivros.map((l) => l.id);
+    const votosAgrupados = livroIds.length > 0
+      ? await db
+          .select({
+            livroId: votacoes.livro_id,
+            total: sql<number>`cast(count(*) as integer)`,
+          })
+          .from(votacoes)
+          .where(inArray(votacoes.livro_id, livroIds))
+          .groupBy(votacoes.livro_id)
+      : [];
 
     const votosPorLivro = new Map<string, number>();
-    allVotacoes.forEach(v => {
-      votosPorLivro.set(v.livro_id, (votosPorLivro.get(v.livro_id) || 0) + 1);
+    votosAgrupados.forEach((v) => {
+      votosPorLivro.set(v.livroId, v.total || 0);
     });
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
 
     const livrosComVotos = allLivros
       .map(l => ({
@@ -42,7 +70,20 @@ export async function GET() {
       .from(votacoesHistorico)
       .orderBy(desc(votacoesHistorico.encerradoEm));
 
-    return NextResponse.json({ ...config, livros: livrosComVotos, historico }, { status: 200 });
+    if (!hasPagination) {
+      return NextResponse.json({
+        ...config,
+        livros: livrosComVotos,
+        historico,
+      }, { status: 200 });
+    }
+
+    return NextResponse.json({
+      ...config,
+      livros: livrosComVotos,
+      historico,
+      pagination: { page, limit, total, pages, hasMore: page < pages }
+    }, { status: 200 });
   } catch (err) {
     return NextResponse.json({ error: 'Erro ao buscar votação' }, { status: 500 });
   }

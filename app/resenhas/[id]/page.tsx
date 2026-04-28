@@ -67,7 +67,7 @@ export default async function ResenhaByIdPage({ params }: { params: { id: string
 
         <div className="grid lg:grid-cols-12 gap-16 items-start">
           <aside className="lg:col-span-3 border-r border-black/5 pr-8">
-            <SidebarCronologica todas={todas ?? []} idAtivo={r.id} />
+              <SidebarCronologica todas={(todas ?? []) as any} idAtivo={r.id} />
           </aside>
 
           <article className="lg:col-span-6 space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-1000">

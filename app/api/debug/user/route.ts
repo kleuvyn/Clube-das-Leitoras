@@ -9,7 +9,11 @@ export async function GET(req: Request) {
     const url = new URL(req.url)
     const email = url.searchParams.get('email')
     if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
-    const sql = postgres(process.env.DATABASE_URL)
+    const connString = process.env.DATABASE_URL;
+    if (!connString) {
+      return NextResponse.json({ error: 'No database configured' }, { status: 500 });
+    }
+    const sql = postgres(connString);
     const rows = await sql`
       SELECT id, email, active, role, must_change_password, left(password,60) as pwd_head
       FROM public.colaboradoras

@@ -32,6 +32,9 @@ export default function EscritorasPage() {
   const [escritoras, setEscritoras] = useState<Escritora[]>([]);
   const [loading, setLoading] = useState(true);
   const [ativa, setAtiva] = useState<Escritora | null>(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
 
   // Estados do Modal de Cadastro Completo
   const [modalOpen, setModalOpen] = useState(false);
@@ -62,10 +65,12 @@ export default function EscritorasPage() {
 
   useEffect(() => {
     async function carregar() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/escritoras');
+        const res = await fetch(`/api/escritoras?page=${page}&limit=${limit}`);
         const data = await res.json();
-        setEscritoras(Array.isArray(data) ? data : []);
+        setEscritoras(Array.isArray(data.data) ? data.data : []);
+        setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
       } catch (err) {
         console.error("Erro ao carregar escritoras:", err);
       } finally {
@@ -73,7 +78,7 @@ export default function EscritorasPage() {
       }
     }
     carregar();
-  }, []);
+  }, [page]);
 
   const enviarSolicitacaoEscritora = async () => {
     const nomeVal = solNome.trim();
@@ -124,17 +129,17 @@ export default function EscritorasPage() {
   if (ativa) {
     return (
       <div className="min-h-screen font-serif pb-40 relative animate-in fade-in duration-500" style={bgStyle}>
-        <header className="max-w-7xl mx-auto pt-24 pb-8 px-6">
+        <header className="max-w-7xl mx-auto pt-32 lg:pt-40 pb-8 px-6 relative z-10">
           <button
             onClick={() => setAtiva(null)}
-            className="group flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] opacity-50 hover:opacity-100 transition-all"
+            className="group flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.3em] opacity-50 hover:opacity-100 transition-all cursor-pointer relative z-20"
           >
             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
             Voltar ao Acervo
           </button>
         </header>
 
-        <main className="max-w-7xl mx-auto px-6">
+        <main className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-start">
             
             <aside className="hidden lg:block lg:col-span-3 sticky top-10 space-y-2 border-l border-black/5 pl-6">
@@ -249,29 +254,53 @@ export default function EscritorasPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
             {escritoras.map((item) => (
-              <div key={item.id} className="group cursor-pointer space-y-8" onClick={() => setAtiva(item)}>
-                <div className="relative aspect-[3/4] bg-white rounded-sm shadow-[10px_10px_30px_rgba(0,0,0,0.05)] overflow-hidden transition-all duration-500 group-hover:shadow-[20px_20px_50px_rgba(0,0,0,0.1)] group-hover:-translate-y-2">
-                  {item.capaUrl ? (
-                    <img src={item.capaUrl} alt={item.livroTitulo} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-slate-50">
-                      <BookOpen size={40} className="opacity-10" />
+              <div key={item.id} className="group cursor-pointer" onClick={() => setAtiva(item)}>
+                <div className="relative bg-white p-3 pb-8 shadow-md overflow-hidden transition-all duration-500 group-hover:shadow-[15px_15px_40px_rgba(0,0,0,0.1)] group-hover:-translate-y-2 group-hover:-rotate-[-2deg] rotate-0 mx-auto w-full max-w-[240px] md:max-w-[280px] border border-black/5 flex flex-col">
+                  <div className="relative aspect-[3/4] w-full mb-4">
+                    {item.capaUrl ? (
+                      <div className="relative w-full h-full bg-slate-100">
+                        <img src={item.capaUrl} alt={item.livroTitulo} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-50 border border-dashed border-black/10">
+                        <BookOpen size={40} className="opacity-10" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <span className="text-white text-[10px] font-bold uppercase tracking-widest border border-white/40 px-6 py-3 rounded-full backdrop-blur-sm z-10 hover:bg-white/10">Conhecer Obra</span>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                     <span className="text-white text-[10px] font-bold uppercase tracking-widest border border-white/40 px-6 py-3 rounded-full backdrop-blur-sm">Conhecer Obra</span>
                   </div>
-                </div>
-                <div className="space-y-3">
-                  <span className="text-[9px] font-bold uppercase tracking-[0.4em]" style={{ color: rosaPrincipal }}>{item.genero || "Literatura"}</span>
-                  <h3 className="text-3xl text-slate-800 leading-none group-hover:italic transition-all">{item.livroTitulo}</h3>
-                  <div className="flex items-center gap-3 pt-2">
-                    <div className="w-6 h-[1px] bg-black/20" />
-                    <p className="text-[10px] uppercase tracking-widest opacity-40 italic">por {item.nome}</p>
+                  <div className="space-y-2 px-1 text-center text-slate-800">
+                    <span className="block text-[8px] font-bold uppercase tracking-[0.3em] opacity-80" style={{ color: rosaPrincipal }}>{item.genero || "Literatura"}</span>
+                    <h3 className="text-2xl font-alice leading-none group-hover:italic transition-all">{item.livroTitulo}</h3>
+                    <p className="text-[10px] uppercase tracking-widest opacity-50 italic mt-2">por {item.nome}</p>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Paginação */}
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 my-12">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : rosaPrincipal, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : rosaPrincipal, color: 'white' }}
+            >
+              Próxima →
+            </button>
           </div>
         )}
 

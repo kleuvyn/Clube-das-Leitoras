@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { parcerias } from '@/lib/db/schema';
-import { eq, desc, asc } from 'drizzle-orm';
+import { eq, desc, asc, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,10 +15,35 @@ type ParceriaRow = {
   createdAt: string;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const rows = await db.select().from(parcerias).orderBy(asc(parcerias.name));
-    return NextResponse.json(rows);
+    const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+
+    const rows = await db
+      .select()
+      .from(parcerias)
+      .orderBy(asc(parcerias.name))
+      .limit(limit + 1)
+      .offset(offset);
+
+    const hasMore = rows.length > limit;
+    const trimmedRows = rows.slice(0, limit);
+    const pages = hasMore ? page + 1 : page;
+
+    if (!hasPagination) {
+      return NextResponse.json(trimmedRows);
+    }
+
+    return NextResponse.json({
+      data: trimmedRows,
+      pagination: { page, limit, pages, hasMore }
+    });
   } catch (err: any) {
     console.error('Erro GET /api/parcerias:', err);
     return NextResponse.json({ error: 'Erro ao carregar parcerias' }, { status: 500 });

@@ -2,6 +2,23 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { resenhas } from '@/lib/db/schema';
 
+export const revalidate = 3600;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+  });
+}
+
 export async function GET() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
   const staticPages = [
@@ -14,7 +31,8 @@ export async function GET() {
     '/podcast',
     '/votacao',
     '/login',
-    '/cadastro'
+    '/cadastro',
+    '/roda-vozes'
   ];
 
   const today = new Date().toISOString();
@@ -26,9 +44,12 @@ export async function GET() {
     xml += `  <url>\n    <loc>${siteUrl}${p}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
   }
 
-  // Add resenhas dynamically
+  // Add resenhas dynamically (limited to avoid timeout)
   try {
-    const rows = await db.select().from(resenhas).orderBy(resenhas.createdAt);
+    const rows = await withTimeout(
+      db.select({ id: resenhas.id, createdAt: resenhas.createdAt }).from(resenhas).orderBy(resenhas.createdAt).limit(500),
+      8000,
+    );
     for (const r of rows) {
       const loc = `${siteUrl}/resenhas/${r.id}`;
       const lastmod = r.createdAt ? new Date(r.createdAt).toISOString() : today;

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { encontros } from '@/lib/db/schema';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { requireAdminOrColaboradora } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -9,18 +9,34 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const tipo = searchParams.get('tipo'); 
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
 
-    let query = db.select().from(encontros);
-    
-    
-    if (tipo) {
-      
-      query = query.where(eq(encontros.tipo, tipo));
+    const [rows, countResult] = await Promise.all([
+          db
+            .select()
+            .from(encontros)
+            .orderBy(desc(encontros.data))
+            .limit(limit)
+            .offset(offset),
+          db.select({ count: sql<number>`cast(count(*) as integer)` }).from(encontros),
+        ]);
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    if (!hasPagination) {
+      return NextResponse.json(rows, { status: 200 });
     }
 
-    const allEncontros = await query.orderBy(desc(encontros.status), desc(encontros.data));
-    return NextResponse.json(allEncontros, { status: 200 });
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages },
+    }, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar encontros:', error);
     return NextResponse.json({ error: 'Erro ao buscar encontros' }, { status: 500 });
@@ -32,9 +48,9 @@ export async function POST(request: Request) {
     await requireAdminOrColaboradora();
     const body = await request.json();
     
+    // Removing the missing schema columns
     const { 
-      titulo, descricao, local, data, horaInicio, 
-      linkMeet, videoUrl, status, tipo 
+      titulo, descricao, local, data, horaInicio, horaFim, imagemUrl, valor, telefone, linkInscricao
     } = body;
 
     if (!titulo || !data) {
@@ -49,11 +65,11 @@ export async function POST(request: Request) {
       local,
       data: new Date(data),
       horaInicio,
-      
-      linkMeet: linkMeet ?? null,    
-      videoUrl: videoUrl ?? null,    
-      status: status ?? 'ativo',      
-      tipo: tipo ?? 'geral',          
+      horaFim,
+      imagemUrl,
+      valor,
+      telefone,
+      linkInscricao,
       slug,
     }).returning();
 

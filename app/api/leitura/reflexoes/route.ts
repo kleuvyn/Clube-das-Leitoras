@@ -3,7 +3,7 @@ import { requireAdminOrColaboradora } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { reflexoesLobos } from '@/lib/db/schema';
 import { analyzeContentModeration } from '@/lib/content-moderation';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,12 +11,43 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const leituraId = searchParams.get('leituraId');
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
 
-    const rows = leituraId
-      ? await db.select().from(reflexoesLobos).where(eq(reflexoesLobos.leituraId, leituraId)).orderBy(desc(reflexoesLobos.createdAt))
-      : await db.select().from(reflexoesLobos).orderBy(desc(reflexoesLobos.createdAt));
+    const [rows, countResult] = leituraId
+      ? await Promise.all([
+          db.select().from(reflexoesLobos)
+            .where(eq(reflexoesLobos.leituraId, leituraId))
+            .orderBy(desc(reflexoesLobos.createdAt))
+            .limit(limit)
+            .offset(offset),
+          db.select({ count: sql<number>`cast(count(*) as integer)` })
+            .from(reflexoesLobos)
+            .where(eq(reflexoesLobos.leituraId, leituraId)),
+        ])
+      : await Promise.all([
+          db.select().from(reflexoesLobos)
+            .orderBy(desc(reflexoesLobos.createdAt))
+            .limit(limit)
+            .offset(offset),
+          db.select({ count: sql<number>`cast(count(*) as integer)` }).from(reflexoesLobos),
+        ]);
 
-    return NextResponse.json(rows);
+    if (!hasPagination) {
+      return NextResponse.json(rows);
+    }
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages },
+    });
   } catch (err) {
     console.error('Erro GET /api/leitura/reflexoes:', err);
     return NextResponse.json({ error: 'Erro ao buscar reflexões' }, { status: 500 });

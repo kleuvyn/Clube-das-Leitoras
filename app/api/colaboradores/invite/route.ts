@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { db } from '@/lib/db';
+import { db, client } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
+import { gerarSenhaTemporaria, TEMP_PASSWORD_VALIDITY_MS } from '@/lib/password-utils';
+
+async function ensureTempPasswordExpiresAtColumn() {
+  try {
+    await client.execute("ALTER TABLE colaboradoras ADD COLUMN temp_password_expires_at integer");
+  } catch (error) {
+    // Ignora se já existir
+  }
+}
 
 function getFromAddress() {
   const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
@@ -18,14 +27,6 @@ function getFromAddress() {
   }
   // fallback safe onboarding
   return 'Clube das Leitoras <onboarding@resend.dev>';
-}
-
-function gerarSenhaTemporaria(): string {
-  const palavras = ['livro', 'flor', 'cafe', 'rosa', 'lua', 'sol', 'brisa', 'afeto', 'laca', 'petal'];
-  const i = crypto.randomInt(palavras.length);
-  const j = crypto.randomInt(palavras.length);
-  const num = 100 + crypto.randomInt(900);
-  return `${palavras[i]}${palavras[j]}${num}`;
 }
 
 export async function POST(req: Request) {
@@ -47,6 +48,8 @@ export async function POST(req: Request) {
     const role = body.role === 'admin' ? 'colaboradora' : (body.role ?? 'convidada');
     const tempPassword = gerarSenhaTemporaria();
 
+    await ensureTempPasswordExpiresAtColumn();
+
     const [existing] = await db.select().from(colaboradoras).where(eq(colaboradoras.email, email));
     if (existing) {
       return NextResponse.json({ error: 'Este e-mail já possui acesso.' }, { status: 400 });
@@ -61,6 +64,7 @@ export async function POST(req: Request) {
       name,
       active: true,
       mustChangePassword: true,
+      tempPasswordExpiresAt: new Date(Date.now() + TEMP_PASSWORD_VALIDITY_MS),
     });
 
     // Tentar enviar e-mail via Brevo (se configurado)

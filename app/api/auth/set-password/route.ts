@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { getRecentPasswordHistory, insertPasswordHistory, PASSWORD_HISTORY_LIMIT } from '@/lib/password-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,11 +52,17 @@ export async function POST(req: Request) {
     );
   }
 
+  const previousHashes = await getRecentPasswordHistory(user.id, PASSWORD_HISTORY_LIMIT);
+  if (await bcrypt.compare(newPassword, user.password) || await Promise.all(previousHashes.map(hash => bcrypt.compare(newPassword, hash))).then(results => results.some(Boolean))) {
+    return NextResponse.json({ error: 'Não é permitido reutilizar senhas recentes.' }, { status: 400 });
+  }
+
+  await insertPasswordHistory(user.id, user.password, user.mustChangePassword ? 'temporary' : 'permanent');
   const hashed = await bcrypt.hash(newPassword, 10);
 
   await db
     .update(colaboradoras)
-    .set({ password: hashed, mustChangePassword: false })
+    .set({ password: hashed, mustChangePassword: false, tempPasswordExpiresAt: null })
     .where(eq(colaboradoras.id, user.id));
 
   return NextResponse.json({ success: true, role: user.role });

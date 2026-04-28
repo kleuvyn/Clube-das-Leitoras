@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { cronograma } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
@@ -16,6 +16,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const anoParam = searchParams.get('ano');
     const todosParam = searchParams.get('todos');
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
 
     
     if (anoParam) {
@@ -33,9 +39,22 @@ export async function GET(request: Request) {
       return NextResponse.json(rows, { headers: cacheHeaders });
     }
 
-    
-    const rows = await db.select().from(cronograma).orderBy(desc(cronograma.createdAt));
-    return NextResponse.json(rows, { headers: cacheHeaders });
+    const [rows, countResult] = await Promise.all([
+      db.select().from(cronograma).orderBy(desc(cronograma.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(cronograma),
+    ]);
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    if (!hasPagination) {
+      return NextResponse.json(rows, { headers: cacheHeaders });
+    }
+
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages },
+    }, { headers: cacheHeaders });
   } catch (err: any) {
     console.error('Erro GET /api/cronograma:', err);
     return NextResponse.json({ error: 'Erro ao carregar cronograma' }, { status: 500 });
@@ -46,6 +65,7 @@ export async function POST(request: Request) {
   try {
     
     await requireAdminOrColaboradora();
+    const body = await request.json();
 
     const [inserted] = await db.insert(cronograma).values({
       title: body.title || 'Cronograma',

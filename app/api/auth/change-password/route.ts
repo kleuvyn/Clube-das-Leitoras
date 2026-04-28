@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { getRecentPasswordHistory, insertPasswordHistory, PASSWORD_HISTORY_LIMIT } from '@/lib/password-utils';
 
 export async function PATCH(req: Request) {
   try {
@@ -43,9 +44,15 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Senha atual incorreta' }, { status: 401 });
     }
 
+    const previousHashes = await getRecentPasswordHistory(user.id, PASSWORD_HISTORY_LIMIT);
+    if (await bcrypt.compare(newPass, user.password) || await Promise.all(previousHashes.map(hash => bcrypt.compare(newPass, hash))).then(results => results.some(Boolean))) {
+      return NextResponse.json({ error: 'Não é permitido reutilizar senhas recentes.' }, { status: 400 });
+    }
+
+    await insertPasswordHistory(user.id, user.password, user.mustChangePassword ? 'temporary' : 'permanent');
     const hashed = await bcrypt.hash(newPass, 10);
 
-    await db.update(colaboradoras).set({ password: hashed, mustChangePassword: false }).where(eq(colaboradoras.id, user.id));
+    await db.update(colaboradoras).set({ password: hashed, mustChangePassword: false, tempPasswordExpiresAt: null }).where(eq(colaboradoras.id, user.id));
 
     return NextResponse.json({ success: true, message: 'Senha alterada com sucesso' });
   } catch (err) {

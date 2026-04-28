@@ -61,6 +61,9 @@ export default function EscritorasAdmin() {
   const { isAdmin } = useAdmin();
   const [lista, setLista] = useState<Escritora[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const [salvando, setSalvando] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<typeof formVazio>(formVazio);
@@ -71,13 +74,14 @@ export default function EscritorasAdmin() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  const loadDados = async () => {
+  const loadDados = async (pageNum = page) => {
     try {
       setLoading(true);
-      const res = await fetch('/api/escritoras');
+      const res = await fetch(`/api/escritoras?page=${pageNum}&limit=${limit}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setLista(Array.isArray(data) ? data : []);
+      setLista(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch (e) {
       console.error("Erro ao carregar:", e);
     } finally {
@@ -85,7 +89,7 @@ export default function EscritorasAdmin() {
     }
   };
 
-  useEffect(() => { loadDados(); }, []);
+  useEffect(() => { loadDados(page); }, [page]);
 
   const uploadImagem = async (file: File): Promise<string | null> => {
     try {
@@ -133,7 +137,7 @@ export default function EscritorasAdmin() {
       if (!res.ok) throw new Error();
       toast.success('Escritora cadastrada com sucesso!');
       setFormData(formVazio);
-      loadDados();
+      loadDados(page);
     } catch {
       toast.error('Erro ao salvar no banco.');
     } finally {
@@ -147,7 +151,7 @@ export default function EscritorasAdmin() {
       const res = await fetch(`/api/escritoras?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       toast.success('Removida!');
-      loadDados();
+      loadDados(page);
     } catch {
       toast.error('Erro ao remover.');
     }
@@ -183,7 +187,7 @@ export default function EscritorasAdmin() {
       if (!res.ok) throw new Error();
       toast.success('Alterações salvas!');
       setEditando(null);
-      loadDados();
+      loadDados(page);
     } catch {
       toast.error('Erro ao salvar alterações.');
     } finally {
@@ -496,6 +500,28 @@ export default function EscritorasAdmin() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : rosaPrincipal, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : rosaPrincipal, color: 'white' }}
+            >
+              Próxima →
+            </button>
           </div>
         )}
       </section>

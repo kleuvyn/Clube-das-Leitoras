@@ -39,21 +39,25 @@ export default function DicasAdmin() {
   const { isAdmin } = useAdmin();
   const [dicas, setDicas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tipo, setTipo] = useState<'pilula' | 'coluna'>('pilula');
 
   const [formData, setFormData] = useState(FORM_VAZIO);
 
-  const loadDados = async () => {
+  const loadDados = async (pageNum = page) => {
     try {
-      const res = await fetch('/api/dicas');
+      const res = await fetch(`/api/dicas?page=${pageNum}&limit=${limit}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setDicas(Array.isArray(data) ? data : []);
+      setDicas(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch (e) { console.error("Erro ao carregar dicas:", e); }
   };
 
-  useEffect(() => { loadDados(); }, []);
+  useEffect(() => { loadDados(page); }, [page]);
 
   const handleSave = async () => {
     if (!formData.titulo || !formData.descricao) {
@@ -72,7 +76,7 @@ export default function DicasAdmin() {
       toast.success(editingId ? 'Dica atualizada!' : 'Dica da Gabi publicada com carinho!');
       setFormData(FORM_VAZIO);
       setEditingId(null);
-      loadDados();
+      loadDados(page);
     } catch (err) {
       toast.error('Erro ao salvar dica.');
     } finally {
@@ -99,7 +103,7 @@ export default function DicasAdmin() {
       const res = await fetch(`/api/dicas?id=${item.id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       toast.success('Dica removida.');
-      loadDados();
+      loadDados(page);
     } catch {
       toast.error('Erro ao remover dica.');
     }
@@ -332,6 +336,28 @@ export default function DicasAdmin() {
             ))
           )}
         </div>
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : azulSereno, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : azulSereno, color: 'white' }}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

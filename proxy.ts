@@ -5,10 +5,9 @@ function matchesRoute(pathname: string, route: string) {
   return pathname === route || pathname.startsWith(`${route}/`);
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Redirecionar /admin/login para /login
   if (pathname === '/admin/login') {
     return NextResponse.redirect(new URL('/login', request.url));
   }
@@ -18,7 +17,6 @@ export function middleware(request: NextRequest) {
     matchesRoute(pathname, route)
   );
 
-  // Proteger rotas admin
   if (isAdminRoute) {
     const adminToken = request.cookies.get('clube-admin-token')?.value;
     if (!adminToken) {
@@ -26,7 +24,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Proteger /nova-senha: deve ser rotas de leitora (token de convidada)
   if (pathname === '/nova-senha') {
     const convidadaToken = request.cookies.get('clube-sessao')?.value;
     if (!convidadaToken) {
@@ -34,7 +31,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Proteger rotas privadas para convidada/admin
   if (isConvidadaProtectedRoute) {
     const adminToken = request.cookies.get('clube-admin-token')?.value;
     const convidadaToken = request.cookies.get('clube-sessao')?.value;

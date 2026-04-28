@@ -30,6 +30,7 @@ export function Footer() {
                     alt="Logo Clube das Leitoras"
                     width={64}
                     height={64}
+                    style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%' }}
                     className="object-contain drop-shadow-sm group-hover:rotate-12 transition-transform duration-500"
                   />
                </div>

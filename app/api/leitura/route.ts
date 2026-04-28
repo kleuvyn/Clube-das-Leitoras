@@ -2,20 +2,56 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { leituras } from '@/lib/db/schema'; 
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const cacheHeaders = {
       'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
     };
 
-    const rows = await db.select()
-      .from(leituras)
-      .orderBy(desc(leituras.createdAt));
+    const { searchParams } = new URL(request.url);
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
+
+    // Mantem o contrato legado quando não ha parametros de paginação.
+    if (!pageParam && !limitParam) {
+      const rows = await db.select()
+        .from(leituras)
+        .orderBy(desc(leituras.createdAt));
+
+      const mapRow = (row: typeof rows[0]) => ({
+        id: row.id,
+        data: row.data || '',
+        tema: row.title,
+        linkMeet: row.link,
+        linkLive: row.linkLive,
+        linkDrive: row.linkDrive,
+        imagem: row.imageUrl,
+        status: row.status,
+      });
+
+      return NextResponse.json({
+        encontros: rows.filter(r => r.status === 'ativo').map(mapRow),
+        encerrados: rows.filter(r => r.status === 'encerrado').map(mapRow),
+      }, { status: 200, headers: cacheHeaders });
+    }
+
+    const page = Math.max(1, parseInt(pageParam || '1'));
+    const limit = Math.min(50, Math.max(1, parseInt(limitParam || '10')));
+    const offset = (page - 1) * limit;
+
+    const [rows, countResult] = await Promise.all([
+      db.select()
+        .from(leituras)
+        .orderBy(desc(leituras.createdAt))
+        .limit(limit)
+        .offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(leituras),
+    ]);
 
     const mapRow = (row: typeof rows[0]) => ({
       id: row.id,
@@ -28,9 +64,12 @@ export async function GET() {
       status: row.status,
     });
 
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
     return NextResponse.json({
-      encontros: rows.filter(r => r.status === 'ativo').map(mapRow),
-      encerrados: rows.filter(r => r.status === 'encerrado').map(mapRow),
+      data: rows.map(mapRow),
+      pagination: { page, limit, total, pages, hasMore: page < pages },
     }, { status: 200, headers: cacheHeaders });
 
   } catch (err) {

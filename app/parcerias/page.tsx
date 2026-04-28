@@ -11,6 +11,11 @@ const papelEditorial = "#FDFCFB";
 const rosaGabi = "#B04D4A";      
 const azulPetroleo = "#2C3E50";   
 
+const bgStyleLocal = {
+  backgroundColor: papelEditorial,
+  backgroundImage: 'radial-gradient(circle at top left, rgba(176,74,74,0.08), transparent 28%), radial-gradient(circle at bottom right, rgba(176,74,74,0.05), transparent 18%)',
+};
+
 interface Editora {
   nome: string;
   img: string;
@@ -21,6 +26,9 @@ interface Editora {
 export default function PaginaParceriasDNA() {
   const [editoras, setEditoras] = useState<Editora[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
 
   const [parceriaModalOpen, setParceriaModalOpen] = useState(false);
   const [parceriaNome, setParceriaNome] = useState(''); // Nova Aliança
@@ -46,17 +54,19 @@ export default function PaginaParceriasDNA() {
 
   useEffect(() => {
     async function carregarParceiras() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/parcerias');
+        const res = await fetch(`/api/parcerias?page=${page}&limit=${limit}`, { cache: 'force-cache' });
         const data = await res.json();
-        if (Array.isArray(data)) {
-          const lista = data.map((p: any) => ({
+        if (Array.isArray(data?.data)) {
+          const lista = data.data.map((p: any) => ({
             nome: p.name,
             img: p.imagem || '',
             link: p.link || '',
             info: p.description || '',
           }));
           setEditoras(lista);
+          setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
         }
       } catch (err) {
         console.error("Erro ao carregar parceiras:", err);
@@ -65,11 +75,11 @@ export default function PaginaParceriasDNA() {
       }
     }
     carregarParceiras();
-  }, []);
+  }, [page]);
 
   return (
     <div className="min-h-screen font-serif pb-32 relative overflow-hidden"
-         style={{ background: `${papelEditorial} url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}>
+         style={bgStyleLocal}>
       
       <header className="max-w-5xl mx-auto pt-32 pb-24 px-6 relative z-10 text-center border-b border-black/5">
         <div className="flex items-center justify-center gap-4 mb-8 opacity-40">
@@ -130,6 +140,28 @@ export default function PaginaParceriasDNA() {
                 </a>
               </article>
             ))}
+          </div>
+        )}
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-12">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : rosaGabi, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : rosaGabi, color: 'white' }}
+            >
+              Próxima →
+            </button>
           </div>
         )}
 

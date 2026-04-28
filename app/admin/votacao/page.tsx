@@ -28,6 +28,9 @@ export default function VotacoesAdmin() {
   const [ativa, setAtiva] = useState(false);
   const [prazo, setPrazo] = useState('');
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const [processando, setProcessando] = useState(false);
   
   const [showModal, setShowModal] = useState(false);
@@ -41,23 +44,24 @@ export default function VotacoesAdmin() {
     linkCompra: '' 
   });
 
-  const loadDados = useCallback(async () => {
+  const loadDados = useCallback(async (pageNum = page) => {
     try {
-      const res = await fetch('/api/votacao');
+      const res = await fetch(`/api/votacao?page=${pageNum}&limit=${limit}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       setAtiva(data.ativa);
       setPrazo(data.prazo || '');
       setLivros(data.livros || []);
       setHistorico(data.historico || []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch {
       toast.error('Erro ao carregar dados da urna.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
-  useEffect(() => { loadDados(); }, [loadDados]);
+  useEffect(() => { loadDados(page); }, [loadDados, page]);
 
   const totalVotos = livros.reduce((acc, l) => acc + (l.votos || 0), 0);
 
@@ -138,7 +142,7 @@ export default function VotacoesAdmin() {
       if (!res.ok) throw new Error();
       toast.success(editandoId ? 'Dados atualizados.' : 'Obra adicionada à urna.');
       setShowModal(false);
-      loadDados();
+      loadDados(page);
     } catch { 
       toast.error('Erro ao salvar informações da obra.'); 
     } finally { 
@@ -152,7 +156,7 @@ export default function VotacoesAdmin() {
       const res = await fetch(`/api/livros?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       toast.success('Obra removida.');
-      loadDados();
+      loadDados(page);
     } catch { 
       toast.error('Erro ao deletar.'); 
     }
@@ -170,7 +174,7 @@ export default function VotacoesAdmin() {
       });
       if (!res.ok) throw new Error();
       toast.success('Rodada encerrada e arquivada com sucesso.');
-      loadDados();
+      loadDados(page);
     } catch { 
       toast.error('Erro ao finalizar ciclo.'); 
     } finally { 
@@ -285,6 +289,28 @@ export default function VotacoesAdmin() {
             )
           })}
         </div>
+
+        {pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : rosaGabi, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : rosaGabi, color: 'white' }}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
       </section>
 
       {/* MODAL DE EDIÇÃO / ADIÇÃO */}

@@ -21,9 +21,9 @@ interface EncontroCardProps {
   enc: Encontro;
   isEncerrado?: boolean;
   editandoId: string | null;
-  editData: Partial<Encontro>;
+  editData: Partial<Encontro> | undefined;
   uploadingImg: boolean;
-  setEditData: React.Dispatch<React.SetStateAction<Partial<Encontro>>>;
+  setEditData: React.Dispatch<React.SetStateAction<Partial<Encontro> | undefined>>;
   setEditandoId: (id: string | null) => void;
   startEdit: (enc: Encontro) => void;
   handleSalvarEdicao: (id: string) => void;
@@ -85,7 +85,7 @@ function EncontroCard({
             <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Imagem</label>
             <div className="flex gap-2">
               <input
-                value={editData.imagem ?? ''}
+                value={editData?.imagem ?? ''}
                 onChange={e => setEditData(p => ({ ...p, imagem: e.target.value }))}
                 placeholder="URL ou faça upload"
                 className="flex-1 p-3 bg-slate-50 rounded-xl text-sm outline-none border border-slate-100"
@@ -193,11 +193,17 @@ export default function LeituraAtivaAdmin() {
   const [encontros, setEncontros] = useState<Encontro[]>([]);
   const [encerrados, setEncerrados] = useState<Encontro[]>([]);
   const [reflexoes, setReflexoes] = useState<Reflexao[]>([]);
+  const [pageEncontros, setPageEncontros] = useState(1);
+  const [paginationEncontros, setPaginationEncontros] = useState({ total: 0, pages: 0, hasMore: false });
+  const [pageReflexoes, setPageReflexoes] = useState(1);
+  const [paginationReflexoes, setPaginationReflexoes] = useState({ total: 0, pages: 0, hasMore: false });
+  const limitEncontros = 12;
+  const limitReflexoes = 20;
   const [uploadingImg, setUploadingImg] = useState(false);
   const imgRef = useRef<HTMLInputElement>(null);
 
   const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<Partial<Encontro>>();
+  const [editData, setEditData] = useState<Partial<Encontro> | undefined>();
 
   const [novoEncontro, setNovoEncontro] = useState({ 
     data: '', tema: '', linkMeet: '', linkLive: '', linkDrive: '', imagem: '' 
@@ -220,18 +226,34 @@ export default function LeituraAtivaAdmin() {
     } catch {}
   }, []);
 
-  const loadDados = async () => {
+  const loadDados = async (pageEnc = pageEncontros, pageRef = pageReflexoes) => {
     setLoading(true);
     try {
       const [leitRes, refRes] = await Promise.all([
-        fetch('/api/leitura'),
-        fetch('/api/leitura/reflexoes'),
+        fetch(`/api/leitura?page=${pageEnc}&limit=${limitEncontros}`),
+        fetch(`/api/leitura/reflexoes?page=${pageRef}&limit=${limitReflexoes}`),
       ]);
       const leitData = await leitRes.json();
       const refData = await refRes.json();
-      setEncontros(Array.isArray(leitData.encontros) ? leitData.encontros : []);
-      setEncerrados(Array.isArray(leitData.encerrados) ? leitData.encerrados : []);
-      setReflexoes(Array.isArray(refData) ? refData : []);
+
+      if (Array.isArray(leitData.data)) {
+        const lista = leitData.data;
+        setEncontros(lista.filter((r: Encontro) => r.status === 'ativo'));
+        setEncerrados(lista.filter((r: Encontro) => r.status === 'encerrado'));
+        setPaginationEncontros(leitData.pagination || { total: 0, pages: 0, hasMore: false });
+      } else {
+        setEncontros(Array.isArray(leitData.encontros) ? leitData.encontros : []);
+        setEncerrados(Array.isArray(leitData.encerrados) ? leitData.encerrados : []);
+        setPaginationEncontros({ total: 0, pages: 0, hasMore: false });
+      }
+
+      if (Array.isArray(refData.data)) {
+        setReflexoes(refData.data);
+        setPaginationReflexoes(refData.pagination || { total: 0, pages: 0, hasMore: false });
+      } else {
+        setReflexoes(Array.isArray(refData) ? refData : []);
+        setPaginationReflexoes({ total: 0, pages: 0, hasMore: false });
+      }
     } catch {
       toast.error("Não foi possível carregar os dados.");
     } finally {
@@ -239,7 +261,8 @@ export default function LeituraAtivaAdmin() {
     }
   };
 
-  useEffect(() => { loadDados(); loadFiltro(); }, [loadFiltro]);
+  useEffect(() => { loadDados(pageEncontros, pageReflexoes); }, [pageEncontros, pageReflexoes]);
+  useEffect(() => { loadFiltro(); }, [loadFiltro]);
 
   const handleUploadImagem = async (file: File, paraEdicao = false) => {
     setUploadingImg(true);
@@ -266,7 +289,7 @@ export default function LeituraAtivaAdmin() {
       if (res.ok) {
         toast.success("Encontro publicado!");
         setNovoEncontro({ data: '', tema: '', linkMeet: '', linkLive: '', linkDrive: '', imagem: '' });
-        loadDados();
+        loadDados(pageEncontros, pageReflexoes);
       } else toast.error("Erro ao publicar.");
     } catch { toast.error("Erro de conexão."); }
   };
@@ -275,7 +298,7 @@ export default function LeituraAtivaAdmin() {
     if (!confirm('Excluir este encontro permanentemente?')) return;
     try {
       const res = await fetch(`/api/leitura?id=${id}`, { method: 'DELETE' });
-      if (res.ok) { toast.success('Excluído.'); loadDados(); }
+      if (res.ok) { toast.success('Excluído.'); loadDados(pageEncontros, pageReflexoes); }
       else toast.error('Erro ao excluir.');
     } catch { toast.error('Erro de conexão.'); }
   };
@@ -286,7 +309,7 @@ export default function LeituraAtivaAdmin() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'encerrado' }),
       });
-      if (res.ok) { toast.success('Marcado como encerrado.'); loadDados(); }
+      if (res.ok) { toast.success('Marcado como encerrado.'); loadDados(pageEncontros, pageReflexoes); }
       else toast.error('Erro ao encerrar.');
     } catch { toast.error('Erro de conexão.'); }
   };
@@ -297,7 +320,7 @@ export default function LeituraAtivaAdmin() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'ativo' }),
       });
-      if (res.ok) { toast.success('Reativado.'); loadDados(); }
+      if (res.ok) { toast.success('Reativado.'); loadDados(pageEncontros, pageReflexoes); }
       else toast.error('Erro ao reativar.');
     } catch { toast.error('Erro de conexão.'); }
   };
@@ -308,7 +331,7 @@ export default function LeituraAtivaAdmin() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editData),
       });
-      if (res.ok) { toast.success('Salvo!'); setEditandoId(null); loadDados(); }
+      if (res.ok) { toast.success('Salvo!'); setEditandoId(null); loadDados(pageEncontros, pageReflexoes); }
       else toast.error('Erro ao salvar.');
     } catch { toast.error('Erro de conexão.'); }
   };
@@ -316,7 +339,7 @@ export default function LeituraAtivaAdmin() {
   const handleDeleteReflexao = async (id: string) => {
     try {
       const res = await fetch(`/api/leitura/reflexoes?id=${id}`, { method: 'DELETE' });
-      if (res.ok) { toast.success('Reflexão removida.'); loadDados(); }
+      if (res.ok) { toast.success('Reflexão removida.'); loadDados(pageEncontros, pageReflexoes); }
       else toast.error('Erro ao remover.');
     } catch { toast.error('Erro de conexão.'); }
   };
@@ -456,6 +479,28 @@ export default function LeituraAtivaAdmin() {
                   </div>
                 </div>
               )}
+
+              {paginationEncontros.pages > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-4">
+                  <button
+                    onClick={() => setPageEncontros(p => Math.max(1, p - 1))}
+                    disabled={pageEncontros === 1}
+                    className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: pageEncontros === 1 ? '#ddd' : vermelhoTerracota, color: 'white' }}
+                  >
+                    ← Anterior
+                  </button>
+                  <span className="text-xs text-slate-500 italic">{pageEncontros}/{paginationEncontros.pages}</span>
+                  <button
+                    onClick={() => setPageEncontros(p => p + 1)}
+                    disabled={!paginationEncontros.hasMore}
+                    className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: !paginationEncontros.hasMore ? '#ddd' : vermelhoTerracota, color: 'white' }}
+                  >
+                    Próxima →
+                  </button>
+                </div>
+              )}
             </section>
           </div>
 
@@ -501,6 +546,28 @@ export default function LeituraAtivaAdmin() {
                   </div>
                 ))}
               </div>
+
+              {paginationReflexoes.pages > 1 && (
+                <div className="flex items-center justify-center gap-4 pt-2">
+                  <button
+                    onClick={() => setPageReflexoes(p => Math.max(1, p - 1))}
+                    disabled={pageReflexoes === 1}
+                    className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: pageReflexoes === 1 ? '#ddd' : vermelhoTerracota, color: 'white' }}
+                  >
+                    ← Anterior
+                  </button>
+                  <span className="text-xs text-slate-500 italic">{pageReflexoes}/{paginationReflexoes.pages}</span>
+                  <button
+                    onClick={() => setPageReflexoes(p => p + 1)}
+                    disabled={!paginationReflexoes.hasMore}
+                    className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: !paginationReflexoes.hasMore ? '#ddd' : vermelhoTerracota, color: 'white' }}
+                  >
+                    Próxima →
+                  </button>
+                </div>
+              )}
             </section>
 
             

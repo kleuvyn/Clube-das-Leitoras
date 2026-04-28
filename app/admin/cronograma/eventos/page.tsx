@@ -24,6 +24,9 @@ export default function AdminEventos() {
   const [isUploading, setIsUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [eventos, setEventos] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,13 +47,14 @@ export default function AdminEventos() {
     setEditandoId(null);
   };
 
-  const loadEventos = async () => {
+  const loadEventos = async (p = page) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/eventos');
+      const res = await fetch(`/api/eventos?page=${p}&limit=${limit}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setEventos(Array.isArray(data) ? data : []);
+      setEventos(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch {
       toast.error("Erro ao carregar eventos.");
     } finally {
@@ -58,7 +62,7 @@ export default function AdminEventos() {
     }
   };
 
-  useEffect(() => { loadEventos(); }, []);
+  useEffect(() => { loadEventos(page); }, [page]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remover este evento?')) return;
@@ -66,7 +70,7 @@ export default function AdminEventos() {
       const res = await fetch(`/api/eventos?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       toast.success('Evento removido!');
-      loadEventos();
+      loadEventos(page);
     } catch {
       toast.error('Erro ao remover.');
     }
@@ -127,7 +131,7 @@ export default function AdminEventos() {
       if (res.ok) {
         toast.success(editandoId ? 'Evento atualizado!' : 'Evento publicado!');
         resetForm();
-        loadEventos();
+        loadEventos(page);
       } else {
         const err = await res.json();
         toast.error(err.error || 'Erro ao salvar.');
@@ -367,6 +371,28 @@ export default function AdminEventos() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : ocreDestaque, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : ocreDestaque, color: 'white' }}
+            >
+              Próxima →
+            </button>
           </div>
         )}
       </section>

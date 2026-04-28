@@ -29,13 +29,18 @@ export default function DicasPage() {
   const [dicas, setDicas] = useState<Dica[]>([]);
   const [loading, setLoading] = useState(true);
   const [dicaAberta, setDicaAberta] = useState<Dica | null>(null);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
 
   useEffect(() => {
     async function carregarDicas() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/dicas');
+        const res = await fetch(`/api/dicas?page=${page}&limit=${limit}`);
         const data = await res.json();
-        setDicas(Array.isArray(data) ? data : []);
+        setDicas(Array.isArray(data.data) ? data.data : []);
+        setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
       } catch (err) {
         console.error("Erro ao carregar dicas:", err);
       } finally {
@@ -43,7 +48,7 @@ export default function DicasPage() {
       }
     }
     carregarDicas();
-  }, []);
+  }, [page]);
 
   
   useEffect(() => {
@@ -147,6 +152,29 @@ export default function DicasPage() {
             <p className="col-span-full text-center italic opacity-40 text-black">Nenhuma dica publicada ainda.</p>
           )}
         </section>
+
+        {/* Paginação */}
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 my-12">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : azulSereno, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : azulSereno, color: 'white' }}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
 
         
         <section className="bg-white border border-black/5 p-12 md:p-20 space-y-16 shadow-sm relative rounded-[3rem]">

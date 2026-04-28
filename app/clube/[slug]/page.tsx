@@ -76,7 +76,7 @@ export default function ConteudoClubeLayout({ params }: { params: { slug: string
                 <div className="grid gap-4">
                    {[
                      "Escolha seu plano de assinatura mensal no nosso grupo oficial.",
-                     "Receba o guia de leitura do mês e o cronograma de Brasília."
+                     "Receba a Jornada de Leitura do mês e o cronograma de Brasília."
                    ].map((texto, idx) => (
                      <div key={idx} className="flex items-center gap-8 p-10 bg-white border border-[#F4EFEA] hover:border-[#94A7BC]/40 transition-all duration-500">
                         <span className="text-4xl font-light italic leading-none" style={{ color: "#F4D9C1" }}>{idx + 1}.</span>

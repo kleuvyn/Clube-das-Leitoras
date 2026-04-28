@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, client } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 import { livroDoMes, resenhas } from '@/lib/db/schema';
 
@@ -10,7 +10,7 @@ export async function GET() {
 
   async function run(nome: string, query: string) {
     try {
-      await db.execute(sql.raw(query));
+      await client.execute(query);
       results[nome] = 'ok';
     } catch (err: any) {
       results[nome] = `ERRO: ${err.message}`;

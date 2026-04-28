@@ -1,4 +1,4 @@
-import { db } from './lib/db';
+import { db, client } from './lib/db';
 import { colaboradoras } from './lib/db/schema';
 import { sql } from 'drizzle-orm';
 
@@ -15,7 +15,7 @@ async function main() {
   console.log('=== USUÁRIOS ===');
   console.table(users);
 
-  const cols = await db.execute(sql`
+  const cols = await client.execute(`
     SELECT column_name, data_type, column_default, is_nullable
     FROM information_schema.columns
     WHERE table_name = 'colaboradoras'

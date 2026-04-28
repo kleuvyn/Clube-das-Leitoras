@@ -200,7 +200,7 @@ export default function AdminCronograma() {
                 {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
               <input value={editandoMes.livro} onChange={e => setEditandoMes({...editandoMes, livro: e.target.value})} placeholder="Título ou Meta de Leitura" className="p-3 bg-white rounded-xl text-sm outline-none border border-slate-100" />
-              <Button onClick={handleSalvarLista} className="rounded-xl h-full shadow-md" style={{ backgroundColor: lavandaPrincipal }}>
+              <Button onClick={handleSalvarLista} className="rounded-xl h-full shadow-md" style={{ backgroundColor: 'var(--page-color)' }}>
                 {editandoMes.index > -1 ? <Check size={20} /> : <Plus size={20} />}
               </Button>
             </div>

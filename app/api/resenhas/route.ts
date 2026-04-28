@@ -5,8 +5,6 @@ import { resenhas } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { analyzeContentModeration } from '@/lib/content-moderation';
 
-export const dynamic = 'force-dynamic';
-
 type ResenhaRow = {
   id: string;
   title: string;
@@ -21,9 +19,15 @@ type ResenhaRow = {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
-    const offset = (page - 1) * limit;
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 200;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+    const listCacheHeaders = {
+      'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    };
 
     const [rows, countResult] = await Promise.all([
       db.select().from(resenhas).orderBy(desc(resenhas.createdAt)).limit(limit).offset(offset),
@@ -33,10 +37,14 @@ export async function GET(request: Request) {
     const total = countResult[0]?.count || 0;
     const pages = Math.ceil(total / limit);
 
+    if (!hasPagination) {
+      return NextResponse.json(rows, { headers: listCacheHeaders });
+    }
+
     return NextResponse.json({
       data: rows,
       pagination: { page, limit, total, pages, hasMore: page < pages }
-    });
+    }, { headers: listCacheHeaders });
   } catch (err: any) {
     console.error('Erro GET /api/resenhas:', err);
     return NextResponse.json({ error: 'Erro ao carregar resenhas' }, { status: 500 });
@@ -62,7 +70,7 @@ export async function POST(request: Request) {
     if (moderation.blocked) {
       return NextResponse.json({
         error: 'Conteúdo bloqueado: identificamos linguagem imprópria.',
-        details: moderation.reason 
+        details: moderation.triggers.join(', ') 
       }, { status: 400 });
     }
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { podcasts } from '@/lib/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
@@ -21,12 +21,37 @@ type PodcastRow = {
   createdAt: string;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    
-    
-    const rows = await db.select().from(podcasts).orderBy(desc(podcasts.createdAt));
-    return NextResponse.json(rows, {
+    const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+
+    const [rows, countResult] = await Promise.all([
+      db.select().from(podcasts).orderBy(desc(podcasts.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(podcasts),
+    ]);
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    if (!hasPagination) {
+      return NextResponse.json(rows, {
+        status: 200,
+        headers: {
+          'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        },
+      });
+    }
+
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages }
+    }, {
       status: 200,
       headers: {
         'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Heart, Sparkles, Loader2, Coffee, BookOpen, PenTool, Music, ArrowRight
 } from "lucide-react";
@@ -167,21 +168,41 @@ export default function LoginCafeFuncional() {
                     </span>
                   )}
                 </Button>
-                
-                <p className="text-center text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 text-[#8C7A66]">
-                  Brasília • Curadoria de Afeto
-                </p>
+
+                <div className="text-center space-y-2">
+                  <Link href="/recuperar-senha" className="block text-[10px] font-bold uppercase tracking-[0.35em] text-[#8C7A66] hover:text-[#B04D4A] transition-colors">
+                    Esqueci minha senha
+                  </Link>
+                  <p className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 text-[#8C7A66]">
+                    Brasília • Curadoria de Afeto
+                  </p>
+                </div>
               </form>
             </div>
           </div>
           
-          <div className="mt-8 text-center space-y-2">
-            <p className="text-[10px] text-[#8C7A66]">
-              Ainda não faz parte? <a href="/cadastro" className="font-bold underline hover:text-[#B04D4A] transition-colors">Solicitar cadastro</a>
-            </p>
-            <p className="text-[10px] text-[#8C7A66] opacity-40">
-              Voltar para <a href="/" className="underline">home</a>
-            </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-[#8C7A66]/60 font-bold">
+                Ainda não escreve conosco?
+              </p>
+              <Link 
+                href="/cadastro" 
+                className="group flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.4em] text-[#B04D4A] transition-all hover:opacity-80"
+              >
+                Solicitar Cadastro
+                <Sparkles size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            </div>
+
+            <div className="h-px w-8 bg-[#8C7A66]/20" />
+
+            <Link 
+              href="/" 
+              className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#8C7A66] hover:text-[#B04D4A] transition-colors"
+            >
+              Voltar para a Home
+            </Link>
           </div>
         </main>
       </div>

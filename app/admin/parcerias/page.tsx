@@ -16,6 +16,9 @@ export default function AdminParcerias() {
   const [loading, setLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [parcerias, setParcerias] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -26,13 +29,14 @@ export default function AdminParcerias() {
     img: '' 
   });
 
-  const loadParcerias = async () => {
+  const loadParcerias = async (pageNum = page) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/parcerias');
+      const res = await fetch(`/api/parcerias?page=${pageNum}&limit=${limit}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setParcerias(Array.isArray(data) ? data : []);
+      setParcerias(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch (e) {
       toast.error("Erro ao carregar parceiras.");
     } finally {
@@ -40,7 +44,7 @@ export default function AdminParcerias() {
     }
   };
 
-  useEffect(() => { loadParcerias(); }, []);
+  useEffect(() => { loadParcerias(page); }, [page]);
 
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -74,7 +78,7 @@ export default function AdminParcerias() {
           toast.success("Parceira atualizada!");
           setEditandoId(null);
           setNovaParceria({ nome: '', info: '', link: '', img: '' });
-          loadParcerias();
+          loadParcerias(page);
         }
       } else {
         
@@ -86,7 +90,7 @@ export default function AdminParcerias() {
         if (res.ok) {
           toast.success("Parceira adicionada!");
           setNovaParceria({ nome: '', info: '', link: '', img: '' });
-          loadParcerias();
+          loadParcerias(page);
         }
       }
     } catch (e) {
@@ -99,7 +103,7 @@ export default function AdminParcerias() {
     try {
       await fetch(`/api/parcerias?id=${id}`, { method: 'DELETE' });
       toast.success("Removido!");
-      loadParcerias();
+      loadParcerias(page);
     } catch (e) {
       toast.error("Erro ao excluir.");
     }
@@ -280,6 +284,28 @@ export default function AdminParcerias() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : azulSerenoLogo, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : azulSerenoLogo, color: 'white' }}
+            >
+              Próxima →
+            </button>
           </div>
         )}
 

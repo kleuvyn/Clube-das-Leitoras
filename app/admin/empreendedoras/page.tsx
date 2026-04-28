@@ -43,22 +43,26 @@ export default function EmpreendedorasAdmin() {
   const { isAdmin } = useAdmin();
   const [lista, setLista] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
   const [isUploading, setIsUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState(FORM_VAZIO);
 
-  const loadDados = async () => {
+  const loadDados = async (pageNum = page) => {
     try {
-      const res = await fetch('/api/empreendedoras', { cache: 'no-store' });
+      const res = await fetch(`/api/empreendedoras?page=${pageNum}&limit=${limit}`, { cache: 'no-store' });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setLista(Array.isArray(data) ? data : []);
+      setLista(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch (e) { console.error("Erro ao carregar:", e); }
   };
 
-  useEffect(() => { loadDados(); }, []);
+  useEffect(() => { loadDados(page); }, [page]);
 
   const uploadFoto = async (file: File) => {
     setIsUploading(true);
@@ -90,7 +94,7 @@ export default function EmpreendedorasAdmin() {
       toast.success(editingId ? 'Empreendedora atualizada!' : 'Empreendedora cadastrada com sucesso!');
       setFormData(FORM_VAZIO);
       setEditingId(null);
-      loadDados();
+      loadDados(page);
     } catch (err) {
       toast.error('Erro ao salvar no banco.');
     } finally {
@@ -123,7 +127,7 @@ export default function EmpreendedorasAdmin() {
       if (!res.ok) throw new Error();
       toast.success('Removida da vitrine.');
       setLista(prev => prev.filter(emp => emp.id !== id));
-      await loadDados();
+      await loadDados(page);
     } catch {
       toast.error('Erro ao remover.');
     }
@@ -263,6 +267,28 @@ export default function EmpreendedorasAdmin() {
             ))
           )}
         </div>
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : lavandaPrincipal, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : lavandaPrincipal, color: 'white' }}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

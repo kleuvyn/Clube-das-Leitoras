@@ -122,6 +122,10 @@ export default function RodaOnlineFuncional() {
   const [encontros, setEncontros] = useState<Encontro[]>([]);
   const [encerrados, setEncerrados] = useState<Encontro[]>([]);
   const [abertos, setAbertos] = useState<Set<string>>(new Set());
+  const [pageEncontros, setPageEncontros] = useState(1);
+  const [pageEncerrados, setPageEncerrados] = useState(1);
+  const limitEncontros = 6;
+  const limitEncerrados = 6;
 
   const toggleAberto = (id: string) =>
     setAbertos(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -194,6 +198,10 @@ export default function RodaOnlineFuncional() {
   const paragrafos = Array.isArray(conteudo.descricao) 
     ? conteudo.descricao 
     : (conteudo.descricao ? conteudo.descricao.split('\n').filter(p => p.trim() !== '') : []);
+  const totalEncontrosPages = Math.max(1, Math.ceil(encontros.length / limitEncontros));
+  const totalEncerradosPages = Math.max(1, Math.ceil(encerrados.length / limitEncerrados));
+  const encontrosPaginados = encontros.slice((pageEncontros - 1) * limitEncontros, pageEncontros * limitEncontros);
+  const encerradosPaginados = encerrados.slice((pageEncerrados - 1) * limitEncerrados, pageEncerrados * limitEncerrados);
 
   return (
     <div className="min-h-screen text-[#2C3E50] font-alice pb-32 relative overflow-hidden" 
@@ -263,7 +271,7 @@ export default function RodaOnlineFuncional() {
                   <div className="h-px w-10" style={{ backgroundColor: `${verdeMusgo}40` }} />
                   <span style={{ color: verdeMusgo }} className="text-[9px] font-mono font-bold uppercase tracking-widest">A Obra do Mês</span>
                 </div>
-                <h2 className="text-6xl md:text-7xl tracking-tighter leading-[0.9] text-[#2C3E50]">{conteudo.titulo}</h2>
+                <h2 className="text-5xl md:text-6xl tracking-tighter leading-[0.95] text-[#2C3E50]">{conteudo.titulo}</h2>
                 <p className="text-2xl italic font-light opacity-50 text-[#2C3E50]">Escrito por {conteudo.autora}</p>
               </div>
 
@@ -333,18 +341,29 @@ export default function RodaOnlineFuncional() {
               )}
 
               {heroRodaId && (
-                <div className="pt-4 border-t border-black/5">
+                <div className="pt-8 mt-6 border-t border-[#8C7B6E]/20">
                   <button
                     onClick={() => setHeroAberto(p => !p)}
-                    className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider opacity-30 hover:opacity-60 transition-opacity"
-                    style={{ color: azulPetroleo }}
+                    className="w-full sm:w-auto inline-flex items-center justify-between sm:justify-start gap-4 px-8 py-4 rounded-full border transition-all duration-500 shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                    style={{
+                      backgroundColor: heroAberto ? '#8C7B6E' : '#FAFAF5',
+                      borderColor: heroAberto ? '#8C7B6E' : 'rgba(140, 123, 110, 0.4)',
+                      color: heroAberto ? '#FFFFFF' : '#8C7B6E'
+                    }}
                   >
-                    <MessageCircle size={11}/>
-                    {heroAberto ? 'Fechar Reflexões' : 'Reflexões deste Encontro'}
-                    {heroAberto ? <ChevronUp size={11}/> : <ChevronDown size={11}/>}
+                    <div className="flex items-center gap-3">
+                      <MessageCircle size={16} className={heroAberto ? "opacity-100" : "opacity-80"} />
+                      <span className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em]">
+                        {heroAberto ? 'Fechar Caderno Proibido' : 'Abrir Caderno Proibido'}
+                      </span>
+                    </div>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors duration-500 ${heroAberto ? 'bg-white/20' : 'bg-[#8C7B6E]/10 group-hover:bg-[#8C7B6E] group-hover:text-white'}`}>
+                      {heroAberto ? <ChevronUp size={14}/> : <ChevronDown size={14}/>}
+                    </div>
                   </button>
+                  
                   {heroAberto && (
-                    <div className="mt-4 animate-in fade-in duration-300">
+                    <div className="mt-8 relative before:absolute before:inset-0 before:bg-white/40 before:rounded-xl before:-z-10 p-6 sm:p-8 border border-[#8C7B6E]/10 shadow-[0_0_20px_rgba(140,123,110,0.03)] animate-in fade-in slide-in-from-top-4 duration-500">
                       <SecaoReflexoesRoda rodaId={heroRodaId} temaNome={conteudo.titulo}/>
                     </div>
                   )}
@@ -353,118 +372,210 @@ export default function RodaOnlineFuncional() {
           </div>
         </section>
 
-        {/* Cronograma de Encontros */}
-        {(encontros.length > 0 || encerrados.length > 0) && <section className="mt-24 space-y-8">
-          <div className="flex items-center gap-4">
-            <div className="h-px flex-1 bg-black/5" />
-            <h2 className="text-[10px] font-bold uppercase tracking-[0.6em] opacity-40 flex items-center gap-2" style={{ color: azulPetroleo }}>
-              <Calendar size={12} /> Cronograma de Encontros
-            </h2>
-            <div className="h-px flex-1 bg-black/5" />
-          </div>
-
-          {encontros.length === 0 ? (
-            <div className="text-center py-16 space-y-4 opacity-30">
-              <Calendar size={36} className="mx-auto" />
-              <p className="italic text-lg" style={{ color: azulPetroleo }}>Em breve novas datas serão anunciadas.</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {encontros.map(enc => (
-                <div key={enc.id} className="bg-white rounded-[3rem] border border-black/5 shadow-sm overflow-hidden transition-all duration-500">
-                  <div className="flex flex-col md:flex-row gap-0">
-                    {enc.imagem && (
-                      <div className="md:w-48 shrink-0">
-                        <img src={enc.imagem} alt={enc.tema} className="w-full h-full object-cover min-h-40" />
-                      </div>
-                    )}
-                    <div className="flex-1 p-8 md:p-10 space-y-4">
-                      <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full opacity-60 w-fit" style={{ backgroundColor: `${verdeMusgo}15`, color: verdeMusgo }}>
-                        <Calendar size={10} /> {enc.data}
-                      </span>
-                      <h3 className="text-2xl italic font-light" style={{ color: azulPetroleo }}>{enc.tema}</h3>
-                      <div className="flex flex-wrap gap-3 pt-1">
-                        {enc.linkMeet && (
-                          <a href={enc.linkMeet} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white rounded-xl"
-                            style={{ backgroundColor: verdeMusgo }}>
-                            <Video size={11} /> Entrar no Meet
-                          </a>
-                        )}
-                        {enc.linkDrive && (
-                          <a href={enc.linkDrive} target="_blank" rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl border"
-                            style={{ color: verdeMusgo, borderColor: `${verdeMusgo}40` }}>
-                            <Download size={11} /> Material / Drive
-                          </a>
-                        )}
-                      </div>
-                      <button onClick={() => toggleAberto(enc.id)} className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider opacity-30 hover:opacity-60 transition-opacity pt-2" style={{ color: azulPetroleo }}>
-                        <MessageCircle size={11}/>
-                        {abertos.has(enc.id) ? 'Fechar Reflexões' : 'Reflexões deste Encontro'}
-                        {abertos.has(enc.id) ? <ChevronUp size={11}/> : <ChevronDown size={11}/>}
-                      </button>
-                    </div>
-                  </div>
-                  {abertos.has(enc.id) && (
-                    <div className="px-8 md:px-10 pb-8 md:pb-10 animate-in fade-in duration-300">
-                      <SecaoReflexoesRoda rodaId={enc.id} temaNome={enc.tema}/>
-                    </div>
-                  )}
+        {(encontros.length > 0 || encerrados.length > 0) && (
+          <section className="mt-24 space-y-8">
+            {encontros.length > 0 && (
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="h-px flex-1 bg-black/5" />
+                  <h2 className="text-[10px] font-bold uppercase tracking-[0.6em] opacity-40 flex items-center gap-2" style={{ color: azulPetroleo }}>
+                    <Calendar size={12} /> Próximos Encontros
+                  </h2>
+                  <div className="h-px flex-1 bg-black/5" />
                 </div>
-              ))}
-            </div>
-          )}
 
-          {encerrados.length > 0 && (
-            <div className="space-y-6 pt-6">
-              <div className="flex items-center gap-4">
-                <div className="h-px flex-1 bg-black/5" />
-                <h2 className="text-[10px] font-bold uppercase tracking-[0.6em] opacity-40 flex items-center gap-2" style={{ color: azulPetroleo }}>
-                  <Archive size={12} /> Encontros Anteriores
-                </h2>
-                <div className="h-px flex-1 bg-black/5" />
-              </div>
-              <div className="space-y-4">
-                {encerrados.map(enc => (
-                  <div key={enc.id} className="border border-black/5 rounded-[2.5rem] overflow-hidden bg-white/60">
-                    <button onClick={() => toggleAberto(enc.id)} className="w-full flex items-center justify-between gap-4 p-7 text-left hover:bg-white/80 transition-colors">
-                      <div className="flex items-center gap-5">
-                        {enc.imagem && <img src={enc.imagem} alt={enc.tema} className="w-14 h-14 object-cover rounded-2xl opacity-70" />}
-                        <div>
-                          <span className="text-[9px] font-bold uppercase tracking-widest opacity-40" style={{ color: azulPetroleo }}>{enc.data}</span>
-                          <p className="text-lg italic font-light opacity-60" style={{ color: azulPetroleo }}>{enc.tema}</p>
+                {encontrosPaginados.map(enc => (
+                  <div key={enc.id} className="bg-white rounded-[3rem] border border-black/5 shadow-sm overflow-hidden transition-all duration-500">
+                    <div className="flex flex-col md:flex-row gap-0">
+                      {enc.imagem && (
+                        <div className="md:w-48 shrink-0">
+                          <img src={enc.imagem} alt={enc.tema} className="w-full h-full object-cover min-h-40" />
                         </div>
-                      </div>
-                      <ChevronDown size={16} className={`opacity-30 shrink-0 transition-transform duration-300 ${abertos.has(enc.id) ? 'rotate-180' : ''}`} />
-                    </button>
-                    {abertos.has(enc.id) && (
-                      <div className="px-7 pb-7 space-y-4 animate-in fade-in duration-300">
-                        <div className="flex flex-wrap gap-3">
-                          {enc.linkLive && (
-                            <a href={enc.linkLive} target="_blank" rel="noopener noreferrer"
+                      )}
+                      <div className="flex-1 p-8 md:p-10 space-y-4">
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full opacity-60 w-fit" style={{ backgroundColor: `${verdeMusgo}15`, color: verdeMusgo }}>
+                          <Calendar size={10} /> {enc.data}
+                        </span>
+                        <h3 className="text-2xl italic font-light" style={{ color: azulPetroleo }}>{enc.tema}</h3>
+                        <div className="flex flex-wrap gap-3 pt-1">
+                          {enc.linkMeet && (
+                            <a href={enc.linkMeet} target="_blank" rel="noopener noreferrer"
                               className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-white rounded-xl"
-                              style={{ backgroundColor: '#c0392b' }}>
-                              <Youtube size={11} /> Assistir Gravação
+                              style={{ backgroundColor: verdeMusgo }}>
+                              <Video size={11} /> Entrar no Meet
                             </a>
                           )}
                           {enc.linkDrive && (
                             <a href={enc.linkDrive} target="_blank" rel="noopener noreferrer"
                               className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-wider rounded-xl border"
                               style={{ color: verdeMusgo, borderColor: `${verdeMusgo}40` }}>
-                              <FileText size={11} /> Material
+                              <Download size={11} /> Material / Drive
                             </a>
                           )}
                         </div>
+                        <button onClick={() => toggleAberto(enc.id)} className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider opacity-30 hover:opacity-60 transition-opacity pt-2" style={{ color: azulPetroleo }}>
+                          <MessageCircle size={11}/>
+                          {abertos.has(enc.id) ? 'Fechar Caderno Proibido' : 'Abrir Caderno Proibido'}
+                          {abertos.has(enc.id) ? <ChevronUp size={11}/> : <ChevronDown size={11}/>}
+                        </button>
+                      </div>
+                    </div>
+                    {abertos.has(enc.id) && (
+                      <div className="px-8 md:px-10 pb-8 md:pb-10 animate-in fade-in duration-300">
                         <SecaoReflexoesRoda rodaId={enc.id} temaNome={enc.tema}/>
                       </div>
                     )}
                   </div>
                 ))}
+
+                {totalEncontrosPages > 1 && (
+                  <div className="flex items-center justify-center gap-4 pt-2">
+                    <button
+                      onClick={() => setPageEncontros(p => Math.max(1, p - 1))}
+                      disabled={pageEncontros === 1}
+                      className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: pageEncontros === 1 ? '#ddd' : verdeMusgo, color: 'white' }}
+                    >
+                      ← Anterior
+                    </button>
+                    <span className="text-xs italic opacity-60" style={{ color: azulPetroleo }}>{pageEncontros}/{totalEncontrosPages}</span>
+                    <button
+                      onClick={() => setPageEncontros(p => Math.min(totalEncontrosPages, p + 1))}
+                      disabled={pageEncontros >= totalEncontrosPages}
+                      className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest disabled:opacity-30 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: pageEncontros >= totalEncontrosPages ? '#ddd' : verdeMusgo, color: 'white' }}
+                    >
+                      Próxima →
+                    </button>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-        </section>}
+            )}
+
+            {encerrados.length > 0 && (
+              <div className="space-y-6 pt-6">
+                <div className="flex items-center gap-6 pb-4">
+                  <div className="h-px flex-1 bg-[#8C7B6E]/20" />
+                  <h2 className="text-xs font-bold uppercase tracking-[0.4em] text-[#8C7B6E] flex items-center gap-3">
+                    <Archive size={14} className="opacity-70" /> Encontros Anteriores
+                  </h2>
+                  <div className="h-px flex-1 bg-[#8C7B6E]/20" />
+                </div>
+                <div className="space-y-10">
+                  {encerradosPaginados.map(enc => (
+                    <div 
+                      key={enc.id} 
+                      className="group relative bg-[#FAFAF5] border border-[#8C7B6E]/10 rounded-sm shadow-sm transition-all duration-700 hover:shadow-md hover:border-[#8C7B6E]/30"
+                    >
+                      {/* Efeito de folha dupla/Páginas empilhadas no fundo */}
+                      <div className="absolute top-1 left-1 right-[-4px] bottom-[-4px] border border-[#8C7B6E]/10 rounded-sm bg-[#FAFAF5]/50 -z-10 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"></div>
+                      
+                      {/* Faixa lateral estilo fita de livro */}
+                      <div className="absolute top-0 bottom-0 left-0 w-1.5 bg-[#8C7B6E]/20 group-hover:bg-[#8C7B6E]/40 transition-colors duration-500" />
+                      <div className="absolute top-0 bottom-0 left-1.5 w-px bg-[#8C7B6E]/10" />
+
+                      <button 
+                        onClick={() => toggleAberto(enc.id)} 
+                        className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-8 p-8 sm:p-10 pl-10 sm:pl-12 text-left"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-10 flex-1">
+                          
+                          {/* Fotografia vintage refinada com fita crepe visual */}
+                          <div className="shrink-0 self-start sm:self-auto relative">
+                            <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 w-8 h-3 bg-white/40 border border-white/60 shadow-sm rotate-[-3deg] z-10 hidden sm:block backdrop-blur-sm" />
+                            
+                            <div className="p-2 bg-white border border-[#8C7B6E]/15 shadow-[0_4px_15px_-5px_rgba(0,0,0,0.05)] rotate-1 group-hover:-rotate-1 transition-transform duration-700 group-hover:scale-105">
+                              {enc.imagem ? (
+                                <img src={enc.imagem} alt={enc.tema} className="w-full h-40 sm:w-32 sm:h-44 object-cover opacity-95 group-hover:opacity-100 transition-opacity duration-500 relative z-0" />
+                              ) : (
+                                <div className="w-full h-40 sm:w-32 sm:h-44 bg-[#8C7B6E]/5 flex items-center justify-center border border-[#8C7B6E]/10">
+                                  <Archive className="opacity-20 text-[#8C7B6E]" size={24} />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex-1 space-y-5">
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-start">
+                                <span className="flex items-center gap-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.3em] pl-3 py-1 border-l border-[#8C7B6E]/30 text-[#8C7B6E]/70 bg-gradient-to-r from-[#8C7B6E]/5 to-transparent">
+                                  REGISTRO ❧ {enc.data}
+                                </span>
+                              </div>
+                              <h3 className="font-serif text-3xl sm:text-4xl text-[#4A443F] leading-[1.15] group-hover:text-[#8C7B6E] transition-colors duration-500 tracking-tight">
+                                {enc.tema}
+                              </h3>
+                            </div>
+                            
+                            <div className="inline-flex items-center gap-3 pt-2">
+                              <div className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-500 ${abertos.has(enc.id) ? 'bg-[#8C7B6E] border-[#8C7B6E] text-white' : 'border-[#8C7B6E]/20 text-[#8C7B6E] group-hover:bg-[#8C7B6E]/10'}`}>
+                                <ChevronDown size={14} className={`transition-transform duration-500 ${abertos.has(enc.id) ? 'rotate-180' : '-rotate-90'}`} />
+                              </div>
+                              <span className="text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.2em] text-[#8C7B6E]/80 group-hover:text-[#8C7B6E] transition-colors">
+                                {abertos.has(enc.id) ? 'Fechar registro' : 'Deixar reflexão no Caderno'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+
+                      {abertos.has(enc.id) && (
+                        <div className="px-8 pb-8 sm:px-12 sm:pb-10 pt-0 space-y-8 animate-in fade-in slide-in-from-top-4 duration-700 relative z-10">
+                          <div className="flex items-center justify-center opacity-40">
+                            <div className="w-16 h-px bg-[#8C7B6E]"></div>
+                            <span className="mx-4 text-[#8C7B6E] text-lg font-serif">❦</span>
+                            <div className="w-16 h-px bg-[#8C7B6E]"></div>
+                          </div>
+                          
+                          <div className="flex flex-wrap justify-center gap-4">
+                            {enc.linkLive && (
+                              <a href={enc.linkLive} target="_blank" rel="noopener noreferrer"
+                                className="group/btn flex items-center gap-2.5 px-6 py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] text-white bg-[#4A443F] hover:bg-[#8C7B6E] transition-colors duration-500">
+                                <Youtube size={14} className="opacity-70 group-hover/btn:opacity-100" /> Gravação do Encontro
+                              </a>
+                            )}
+                            {enc.linkDrive && (
+                              <a href={enc.linkDrive} target="_blank" rel="noopener noreferrer"
+                                className="group/btn flex items-center gap-2.5 px-6 py-2.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[#4A443F] border border-[#8C7B6E]/30 hover:border-[#8C7B6E]/60 hover:bg-[#8C7B6E]/5 transition-all duration-500">
+                                <FileText size={14} className="opacity-50 group-hover/btn:opacity-100" /> Material de Estudo
+                              </a>
+                            )}
+                          </div>
+                          
+                          <div className="pt-6 relative before:absolute before:inset-0 before:bg-white/40 before:rounded-sm before:-z-10 p-6 sm:p-8 border border-[#8C7B6E]/10 shadow-[0_0_20px_rgba(140,123,110,0.03)] mt-6">
+                            <SecaoReflexoesRoda rodaId={enc.id} temaNome={enc.tema}/>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {totalEncerradosPages > 1 && (
+                  <div className="flex items-center justify-center gap-6 pt-6">
+                    <button
+                      onClick={() => setPageEncerrados(p => Math.max(1, p - 1))}
+                      disabled={pageEncerrados === 1}
+                      className="px-6 py-2.5 rounded-full font-bold uppercase text-[10px] tracking-widest text-[#4A443F] bg-[#FAFAF5] border border-[#8C7B6E]/30 hover:bg-[#8C7B6E]/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      ← Anterior
+                    </button>
+                    <span className="text-xs italic text-[#8C7B6E]" >
+                      {pageEncerrados} <span className="opacity-50">/ {totalEncerradosPages}</span>
+                    </span>
+                    <button
+                      onClick={() => setPageEncerrados(p => Math.min(totalEncerradosPages, p + 1))}
+                      disabled={pageEncerrados >= totalEncerradosPages}
+                      className="px-6 py-2.5 rounded-full font-bold uppercase text-[10px] tracking-widest text-[#4A443F] bg-[#FAFAF5] border border-[#8C7B6E]/30 hover:bg-[#8C7B6E]/10 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+                    >
+                      Próxima →
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
       </main>
 
       <footer>

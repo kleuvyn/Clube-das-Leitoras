@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, client } from '@/lib/db';
 import { sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    await db.execute(sql`ALTER TABLE encontros ADD COLUMN IF NOT EXISTS valor text`);
-    await db.execute(sql`ALTER TABLE encontros ADD COLUMN IF NOT EXISTS telefone text`);
-    await db.execute(sql`ALTER TABLE encontros ADD COLUMN IF NOT EXISTS link_inscricao text`);
-    await db.execute(sql`
+    await client.execute(`ALTER TABLE encontros ADD COLUMN IF NOT EXISTS valor text`);
+    await client.execute(`ALTER TABLE encontros ADD COLUMN IF NOT EXISTS telefone text`);
+    await client.execute(`ALTER TABLE encontros ADD COLUMN IF NOT EXISTS link_inscricao text`);
+    await client.execute(`
       CREATE TABLE IF NOT EXISTS evento_confirmacoes (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         evento_id uuid NOT NULL REFERENCES encontros(id) ON DELETE CASCADE,

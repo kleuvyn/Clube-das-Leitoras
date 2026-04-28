@@ -78,9 +78,18 @@ export const colaboradoras = sqliteTable('colaboradoras', {
   gdprConsentidoEm: integer('gdpr_consentido_em', { mode: 'timestamp' }),
   gdprConsentimentoVersao: text('gdpr_consentimento_versao'),
   gdprConsentimentoFinalidade: text('gdpr_consentimento_finalidade'),
+  tempPasswordExpiresAt: integer('temp_password_expires_at', { mode: 'timestamp' }),
 
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
   lastLogin: integer('last_login', { mode: 'timestamp' }),
+});
+
+export const colaboradorasPasswordHistory = sqliteTable('colaboradoras_password_history', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  colaboradoraId: text('colaboradora_id').notNull().references(() => colaboradoras.id, { onDelete: 'cascade' }),
+  passwordHash: text('password_hash').notNull(),
+  type: text('type').notNull().default('permanent'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
 export const permissoesSeccao = sqliteTable('permissoes_seccao', {
@@ -182,6 +191,35 @@ export const resenhas = sqliteTable('resenhas', {
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
+export const sorteiosParticipantes = sqliteTable('sorteios_participantes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  nome: text('nome').notNull(),
+  mesBase: text('mes_base').notNull(), // ex: "2026-04"
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const sorteiosHistorico = sqliteTable('sorteios_historico', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  nome: text('nome').notNull(),
+  premio: text('premio').notNull(),
+  mesBase: text('mes_base').notNull(),
+  dataSorteio: integer('data_sorteio', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const sorteiosPremios = sqliteTable('sorteios_premios', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  premio: text('premio').notNull(),
+  mesBase: text('mes_base').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const sorteiosConfig = sqliteTable('sorteios_config', {
+  id: integer('id').primaryKey(),
+  mesBase: text('mes_base').notNull(),
+  urnaAberta: integer('urna_aberta').default(1).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow(),
+});
+
 export const podcasts = sqliteTable('podcasts', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   titulo: text('titulo').notNull(),
@@ -276,6 +314,26 @@ export const comentarios = sqliteTable('comentarios', {
   autoraNome: text('autora_nome').notNull(),
   autoraEmail: text('autora_email'),
   texto: text('texto').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const rodaVozes = sqliteTable('roda_vozes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: text('session_id').unique().notNull(),
+  titulo: text('titulo').default('Roda de Vozes'),
+  status: text('status').default('ativa'), // ativa, pausada, encerrada
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const participantesRodaVozes = sqliteTable('participantes_roda_vozes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  rodaId: text('roda_id').notNull().references(() => rodaVozes.id, { onDelete: 'cascade' }),
+  nome: text('nome').notNull(),
+  ordem: integer('ordem').notNull(),
+  falou: integer('falou', { mode: 'boolean' }).default(false),
+  tempoUtilizado: integer('tempo_utilizado').default(0),
+  minutosAdicionaisUsados: integer('minutos_adicionais_usados').default(0),
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 

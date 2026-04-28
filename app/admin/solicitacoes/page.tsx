@@ -112,7 +112,7 @@ export default function SolicitacoesAdmin() {
           <h1 className="text-4xl font-serif italic text-slate-900">Curadoria de Acessos</h1>
           <p className="text-slate-500 text-sm mt-1">Gerencie quem entra no Clube das Leitoras.</p>
         </div>
-        <Button onClick={load} variant="ghost" className="gap-2 text-slate-400 hover:text-slate-900">
+        <Button onClick={() => load()} variant="ghost" className="gap-2 text-slate-400 hover:text-slate-900">
           <RefreshCw size={16} className={carregando ? "animate-spin" : ""} /> Atualizar Lista
         </Button>
       </header>

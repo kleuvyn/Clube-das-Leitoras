@@ -36,17 +36,22 @@ export default function CronogramaPage() {
   const [cronogramas, setCronogramas] = useState<CronogramaAno[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandidos, setExpandidos] = useState<Set<number>>(new Set());
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
 
   const anoAtual = new Date().getFullYear();
   const mesAtual = new Date().getMonth() + 1;
 
   useEffect(() => {
     async function carregar() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/cronograma');
+        const res = await fetch(`/api/cronograma?page=${page}&limit=${limit}`);
         if (!res.ok) return;
         const data = await res.json();
-        const arr = Array.isArray(data) ? data : (data ? [data] : []);
+        const arr = Array.isArray(data?.data) ? data.data : [];
+        setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
 
         
         const porAno = new Map<number, any>();
@@ -78,7 +83,7 @@ export default function CronogramaPage() {
       }
     }
     carregar();
-  }, []);
+  }, [page]);
 
   const toggleExpand = (ano: number) =>
     setExpandidos(prev => {
@@ -240,6 +245,28 @@ export default function CronogramaPage() {
                         );
                       })}
 
+
+                    {!loading && pagination.pages > 1 && (
+                      <div className="flex items-center justify-center gap-6 pt-6">
+                        <button
+                          onClick={() => setPage(p => Math.max(1, p - 1))}
+                          disabled={page === 1}
+                          className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: page === 1 ? '#ddd' : 'var(--page-color)', color: 'white' }}
+                        >
+                          ← Anterior
+                        </button>
+                        <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+                        <button
+                          onClick={() => setPage(p => p + 1)}
+                          disabled={!pagination.hasMore}
+                          className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: !pagination.hasMore ? '#ddd' : 'var(--page-color)', color: 'white' }}
+                        >
+                          Próxima →
+                        </button>
+                      </div>
+                    )}
                       
                       {isAtual && (
                         <div

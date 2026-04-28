@@ -89,9 +89,14 @@ export default function RodaOnlineAdmin() {
   const [reflexoes, setReflexoes] = useState<Reflexao[]>([]);
   const [loadingRef, setLoadingRef] = useState(true);
   const [filtroAtivo, setFiltroAtivo] = useState<'todos' | 'suspeitos'>('todos');
+  const [pageReflexoes, setPageReflexoes] = useState(1);
+  const [paginationReflexoes, setPaginationReflexoes] = useState({ total: 0, pages: 0, hasMore: false });
+  const limitReflexoes = 20;
 
   
   const [historico, setHistorico] = useState<RodaItem[]>([]);
+  const [pageHistorico, setPageHistorico] = useState(1);
+  const limitHistorico = 8;
 
   
   const [extras, setExtras] = useState<string[]>([]);
@@ -130,16 +135,17 @@ export default function RodaOnlineAdmin() {
     status: 'ativo'
   });
 
-  const loadReflexoes = useCallback(async () => {
+  const loadReflexoes = useCallback(async (pageNum = pageReflexoes) => {
     setLoadingRef(true);
     try {
-      const res = await fetch('/api/rodaonline/reflexoes');
+      const res = await fetch(`/api/rodaonline/reflexoes?page=${pageNum}&limit=${limitReflexoes}`);
       const data = await res.json();
-      setReflexoes(Array.isArray(data) ? data : []);
+      setReflexoes(Array.isArray(data.data) ? data.data : []);
+      setPaginationReflexoes(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch {} finally {
       setLoadingRef(false);
     }
-  }, []);
+  }, [pageReflexoes]);
 
   const loadFiltro = useCallback(async () => {
     try {
@@ -186,9 +192,9 @@ export default function RodaOnlineAdmin() {
       }
     };
     loadRoda();
-    loadReflexoes();
+    loadReflexoes(pageReflexoes);
     loadFiltro();
-  }, [loadReflexoes, loadFiltro]);
+  }, [loadReflexoes, loadFiltro, pageReflexoes]);
 
   const handleSave = async () => {
     if (!formData.title) {
@@ -339,6 +345,8 @@ export default function RodaOnlineAdmin() {
     : reflexoes;
 
   const suspeitos = reflexoes.filter(r => analyzeContentModeration(`${r.autoraNome} ${r.texto}`).score > 0);
+  const totalHistoricoPages = Math.max(1, Math.ceil(historico.length / limitHistorico));
+  const historicoPaginado = historico.slice((pageHistorico - 1) * limitHistorico, pageHistorico * limitHistorico);
 
   if (fetching) return (
     <div className="flex items-center justify-center h-96">
@@ -494,6 +502,28 @@ export default function RodaOnlineAdmin() {
                 ))}
               </div>
             )}
+
+            {!loadingRef && paginationReflexoes.pages > 1 && (
+              <div className="flex items-center justify-center gap-4 pt-4">
+                <button
+                  onClick={() => setPageReflexoes(p => Math.max(1, p - 1))}
+                  disabled={pageReflexoes === 1}
+                  className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: pageReflexoes === 1 ? '#ddd' : azulSereno, color: 'white' }}
+                >
+                  ← Anterior
+                </button>
+                <span className="text-xs text-slate-500 italic">{pageReflexoes}/{paginationReflexoes.pages}</span>
+                <button
+                  onClick={() => setPageReflexoes(p => p + 1)}
+                  disabled={!paginationReflexoes.hasMore}
+                  className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: !paginationReflexoes.hasMore ? '#ddd' : azulSereno, color: 'white' }}
+                >
+                  Próxima →
+                </button>
+              </div>
+            )}
           </div>
 
           
@@ -603,7 +633,7 @@ export default function RodaOnlineAdmin() {
             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[9px] font-bold">{historico.length}</span>
           </div>
           <div className="flex flex-col gap-2">
-            {historico.map(roda => (
+            {historicoPaginado.map(roda => (
               <div key={roda.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm flex items-center gap-3 p-3 group">
                 {/* Thumbnail */}
                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-50 shrink-0 flex items-center justify-center">
@@ -671,6 +701,28 @@ export default function RodaOnlineAdmin() {
               </div>
             ))}
           </div>
+
+          {totalHistoricoPages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-3">
+              <button
+                onClick={() => setPageHistorico(p => Math.max(1, p - 1))}
+                disabled={pageHistorico === 1}
+                className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: pageHistorico === 1 ? '#ddd' : azulSereno, color: 'white' }}
+              >
+                ← Anterior
+              </button>
+              <span className="text-xs text-slate-500 italic">{pageHistorico}/{totalHistoricoPages}</span>
+              <button
+                onClick={() => setPageHistorico(p => Math.min(totalHistoricoPages, p + 1))}
+                disabled={pageHistorico >= totalHistoricoPages}
+                className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: pageHistorico >= totalHistoricoPages ? '#ddd' : azulSereno, color: 'white' }}
+              >
+                Próxima →
+              </button>
+            </div>
+          )}
         </section>
       )}
     </div>

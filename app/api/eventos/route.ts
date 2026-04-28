@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { encontros, eventoConfirmacoes } from '@/lib/db/schema';
-import { eq, desc, sql, and } from 'drizzle-orm';
+import { eq, desc, sql, and, inArray } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
@@ -25,25 +25,42 @@ const mapToUiEvent = (r: any) => ({
   createdAt: r.createdAt,
 });
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+
     const cacheHeaders = {
       'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
     };
 
-    const rows = await db.select().from(encontros).orderBy(desc(encontros.createdAt));
+    const [rows, countResult] = await Promise.all([
+      db.select().from(encontros).orderBy(desc(encontros.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(encontros),
+    ]);
 
-    
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
     const countMap: Record<string, { vou: number; nao_vou: number }> = {};
     try {
-      const confirmacoes = await db
-        .select({
-          eventoId: eventoConfirmacoes.eventoId,
-          status: eventoConfirmacoes.status,
-          total: sql<number>`count(*)::int`,
-        })
-        .from(eventoConfirmacoes)
-        .groupBy(eventoConfirmacoes.eventoId, eventoConfirmacoes.status);
+      const eventoIds = rows.map((r) => r.id);
+      const confirmacoes = eventoIds.length > 0
+        ? await db
+            .select({
+              eventoId: eventoConfirmacoes.eventoId,
+              status: eventoConfirmacoes.status,
+              total: sql<number>`cast(count(*) as integer)`,
+            })
+            .from(eventoConfirmacoes)
+            .where(inArray(eventoConfirmacoes.eventoId, eventoIds))
+            .groupBy(eventoConfirmacoes.eventoId, eventoConfirmacoes.status)
+        : [];
 
       for (const c of confirmacoes) {
         if (!countMap[c.eventoId]) countMap[c.eventoId] = { vou: 0, nao_vou: 0 };
@@ -52,11 +69,20 @@ export async function GET() {
       }
     } catch {}
 
-    return NextResponse.json(rows.map(r => mapToUiEvent({
+    const mappedRows = rows.map(r => mapToUiEvent({
       ...r,
       totalVou: countMap[r.id]?.vou ?? 0,
       totalNaoVou: countMap[r.id]?.nao_vou ?? 0,
-    })), { headers: cacheHeaders });
+    }));
+
+    if (!hasPagination) {
+      return NextResponse.json(mappedRows, { headers: cacheHeaders });
+    }
+
+    return NextResponse.json({
+      data: mappedRows,
+      pagination: { page, limit, total, pages, hasMore: page < pages }
+    }, { headers: cacheHeaders });
   } catch (err) {
     console.error('Erro ao buscar eventos:', err);
     return NextResponse.json({ error: 'Erro ao carregar a agenda.' }, { status: 500 });

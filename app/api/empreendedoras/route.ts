@@ -2,16 +2,31 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { empreendedoras } from '@/lib/db/schema';
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const rows = await db.select().from(empreendedoras).orderBy(asc(empreendedoras.name));
-    
-    
-    const formattedRows = rows.map(row => ({
+    const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+
+    const rows = await db
+      .select()
+      .from(empreendedoras)
+      .orderBy(asc(empreendedoras.name))
+      .limit(limit + 1)
+      .offset(offset);
+
+    const hasMore = rows.length > limit;
+    const trimmedRows = rows.slice(0, limit);
+
+    const formattedRows = trimmedRows.map(row => ({
       id: row.id,
       negocio: row.name,         
       nome: row.feitoPor,        
@@ -21,7 +36,18 @@ export async function GET() {
       categoria: row.categoria ?? null
     }));
 
-    return NextResponse.json(formattedRows, {
+    if (!hasPagination) {
+      return NextResponse.json(formattedRows, {
+        headers: {
+          'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        },
+      });
+    }
+
+    return NextResponse.json({
+      data: formattedRows,
+      pagination: { page, limit, hasMore }
+    }, {
       headers: {
         'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
       },

@@ -6,8 +6,11 @@ export async function GET() {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
   try {
-    const connString = process.env.DATABASE_URL
-    const sql = postgres(connString)
+    const connString = process.env.DATABASE_URL;
+    if (!connString) {
+      return NextResponse.json({ error: 'No database configured' }, { status: 500 });
+    }
+    const sql = postgres(connString);
     const res = await sql`select current_database() as db, current_schema() as schema, current_user as user, current_setting('search_path', true) as search_path`
     await sql.end()
     return NextResponse.json({ info: res[0] })

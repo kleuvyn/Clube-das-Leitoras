@@ -62,6 +62,9 @@ export default function ResenhasAdmin() {
   const { isAdmin } = useAdmin();
   const [resenhas, setResenhas] = useState<Resenha[]>([]);
   const [loadingResenhas, setLoadingResenhas] = useState(true);
+  const [pageResenhas, setPageResenhas] = useState(1);
+  const [paginationResenhas, setPaginationResenhas] = useState({ total: 0, pages: 0, hasMore: false });
+  const limitResenhas = 8;
   const [salvandoResenha, setSalvandoResenha] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [resenhaAberta, setResenhaAberta] = useState<string | null>(null);
@@ -72,6 +75,9 @@ export default function ResenhasAdmin() {
   
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [loadingComent, setLoadingComent] = useState(true);
+  const [pageComentarios, setPageComentarios] = useState(1);
+  const [paginationComentarios, setPaginationComentarios] = useState({ total: 0, pages: 0, hasMore: false });
+  const limitComentarios = 20;
   const [filtroMod, setFiltroMod] = useState<'todos' | 'suspeitos'>('todos');
 
   
@@ -81,25 +87,30 @@ export default function ResenhasAdmin() {
   const [termsBase, setTermsBase] = useState<string[]>([]);
 
   
-  const loadResenhas = async () => {
+  const loadResenhas = async (pageNum = pageResenhas) => {
     setLoadingResenhas(true);
     try {
-      const res = await fetch('/api/resenhas');
+      const res = await fetch(`/api/resenhas?page=${pageNum}&limit=${limitResenhas}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setResenhas(Array.isArray(data) ? data : []);
+      setResenhas(Array.isArray(data.data) ? data.data : []);
+      setPaginationResenhas(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch { toast.error('Erro ao carregar resenhas.'); }
     finally { setLoadingResenhas(false); }
   };
 
-  const loadComentarios = useCallback(async () => {
+  const loadComentarios = useCallback(async (pageNum = pageComentarios) => {
     setLoadingComent(true);
     try {
       const [comentRes, filtroRes] = await Promise.all([
-        fetch('/api/comentarios'),
+        fetch(`/api/comentarios?page=${pageNum}&limit=${limitComentarios}`),
         fetch('/api/admin/moderacao'),
       ]);
-      if (comentRes.ok) setComentarios(await comentRes.json());
+      if (comentRes.ok) {
+        const comentData = await comentRes.json();
+        setComentarios(Array.isArray(comentData.data) ? comentData.data : []);
+        setPaginationComentarios(comentData.pagination || { total: 0, pages: 0, hasMore: false });
+      }
       if (filtroRes.ok) {
         const fData = await filtroRes.json();
         setExtras(fData.extras ?? []);
@@ -107,9 +118,10 @@ export default function ResenhasAdmin() {
       }
     } catch (e) { console.error(e); }
     finally { setLoadingComent(false); }
-  }, []);
+  }, [pageComentarios]);
 
-  useEffect(() => { loadResenhas(); loadComentarios(); }, [loadComentarios]);
+  useEffect(() => { loadResenhas(pageResenhas); }, [pageResenhas]);
+  useEffect(() => { loadComentarios(pageComentarios); }, [loadComentarios, pageComentarios]);
 
   
   const handleUploadImg = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -142,7 +154,7 @@ export default function ResenhasAdmin() {
       toast.success(editandoId ? 'Resenha atualizada!' : 'Resenha publicada!');
       setForm(formVazio);
       setEditandoId(null);
-      loadResenhas();
+      loadResenhas(pageResenhas);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao salvar resenha.');
     } finally { setSalvandoResenha(false); }
@@ -365,6 +377,28 @@ export default function ResenhasAdmin() {
               </div>
             ))
           )}
+
+          {!loadingResenhas && paginationResenhas.pages > 1 && (
+            <div className="flex items-center justify-center gap-6 mt-8">
+              <button
+                onClick={() => setPageResenhas(p => Math.max(1, p - 1))}
+                disabled={pageResenhas === 1}
+                className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: pageResenhas === 1 ? '#ddd' : azulLogo, color: 'white' }}
+              >
+                ← Anterior
+              </button>
+              <span className="text-sm text-slate-500 italic">Página {pageResenhas} de {paginationResenhas.pages}</span>
+              <button
+                onClick={() => setPageResenhas(p => p + 1)}
+                disabled={!paginationResenhas.hasMore}
+                className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: !paginationResenhas.hasMore ? '#ddd' : azulLogo, color: 'white' }}
+              >
+                Próxima →
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
@@ -433,6 +467,28 @@ export default function ResenhasAdmin() {
                             </button>
                           </div>
                         ))}
+                      </div>
+                    )}
+
+                    {!loadingComent && paginationComentarios.pages > 1 && (
+                      <div className="flex items-center justify-center gap-4 pt-4">
+                        <button
+                          onClick={() => setPageComentarios(p => Math.max(1, p - 1))}
+                          disabled={pageComentarios === 1}
+                          className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: pageComentarios === 1 ? '#ddd' : azulLogo, color: 'white' }}
+                        >
+                          ← Anterior
+                        </button>
+                        <span className="text-xs text-slate-500 italic">{pageComentarios}/{paginationComentarios.pages}</span>
+                        <button
+                          onClick={() => setPageComentarios(p => p + 1)}
+                          disabled={!paginationComentarios.hasMore}
+                          className="px-4 py-2 rounded-lg font-bold uppercase text-[9px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{ backgroundColor: !paginationComentarios.hasMore ? '#ddd' : azulLogo, color: 'white' }}
+                        >
+                          Próxima →
+                        </button>
                       </div>
                     )}
                   </>

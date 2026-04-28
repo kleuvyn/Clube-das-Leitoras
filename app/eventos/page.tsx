@@ -94,6 +94,9 @@ export default function EventosPage() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [fotosGaleria, setFotosGaleria] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [ativo, setAtivo] = useState<Evento | null>(null);
   const [rsvp, setRsvp] = useState<Record<string, 'vou' | 'nao_vou' | null>>({});
@@ -104,11 +107,12 @@ export default function EventosPage() {
     setUserEmail(email);
 
     async function carregarDados() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/eventos');
+        const res = await fetch(`/api/eventos?page=${page}&limit=${limit}`);
         const data = await res.json();
-        if (Array.isArray(data)) {
-          const mapped = data.map((e: any) => ({
+        if (Array.isArray(data?.data)) {
+          const mapped = data.data.map((e: any) => ({
             id: e.id,
             titulo: e.title || '',
             dataFormatada: e.date
@@ -125,6 +129,7 @@ export default function EventosPage() {
             totalNaoVou: e.totalNaoVou ?? 0,
           }));
           setEventos(mapped);
+          setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
 
           if (email && mapped.length > 0) {
             const respostas: Record<string, 'vou' | 'nao_vou' | null> = {};
@@ -151,7 +156,7 @@ export default function EventosPage() {
     ];
     setFotosGaleria(preferredFotos);
     return () => undefined;
-  }, []);
+  }, [page]);
 
   const handleRsvp = useCallback(async (eventoId: string, status: 'vou' | 'nao_vou') => {
     if (!userEmail) return;
@@ -585,6 +590,28 @@ export default function EventosPage() {
             </div>
           ))}
         </section>
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 -mt-12">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : ocreDestaque, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : ocreDestaque, color: 'white' }}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
 
         <section className="bg-white/50 border border-black/5 p-12 md:p-20 space-y-16 rounded-3xl text-center">
           <div className="space-y-4">

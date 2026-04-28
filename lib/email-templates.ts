@@ -224,7 +224,7 @@ export function cartaAprovacaoComSenha(params: { nome: string; email: string; se
         <div style="font-size: 10px; color: ${CORES.marromPapel}; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Chave de Acesso</div>
         <div style="color: ${CORES.rosaGabi}; font-weight: bold; font-size: 26px; font-family: monospace;">${escapeHtml(senha)}</div>
       </div>
-      <p style="font-size: 13px;"><em>Recomendamos a alteração desta senha em seu primeiro acesso.</em></p>
+      <p style="font-size: 13px;"><em>Esta senha expira em 24 horas e deve ser trocada no primeiro acesso.</em></p>
       <a class="cta-button" href="${siteUrl}/login">Entrar no Clube</a>
     </div>
     <div class="footer">Brasília • Curadoria de Afeto</div>

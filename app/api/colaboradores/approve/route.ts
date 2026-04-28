@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { db } from '@/lib/db';
+import { db, client } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
+import { insertPasswordHistory, TEMP_PASSWORD_VALIDITY_MS } from '@/lib/password-utils';
+
+async function ensureTempPasswordExpiresAtColumn() {
+  try {
+    await client.execute("ALTER TABLE colaboradoras ADD COLUMN temp_password_expires_at integer");
+  } catch (error) {
+    // Ignora se a coluna já existir
+  }
+}
 
 function getFromAddress() {
   const fromEnv = process.env.BREVO_FROM?.trim() ?? process.env.RESEND_FROM?.trim();
@@ -40,6 +49,8 @@ export async function POST(request: Request) {
     const id = body.id;
     if (!id) return NextResponse.json({ error: 'ID da leitora é necessário' }, { status: 400 });
 
+    await ensureTempPasswordExpiresAtColumn();
+
     const [user] = await db.select().from(colaboradoras).where(eq(colaboradoras.id, id));
     if (!user) return NextResponse.json({ error: 'Leitora não encontrada' }, { status: 404 });
     if (user.active) return NextResponse.json({ error: 'Leitora já está ativa' }, { status: 400 });
@@ -47,14 +58,19 @@ export async function POST(request: Request) {
     const tempPassword = gerarSenhaTemporaria();
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
+    if (user.password) {
+      await insertPasswordHistory(user.id, user.password, user.mustChangePassword ? 'temporary' : 'permanent');
+    }
+
     await db.update(colaboradoras).set({
       password: hashedPassword,
       active: true,
       status: 'ativa',
       mustChangePassword: true,
+      tempPasswordExpiresAt: new Date(Date.now() + TEMP_PASSWORD_VALIDITY_MS),
     }).where(eq(colaboradoras.id, id));
 
-    const emailStatus = { sent: false, error: null };
+    const emailStatus: { sent: boolean; error: string | null } = { sent: false, error: null };
     const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
     if (!apiKey) {
       console.warn('BREVO_API_KEY não configurada. E-mails não serão enviados.');

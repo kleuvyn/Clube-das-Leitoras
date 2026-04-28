@@ -145,12 +145,21 @@ export default function RootClient({
       }}
     >
       <div className="fixed inset-0 z-[-1] opacity-[0.06] pointer-events-none flex items-center justify-center scale-125">
-        <Image src="/logo.png" alt="Logo" width={900} height={900} className="object-contain max-w-275 opacity-100" />
+        <Image
+          src="/logo.png"
+          alt="Logo"
+          width={900}
+          height={900}
+          loading="eager"
+          priority
+          style={{ width: 275, height: 'auto' }}
+          className="object-contain opacity-100"
+        />
       </div>
 
       {!isAuthPage && <Navigation />}
 
-      <main className="min-h-screen relative z-1 w-full">
+      <main className="min-h-screen relative z-10 w-full">
         {children}
       </main>
 

@@ -63,7 +63,7 @@ export default function CadastroLeitoraPage() {
       }
 
       if (data?.emailStatus?.hasKey === false) {
-        toast.warn('A API de e-mail não está configurada. Contate a equipe técnica.');
+        toast.error('A API de e-mail não está configurada. Contate a equipe técnica.');
       }
 
       router.push('/login');

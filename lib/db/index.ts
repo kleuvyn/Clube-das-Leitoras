@@ -7,7 +7,7 @@ const globalForDb = globalThis as unknown as {
 };
 
 // 1. Criamos o cliente do LibSQL (Turso)
-const client = globalForDb.client ?? createClient({
+export const client = globalForDb.client ?? createClient({
   url: process.env.DATABASE_URL!,
   authToken: process.env.DATABASE_AUTH_TOKEN!,
 });

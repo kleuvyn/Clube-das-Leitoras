@@ -47,6 +47,9 @@ function getVoterKey(): string {
 export default function VotacaoPage() {
   const [dados, setDados] = useState<VotacaoState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const [votando, setVotando] = useState(false);
   const [votoAtual, setVotoAtual] = useState<string | null>(null);
   const [showSugestao, setShowSugestao] = useState(false);
@@ -55,9 +58,10 @@ export default function VotacaoPage() {
 
   const carregar = useCallback(async () => {
     try {
-      const res = await fetch('/api/votacao');
+      const res = await fetch(`/api/votacao?page=${page}&limit=${limit}`);
       const data = await res.json();
       setDados(data);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
       const salvo = localStorage.getItem('clube_voto_atual');
       if (salvo && data.ativa) {
         const livroAindaExiste = data.livros.some((l: Livro) => l.id === salvo);
@@ -75,7 +79,7 @@ export default function VotacaoPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page]);
 
   useEffect(() => { carregar(); }, [carregar]);
 
@@ -231,6 +235,28 @@ export default function VotacaoPage() {
               );
             })}
           </div>
+
+          {!loading && pagination.pages > 1 && (
+            <div className="flex items-center justify-center gap-6 pt-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: page === 1 ? '#ddd' : ocre, color: 'white' }}
+              >
+                ← Anterior
+              </button>
+              <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+              <button
+                onClick={() => setPage(p => p + 1)}
+                disabled={!pagination.hasMore}
+                className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ backgroundColor: !pagination.hasMore ? '#ddd' : ocre, color: 'white' }}
+              >
+                Próxima →
+              </button>
+            </div>
+          )}
         </section>
 
         {/* ÁREA DE SUGESTÃO */}

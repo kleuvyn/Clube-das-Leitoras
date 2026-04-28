@@ -39,6 +39,9 @@ export default function LivroDoMesAdmin() {
   const router = useRouter();
   const [rodas, setRodas] = useState<LivroItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
   const [uploading, setUploading] = useState(false);
   const [deletando, setDeletando] = useState<string | null>(null);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -54,15 +57,16 @@ export default function LivroDoMesAdmin() {
     foto: '',
   });
 
-  const loadDados = async () => {
+  const loadDados = async (pageNum = page) => {
     try {
-      const res = await fetch('/api/livro-do-mes?summary=1', { cache: 'no-store' });
+      const res = await fetch(`/api/livro-do-mes?summary=1&page=${pageNum}&limit=${limit}`, { cache: 'no-store' });
       const data = await res.json();
-      setRodas(Array.isArray(data) ? data : []);
+      setRodas(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch (e) { console.error("Erro ao carregar:", e); }
   };
 
-  useEffect(() => { loadDados(); }, []);
+  useEffect(() => { loadDados(page); }, [page]);
 
   const resetForm = () => {
     setFormData({ mes: 'Janeiro', ano: String(anoAtual), livro: '', autora: '', sinopse: '', tag: 'Futura Leitura', foto: '' });
@@ -129,7 +133,7 @@ export default function LivroDoMesAdmin() {
       toast.success(editandoId ? 'Leitura atualizada!' : 'Leitura publicada!');
       const wasEditing = !!editandoId;
       resetForm();
-      loadDados();
+      loadDados(page);
       if (!wasEditing) router.push('/admin/resenhas');
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao salvar.');
@@ -149,7 +153,7 @@ export default function LivroDoMesAdmin() {
       }
       toast.success('Removido!');
       if (editandoId === id) resetForm();
-      loadDados();
+      loadDados(page);
     } catch (err: any) {
       toast.error(err?.message || 'Erro ao remover.');
     } finally {
@@ -360,6 +364,28 @@ export default function LivroDoMesAdmin() {
             ))
           )}
         </div>
+
+        {!loading && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : verdeSalvia, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : verdeSalvia, color: 'white' }}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

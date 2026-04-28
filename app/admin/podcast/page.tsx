@@ -21,6 +21,9 @@ export default function PodcastAdmin() {
   const [uploadingAudio, setUploadingAudio] = useState(false);
   const [episodios, setEpisodios] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const imageInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
 
@@ -35,13 +38,14 @@ export default function PodcastAdmin() {
     data: new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
   });
 
-  const loadEpisodios = async () => {
+  const loadEpisodios = async (pageNum = page) => {
     setCarregando(true);
     try {
-      const res = await fetch('/api/podcast');
+      const res = await fetch(`/api/podcast?page=${pageNum}&limit=${limit}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      setEpisodios(Array.isArray(data) ? data : []);
+      setEpisodios(Array.isArray(data.data) ? data.data : []);
+      setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
     } catch {
       toast.error('Erro ao carregar episódios.');
     } finally {
@@ -49,7 +53,7 @@ export default function PodcastAdmin() {
     }
   };
 
-  useEffect(() => { loadEpisodios(); }, []);
+  useEffect(() => { loadEpisodios(page); }, [page]);
 
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -105,7 +109,7 @@ export default function PodcastAdmin() {
       }
       toast.success('Episódio publicado!');
       setFormData({ titulo: '', convidada: '', resumo: '', spotifyUrl: '', youtubeUrl: '', audioUrl: '', imageUrl: '', data: new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) });
-      loadEpisodios();
+      loadEpisodios(page);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao publicar o episódio.');
     } finally {
@@ -119,7 +123,7 @@ export default function PodcastAdmin() {
       const res = await fetch(`/api/podcast?id=${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error();
       toast.success('Episódio removido!');
-      setEpisodios(prev => prev.filter(e => e.id !== id));
+      loadEpisodios(page);
     } catch {
       toast.error('Erro ao remover.');
     }
@@ -306,6 +310,28 @@ export default function PodcastAdmin() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {!carregando && pagination.pages > 1 && (
+          <div className="flex items-center justify-center gap-6 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : rosaRetro, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : rosaRetro, color: 'white' }}
+            >
+              Próxima →
+            </button>
           </div>
         )}
       </section>

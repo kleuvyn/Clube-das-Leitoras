@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { livroDoMes, resenhas } from '@/lib/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +13,12 @@ export async function GET(request: Request) {
     const anoParam = searchParams.get('ano');
     const idParam = searchParams.get('id');
     const summaryParam = searchParams.get('summary') === '1';
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 200;
+    const offset = hasPagination ? (page - 1) * limit : 0;
     const listCacheHeaders = {
       'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
     };
@@ -31,8 +37,9 @@ export async function GET(request: Request) {
     }
 
     let rows;
+    let total = 0;
     if (summaryParam) {
-      const query = db
+      const baseSelect = db
         .select({
           id: livroDoMes.id,
           mes: livroDoMes.mes,
@@ -40,25 +47,58 @@ export async function GET(request: Request) {
           ano: livroDoMes.ano,
           livro: livroDoMes.livro,
           autora: livroDoMes.autora,
+          foto: livroDoMes.foto,
+          sinopse: livroDoMes.sinopse,
           tag: livroDoMes.tag,
           updatedAt: livroDoMes.updatedAt,
         })
         .from(livroDoMes);
 
-      rows = anoParam
-        ? await query.where(eq(livroDoMes.ano, Number(anoParam))).orderBy(desc(livroDoMes.updatedAt))
-        : await query.orderBy(desc(livroDoMes.updatedAt));
+      const baseCount = db
+        .select({ count: sql<number>`cast(count(*) as integer)` })
+        .from(livroDoMes);
+
+      const [resultRows, countResult] = anoParam
+        ? await Promise.all([
+            baseSelect.where(eq(livroDoMes.ano, Number(anoParam))).orderBy(desc(livroDoMes.updatedAt)).limit(limit).offset(offset),
+            baseCount.where(eq(livroDoMes.ano, Number(anoParam))),
+          ])
+        : await Promise.all([
+            baseSelect.orderBy(desc(livroDoMes.updatedAt)).limit(limit).offset(offset),
+            baseCount,
+          ]);
+
+      rows = resultRows;
+      total = countResult[0]?.count || 0;
     } else {
-      rows = anoParam
-        ? await db
-            .select()
-            .from(livroDoMes)
-            .where(eq(livroDoMes.ano, Number(anoParam)))
-            .orderBy(desc(livroDoMes.updatedAt))
-        : await db.select().from(livroDoMes).orderBy(desc(livroDoMes.updatedAt));
+      const baseSelect = db.select().from(livroDoMes);
+      const baseCount = db
+        .select({ count: sql<number>`cast(count(*) as integer)` })
+        .from(livroDoMes);
+
+      const [resultRows, countResult] = anoParam
+        ? await Promise.all([
+            baseSelect.where(eq(livroDoMes.ano, Number(anoParam))).orderBy(desc(livroDoMes.updatedAt)).limit(limit).offset(offset),
+            baseCount.where(eq(livroDoMes.ano, Number(anoParam))),
+          ])
+        : await Promise.all([
+            baseSelect.orderBy(desc(livroDoMes.updatedAt)).limit(limit).offset(offset),
+            baseCount,
+          ]);
+
+      rows = resultRows;
+      total = countResult[0]?.count || 0;
     }
 
-    return NextResponse.json(rows, { headers: listCacheHeaders });
+    if (!hasPagination) {
+      return NextResponse.json(rows, { headers: listCacheHeaders });
+    }
+
+    const pages = Math.ceil(total / limit);
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages },
+    }, { headers: listCacheHeaders });
   } catch (err: any) {
     console.error('Erro GET /api/livro-do-mes:', err);
     return NextResponse.json({ error: 'Erro ao carregar o livro do mês' }, { status: 500 });

@@ -25,6 +25,7 @@ export async function GET(request: Request) {
   try {
     await requireAdminOrColaboradora();
     const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const offset = (page - 1) * limit;
@@ -33,6 +34,10 @@ export async function GET(request: Request) {
       db.select().from(solicitacoes).orderBy(desc(solicitacoes.createdAt)).limit(limit).offset(offset),
       db.select({ count: sql<number>`cast(count(*) as integer)` }).from(solicitacoes),
     ]);
+
+    if (!hasPagination) {
+      return NextResponse.json(rows);
+    }
 
     const total = countResult[0]?.count || 0;
     const pages = Math.ceil(total / limit);
@@ -365,7 +370,7 @@ export async function PATCH(request: Request) {
     }
 
     // Alinha o objeto para a UI do admin que verificava `emailStatus.sent`.
-    emailStatus.sent = !!emailStatus.user;
+(emailStatus as any).sent = !!emailStatus.user;
 
     return NextResponse.json({ success: true, emailStatus }, { status: 200 });
   } catch (e) {

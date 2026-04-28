@@ -10,14 +10,46 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const anoParam = searchParams.get('ano');
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
 
-    const query = db.select().from(livros).$dynamic();
+    const [results, countResult] = anoParam
+      ? await Promise.all([
+          db.select().from(livros)
+            .where(and(eq(livros.ano, parseInt(anoParam)), ne(livros.tipo, 'candidato')))
+            .orderBy(desc(livros.mes), desc(livros.votos))
+            .limit(limit)
+            .offset(offset),
+          db.select({ count: sql<number>`cast(count(*) as integer)` })
+            .from(livros)
+            .where(and(eq(livros.ano, parseInt(anoParam)), ne(livros.tipo, 'candidato'))),
+        ])
+      : await Promise.all([
+          db.select().from(livros)
+            .where(ne(livros.tipo, 'candidato'))
+            .orderBy(desc(livros.ano), desc(livros.mes), desc(livros.votos))
+            .limit(limit)
+            .offset(offset),
+          db.select({ count: sql<number>`cast(count(*) as integer)` })
+            .from(livros)
+            .where(ne(livros.tipo, 'candidato')),
+        ]);
 
-    const results = anoParam
-      ? await query.where(and(eq(livros.ano, parseInt(anoParam)), ne(livros.tipo, 'candidato'))).orderBy(desc(livros.mes), desc(livros.votos))
-      : await query.where(ne(livros.tipo, 'candidato')).orderBy(desc(livros.ano), desc(livros.mes), desc(livros.votos));
+    if (!hasPagination) {
+      return NextResponse.json(results, { status: 200 });
+    }
 
-    return NextResponse.json(results, { status: 200 });
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: results,
+      pagination: { page, limit, total, pages, hasMore: page < pages },
+    }, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar livros:', error);
     return NextResponse.json({ error: 'Erro ao buscar livros' }, { status: 500 });
@@ -35,7 +67,7 @@ export async function POST(request: Request) {
 
     
     if (isVotacao && voterKey) {
-      const jaVotou = await db.select().from(votacoes).where(eq(votacoes.usuario_email, voterKey));
+      const jaVotou = await db.select().from(votacoes).where(eq(votacoes.usuario_email, voterKey)).limit(1);
       if (jaVotou.length > 0) {
         return NextResponse.json({ error: 'Você já votou nesta rodada.' }, { status: 409 });
       }

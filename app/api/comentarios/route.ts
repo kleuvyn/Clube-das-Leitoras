@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { comentarios, configModeracao } from '@/lib/db/schema';
-import { eq, desc, or, and, isNull } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { analyzeContentModeration } from '@/lib/content-moderation';
 import { requireAdminOrColaboradora } from '@/lib/auth';
 
@@ -22,17 +22,53 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const livroDoMesId = searchParams.get('livroDoMesId');
     const resenhaId = searchParams.get('resenhaId');
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
 
     let rows;
+    let countResult;
     if (livroDoMesId) {
-      rows = await db.select().from(comentarios).where(eq(comentarios.livroDoMesId, livroDoMesId)).orderBy(desc(comentarios.createdAt));
+      [rows, countResult] = await Promise.all([
+        db.select().from(comentarios)
+          .where(eq(comentarios.livroDoMesId, livroDoMesId))
+          .orderBy(desc(comentarios.createdAt))
+          .limit(limit)
+          .offset(offset),
+        db.select({ count: sql<number>`cast(count(*) as integer)` }).from(comentarios).where(eq(comentarios.livroDoMesId, livroDoMesId)),
+      ]);
     } else if (resenhaId) {
-      rows = await db.select().from(comentarios).where(eq(comentarios.resenhaId, resenhaId)).orderBy(desc(comentarios.createdAt));
+      [rows, countResult] = await Promise.all([
+        db.select().from(comentarios)
+          .where(eq(comentarios.resenhaId, resenhaId))
+          .orderBy(desc(comentarios.createdAt))
+          .limit(limit)
+          .offset(offset),
+        db.select({ count: sql<number>`cast(count(*) as integer)` }).from(comentarios).where(eq(comentarios.resenhaId, resenhaId)),
+      ]);
     } else {
-      rows = await db.select().from(comentarios).orderBy(desc(comentarios.createdAt));
+      [rows, countResult] = await Promise.all([
+        db.select().from(comentarios)
+          .orderBy(desc(comentarios.createdAt))
+          .limit(limit)
+          .offset(offset),
+        db.select({ count: sql<number>`cast(count(*) as integer)` }).from(comentarios),
+      ]);
     }
 
-    return NextResponse.json(rows);
+    if (!hasPagination) {
+      return NextResponse.json(rows);
+    }
+
+    const total = countResult?.[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages },
+    });
   } catch (err) {
     console.error('GET /api/comentarios:', err);
     return NextResponse.json({ error: 'Erro ao carregar comentários.' }, { status: 500 });

@@ -34,6 +34,9 @@ export default function PodcastFinalRestaurado() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(70);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 10;
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -42,10 +45,13 @@ export default function PodcastFinalRestaurado() {
 
   useEffect(() => {
     async function carregarPodcast() {
+      setLoading(true);
       try {
-        const res = await fetch('/api/podcast');
+        const res = await fetch(`/api/podcast?page=${page}&limit=${limit}`);
         const data = await res.json();
-        setEpisodios(Array.isArray(data) ? data : []);
+        setEpisodios(Array.isArray(data?.data) ? data.data : []);
+        setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
+        setAtivoIdx(0);
       } catch (err) {
         console.error("Erro na sintonia:", err);
       } finally {
@@ -53,7 +59,7 @@ export default function PodcastFinalRestaurado() {
       }
     }
     carregarPodcast();
-  }, []);
+  }, [page]);
 
   
   useEffect(() => {
@@ -282,6 +288,28 @@ export default function PodcastFinalRestaurado() {
                      <Heart size={18} className={`transition-all ${ativoIdx === index ? 'text-rose-400 opacity-100 fill-current' : 'opacity-10'}`} />
                   </article>
                 ))}
+             </div>
+           )}
+
+           {!loading && pagination.pages > 1 && (
+             <div className="flex items-center justify-center gap-6 pt-6">
+               <button
+                 onClick={() => setPage(p => Math.max(1, p - 1))}
+                 disabled={page === 1}
+                 className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                 style={{ backgroundColor: page === 1 ? '#ddd' : rosaRetro, color: 'white' }}
+               >
+                 ← Anterior
+               </button>
+               <span className="text-sm text-slate-500 italic">Página {page} de {pagination.pages}</span>
+               <button
+                 onClick={() => setPage(p => p + 1)}
+                 disabled={!pagination.hasMore}
+                 className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                 style={{ backgroundColor: !pagination.hasMore ? '#ddd' : rosaRetro, color: 'white' }}
+               >
+                 Próxima →
+               </button>
              </div>
            )}
         </section>

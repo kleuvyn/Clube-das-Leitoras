@@ -34,8 +34,11 @@ export default function HomeJornalClubeLeitoras() {
   useEffect(() => {
     async function buscarMemoria() {
       try {
-        const res = await fetch(`/api/livro-do-mes?ano=${anoAtual - 1}&summary=1`);
-        const data = await res.json();
+        const res = await fetch(`/api/livro-do-mes?ano=${anoAtual - 1}&summary=1&limit=20`);
+        const result = await res.json();
+        // A API agora retorna { data: [...] } quando há paginação (?limit=20)
+        const data = Array.isArray(result) ? result : result.data;
+        
         if (Array.isArray(data) && data.length > 0) {
           setCuradoriaMemoria(data.map((l: any) => ({
             mes: l.mes || '',
@@ -55,23 +58,31 @@ export default function HomeJornalClubeLeitoras() {
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
   ];
 
+  function normalizeMonth(value: unknown) {
+    return String(value || '').trim().toLowerCase();
+  }
+
   useEffect(() => {
     async function buscarLivroAtual() {
       try {
-        const res = await fetch(`/api/livro-do-mes?ano=${new Date().getFullYear()}&summary=1`);
-        const data = await res.json();
+        const res = await fetch(`/api/livro-do-mes?ano=${new Date().getFullYear()}&summary=1&limit=20`);
+        const result = await res.json();
+        // A API agora retorna { data: [...] } quando há paginação (?limit=20)
+        const data = Array.isArray(result) ? result : result.data;
+        
         if (Array.isArray(data) && data.length > 0) {
           const mesAtual = new Date().getMonth() + 1;
-          const mesAtualNome = MESES_PT[mesAtual - 1];
+          const mesAtualNome = normalizeMonth(MESES_PT[mesAtual - 1]);
 
           const monthMatch = data.find((item: any) => {
             const num = typeof item.num === 'number' ? item.num : Number(item.num);
-            const mes = String(item.mes || '').toLowerCase();
-            return num === mesAtual || mes === mesAtualNome.toLowerCase();
+            const mes = normalizeMonth(item.mes);
+            return num === mesAtual || mes === mesAtualNome;
           });
 
-          const fallback = (monthMatch || data
+          const fallbackCandidates = data
             .slice()
+            .filter((item: any) => String(item.foto || '').trim())
             .sort((a: any, b: any) => {
               const ana = typeof a.ano === 'number' ? a.ano : Number(a.ano);
               const bna = typeof b.ano === 'number' ? b.ano : Number(b.ano);
@@ -79,19 +90,16 @@ export default function HomeJornalClubeLeitoras() {
               const anum = typeof a.num === 'number' ? a.num : Number(a.num);
               const bnum = typeof b.num === 'number' ? b.num : Number(b.num);
               return (bnum || 0) - (anum || 0);
-            })[0]);
-          const chosen = monthMatch || fallback;
+            });
 
-          const detailRes = await fetch(`/api/livro-do-mes?id=${chosen.id}`);
-          const detail = await detailRes.json();
-          const full = detail && detail.id ? detail : chosen;
+          const chosen = monthMatch || fallbackCandidates[0] || data[0];
 
           setLivroDoMes({
-            titulo: full.livro || '',
-            autor: full.autora || '',
-            mes: full.mes || '',
-            capa: full.foto || '',
-            descricao_curta: full.sinopse || '',
+            titulo: chosen.livro || '',
+            autor: chosen.autora || '',
+            mes: chosen.mes || '',
+            capa: chosen.foto || '',
+            descricao_curta: chosen.sinopse || '',
           });
         }
       } catch (err) {
@@ -146,14 +154,31 @@ export default function HomeJornalClubeLeitoras() {
         <section className="pb-20 group border-b-2 border-black/5">
           {!loading && livroDoMes && livroDoMes.titulo ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-               <div className="aspect-3/4 relative shadow-2xl overflow-hidden rounded-sm mx-auto w-full max-w-sm border-2 border-black/5">
-                  <Image 
-                    src={livroDoMes.capa || "/baixoparaiso.png"} 
-                    alt={livroDoMes.titulo} 
-                    fill 
-                    className="object-cover" 
-                    style={{ filter: 'none', opacity: 1 }}
-                  />
+               <div className="aspect-3/4 relative shadow-2xl overflow-hidden rounded-sm mx-auto w-full max-w-[20rem] border-2 border-black/5">
+                  {(() => {
+                    const coverSrc = String(livroDoMes.capa || '').trim();
+                    const src = coverSrc || '/baixoparaiso.png';
+                    const isLocalPublic = src.startsWith('/') && !src.startsWith('//');
+                    const isDataUri = src.toLowerCase().startsWith('data:');
+
+                    return isLocalPublic && !isDataUri ? (
+                      <Image
+                        src={src}
+                        alt={livroDoMes.titulo || 'Capa do livro do mês'}
+                        fill
+                        className="object-cover"
+                        style={{ width: 'auto', height: 'auto', filter: 'none', opacity: 1 }}
+                        unoptimized
+                      />
+                    ) : (
+                      <img
+                        src={src}
+                        alt={livroDoMes.titulo || 'Capa do livro do mês'}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ width: 'auto', height: 'auto' }}
+                      />
+                    );
+                  })()}
                </div>
                <div className="space-y-8">
                   <span className="font-bold text-[10px] uppercase tracking-[0.4em] px-4 py-1.5 border border-rosa-gabi rounded-full inline-block text-rosa-gabi">
@@ -167,11 +192,11 @@ export default function HomeJornalClubeLeitoras() {
                       </span>
                   </h2>
                   
-                  <p className="text-base md:text-lg italic leading-snug opacity-85 text-black text-justify font-serif tracking-tight max-w-3xl">
+                  <p className="text-base md:text-lg italic leading-snug opacity-85 text-black text-justify font-serif tracking-tight max-w-3xl line-clamp-6">
                     De {livroDoMes.autor}. {livroDoMes.descricao_curta}
                   </p>
                   <a href="/livro-do-mes" className="flex items-center gap-6 font-bold text-xs uppercase tracking-widest text-rosa-gabi hover:gap-8 transition-all">
-                    Guia de Leitura <ArrowRight />
+                    Jornada de Leitura <ArrowRight />
                   </a>
                </div>
             </div>
@@ -286,10 +311,17 @@ export default function HomeJornalClubeLeitoras() {
                   .slice()
                   .sort((a, b) => {
                     const meses = [
-                      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+                      'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                      'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
                     ];
-                    return meses.indexOf(a.mes) - meses.indexOf(b.mes);
+                    
+                    const getMonthIndex = (mesString: string) => {
+                      const normalized = normalizeMonth(mesString);
+                      const index = meses.findIndex(m => normalized.includes(m));
+                      return index === -1 ? 99 : index;
+                    };
+
+                    return getMonthIndex(a.mes) - getMonthIndex(b.mes);
                   })
                   .map((item, idx) => (
                     <div key={idx} className="group pb-3 border-b border-black/5">

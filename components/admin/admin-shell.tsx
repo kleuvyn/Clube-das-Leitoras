@@ -2,7 +2,7 @@
 
 import { useAdmin } from '@/lib/admin-context';
 import { Button } from '@/components/ui/button';
-import { LogOut, Menu, Users, LayoutDashboard, BookOpen, Vote, Sparkles, ShoppingBag, ExternalLink, Calendar, Mic, ImageIcon, Handshake, Feather } from 'lucide-react';
+import { LogOut, Menu, Users, LayoutDashboard, BookOpen, Vote, Sparkles, ShoppingBag, ExternalLink, Calendar, Mic, ImageIcon, Handshake, Feather, Gift } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -14,7 +14,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const { logout, currentUser, isAdmin } = useAdmin();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const isAdminOrColab = isAdmin || currentUser?.role === 'colaboradora';
+  const isAdminOrColab = isAdmin || (currentUser?.role as string) === 'colaboradora';
 
   useEffect(() => {
     document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -41,16 +41,18 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: '/admin/leitura', label: 'Caderno de Leitura', icon: BookOpen },
         { href: '/admin/rodaonline', label: 'Roda On-line', icon: Users },
+        { href: '/admin/roda-vozes', label: 'Roda de Vozes', icon: Mic },
         { href: '/admin/resenhas', label: 'Resenhas', icon: Sparkles },
         { href: '/admin/votacao', label: 'Votação', icon: Vote },
       ]
     },
     {
-      category: 'Experiências & Agenda',
+      category: 'Momentos do Clube',
       items: [
         { href: '/admin/podcast', label: 'Podcast', icon: Mic },
         { href: '/admin/cronograma', label: 'Cronograma', icon: Calendar },
         { href: '/admin/cronograma/eventos', label: 'Encontros', icon: ImageIcon },
+        { href: '/admin/sorteios', label: 'Sorteios', icon: Gift },
       ]
     },
     {

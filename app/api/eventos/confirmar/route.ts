@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { db } from '@/lib/db';
+import { db, client } from '@/lib/db';
 import { eventoConfirmacoes } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     
-    await db.execute(sql`
+    await client.execute(`
       INSERT INTO evento_confirmacoes (evento_id, usuario_email, status)
       VALUES (${eventoId}, ${email}, ${status})
       ON CONFLICT (evento_id, usuario_email)

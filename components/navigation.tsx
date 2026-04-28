@@ -49,7 +49,7 @@ export function Navigation() {
   const categorias = [
     {
       id: 'clube',
-      label: 'O Clube',
+      label: 'Conexões',
       items: [
         { label: 'Livros do Mês', href: '/livro-do-mes' },
         { label: 'Dicas da Gabi', href: '/dicas' },
@@ -60,19 +60,21 @@ export function Navigation() {
     },
     {
       id: 'conteudo',
-      label: 'Espaço de Leitura',
+      label: 'Vivências de Leitura',
       items: [
-        { label: 'Caderno: Mulheres que Correm com os Lobos', href: '/leitura/lobos' },
+        // { label: 'Caderno: Mulheres que Correm com os Lobos', href: '/leitura/lobos' },
+        { label: 'Roda de Vozes', href: '/roda-vozes' },
          { label: 'Roda On-line', href: '/rodaonline' },
-        { label: 'Resenhas Exclusivas', href: '/resenhas' },
+        { label: 'Pós-Roda', href: '/resenhas' },
         { label: 'Votação do Mês', href: '/votacao' }
 
       ]
     },
     {
       id: 'agenda',
-      label: 'Experiências & Agenda',
+      label: 'Momentos do Clube',
       items: [
+        { label: 'Sorteios do Clube', href: '/sorteios' },
         { label: 'Podcast', href: '/podcast' },
         { label: 'Cronograma Mensal', href: '/cronograma' },
         { label: 'Galeria de Encontros', href: '/eventos' }
@@ -98,6 +100,7 @@ export function Navigation() {
               alt="Logo Clube das Leitoras" 
               width={64}
               height={64}
+              style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%' }}
               className="object-contain transition-transform group-hover:scale-105"
               priority
             />

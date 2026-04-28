@@ -20,7 +20,7 @@ const azulPetroleo = "#2C3E50";
 const papelCor = "#FDFCFB";
 const bgStyle = {
   backgroundColor: papelCor,
-  backgroundImage: `url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')`,
+  backgroundImage: 'radial-gradient(circle at top left, rgba(150,123,182,0.08), transparent 28%), radial-gradient(circle at bottom right, rgba(150,123,182,0.05), transparent 18%)',
 };
 
 const CATEGORIAS = [
@@ -64,6 +64,9 @@ export default function VitrineEmpreendedoras() {
   const [categoriaSelecionada, setCategoriaSelecionada] =
     useState<string>("Todas");
   const [showFiltro, setShowFiltro] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
+  const limit = 12;
 
   // Estados do Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -80,10 +83,14 @@ export default function VitrineEmpreendedoras() {
 
   useEffect(() => {
     async function carregarVitrine() {
+      setLoading(true);
       try {
-        const res = await fetch("/api/empreendedoras");
+        const res = await fetch(`/api/empreendedoras?page=${page}&limit=${limit}`, {
+          cache: 'force-cache',
+        });
         const data = await res.json();
-        setEmpreendedoras(Array.isArray(data) ? data : []);
+        setEmpreendedoras(Array.isArray(data.data) ? data.data : []);
+        setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
       } catch (err) {
         console.error("Erro ao carregar vitrine:", err);
       } finally {
@@ -91,7 +98,7 @@ export default function VitrineEmpreendedoras() {
       }
     }
     carregarVitrine();
-  }, []);
+  }, [page]);
 
   const filtradas = empreendedoras.filter(
     (item) =>
@@ -347,6 +354,28 @@ export default function VitrineEmpreendedoras() {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {!loading && (pagination.hasMore || page > 1) && (
+          <div className="flex items-center justify-center gap-6 my-12">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: page === 1 ? '#ddd' : lavandaPrincipal, color: 'white' }}
+            >
+              ← Anterior
+            </button>
+            <span className="text-sm text-slate-500 italic">Página {page}</span>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!pagination.hasMore}
+              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : lavandaPrincipal, color: 'white' }}
+            >
+              Próxima →
+            </button>
           </div>
         )}
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, client } from '@/lib/db';
 import { dicas } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -17,22 +17,47 @@ type DicaRow = {
   createdAt: string;
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const rows = await db.select().from(dicas).orderBy(desc(dicas.createdAt));
-    return NextResponse.json(rows, {
+    const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 1000;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+
+    const [rows, countResult] = await Promise.all([
+      db.select().from(dicas).orderBy(desc(dicas.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(dicas),
+    ]);
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    if (!hasPagination) {
+      return NextResponse.json(rows, {
+        headers: {
+          'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        },
+      });
+    }
+
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages }
+    }, {
       headers: {
         'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
       },
     });
   } catch (err: any) {
-    
     if (err.message?.includes('column') || err.message?.includes('does not exist')) {
       try {
-        const rows = await db.execute(
-          sql`SELECT id, categoria, titulo, descricao, created_at as "createdAt" FROM dicas ORDER BY created_at DESC`
+        const rows = await client.execute(
+          `SELECT id, categoria, titulo, descricao, created_at as "createdAt" FROM dicas ORDER BY created_at DESC`
         );
-        return NextResponse.json(rows.rows ?? [], {
+        return NextResponse.json({ data: rows.rows ?? [], pagination: { page: 1, limit: 50, total: (rows.rows ?? []).length, pages: 1, hasMore: false } }, {
           headers: {
             'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
           },

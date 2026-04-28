@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, client } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { sql, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
+
+async function ensureTempPasswordExpiresAtColumn() {
+  try {
+    await client.execute("ALTER TABLE colaboradoras ADD COLUMN temp_password_expires_at integer");
+  } catch (error) {
+    // Ignora o erro se a coluna já existir (LibSQL não suporta IF NOT EXISTS no ADD COLUMN)
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +22,8 @@ export async function POST(request: Request) {
     if (!email || !password) {
       return NextResponse.json({ error: 'E-mail e senha são obrigatórios' }, { status: 400 });
     }
+
+    await ensureTempPasswordExpiresAtColumn();
 
     const [user] = await db
       .select()
@@ -45,7 +55,15 @@ export async function POST(request: Request) {
 
     const passwordMatch = await bcrypt.compare(password, user.password!);
     if (!passwordMatch) {
-      return NextResponse.json({ error: 'Credenciais inválidas' }, { status: 401 });
+      return NextResponse.json({ error: 'Credenciais inválidas ou expirada' }, { status: 401 });
+    }
+
+    if (user.mustChangePassword && user.tempPasswordExpiresAt && new Date(user.tempPasswordExpiresAt) < new Date()) {
+      return NextResponse.json({ error: 'Credenciais inválidas ou expirada' }, { status: 401 });
+    }
+
+    if (user.mustChangePassword && user.tempPasswordExpiresAt && new Date(user.tempPasswordExpiresAt) >= new Date()) {
+      await db.update(colaboradoras).set({ tempPasswordExpiresAt: new Date(0) }).where(eq(colaboradoras.id, user.id));
     }
 
     const { password: _, ...userWithoutPassword } = user;

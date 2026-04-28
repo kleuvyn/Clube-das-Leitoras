@@ -2,15 +2,38 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { rodaonline } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
 
-export const dynamic = 'force-dynamic';
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const rows = await db.select().from(rodaonline).orderBy(desc(rodaonline.createdAt));
-    return NextResponse.json(rows, { status: 200 });
+    const { searchParams } = new URL(request.url);
+    const hasPagination = searchParams.has('page') || searchParams.has('limit');
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+    const limit = hasPagination
+      ? Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')))
+      : 200;
+    const offset = hasPagination ? (page - 1) * limit : 0;
+    const listCacheHeaders = {
+      'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    };
+
+    const [rows, countResult] = await Promise.all([
+      db.select().from(rodaonline).orderBy(desc(rodaonline.createdAt)).limit(limit).offset(offset),
+      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(rodaonline),
+    ]);
+
+    const total = countResult[0]?.count || 0;
+    const pages = Math.ceil(total / limit);
+
+    if (!hasPagination) {
+      return NextResponse.json(rows, { status: 200, headers: listCacheHeaders });
+    }
+
+    return NextResponse.json({
+      data: rows,
+      pagination: { page, limit, total, pages, hasMore: page < pages },
+    }, { status: 200, headers: listCacheHeaders });
   } catch (err) {
     console.error('Erro GET /api/rodaonline:', err);
     return NextResponse.json({ error: 'Erro ao buscar rodas online' }, { status: 500 });
