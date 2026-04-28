@@ -436,10 +436,40 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'ID e status válidos são obrigatórios.' }, { status: 400 });
     }
 
-    const [solicitacao] = await db.select().from(solicitacoes).where(eq(solicitacoes.id, id));
+    const includeApprovedAt = await hasApprovedAtColumn();
+    const selectFields = includeApprovedAt
+      ? {
+          id: solicitacoes.id,
+          tipo: solicitacoes.tipo,
+          nome: solicitacoes.nome,
+          email: solicitacoes.email,
+          telefone: solicitacoes.telefone,
+          site: solicitacoes.site,
+          instagram: solicitacoes.instagram,
+          mensagem: solicitacoes.mensagem,
+          enderecoCompleto: solicitacoes.enderecoCompleto,
+          status: solicitacoes.status,
+          approvedAt: solicitacoes.approvedAt,
+          createdAt: solicitacoes.createdAt,
+        }
+      : {
+          id: solicitacoes.id,
+          tipo: solicitacoes.tipo,
+          nome: solicitacoes.nome,
+          email: solicitacoes.email,
+          telefone: solicitacoes.telefone,
+          site: solicitacoes.site,
+          instagram: solicitacoes.instagram,
+          mensagem: solicitacoes.mensagem,
+          enderecoCompleto: solicitacoes.enderecoCompleto,
+          status: solicitacoes.status,
+          approvedAt: sql<null>`null`.as('approvedAt'),
+          createdAt: solicitacoes.createdAt,
+        };
+
+    const [solicitacao] = await db.select(selectFields).from(solicitacoes).where(eq(solicitacoes.id, id));
     if (!solicitacao) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
-    const includeApprovedAt = await hasApprovedAtColumn();
     await db.update(solicitacoes).set(includeApprovedAt ? { status, approvedAt: status === 'aprovada' ? new Date() : null } : { status }).where(eq(solicitacoes.id, id));
 
     const emailStatus: { adminAction: boolean; user: boolean; hasKey: boolean; errors: string[] } = { adminAction: true, user: false, hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY), errors: [] };
