@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { client, db } from '@/lib/db';
+import { client, db, dbWrite, isWriteBlockedError } from '@/lib/db';
 import { solicitacoes, colaboradoras } from '@/lib/db/schema';
 import { and, eq, desc, or, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
@@ -288,7 +288,7 @@ export async function POST(request: Request) {
     }
 
     // 1. Salva no Banco de Dados (Corrigido o erro de sintaxe aqui)
-    const [created] = await db.insert(solicitacoes).values({
+    const [created] = await dbWrite.insert(solicitacoes).values({
       tipo,
       nome,
       email: paraBancoEmail,
@@ -470,7 +470,14 @@ export async function PATCH(request: Request) {
     const [solicitacao] = await db.select(selectFields).from(solicitacoes).where(eq(solicitacoes.id, id));
     if (!solicitacao) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
-    await db.update(solicitacoes).set(includeApprovedAt ? { status, approvedAt: status === 'aprovada' ? new Date() : null } : { status }).where(eq(solicitacoes.id, id));
+    try {
+      await dbWrite.update(solicitacoes).set(includeApprovedAt ? { status, approvedAt: status === 'aprovada' ? new Date() : null } : { status }).where(eq(solicitacoes.id, id));
+    } catch (err) {
+      if (isWriteBlockedError(err)) {
+        return NextResponse.json({ error: 'Não é possível aprovar solicitações: banco em modo somente leitura' }, { status: 503 });
+      }
+      throw err;
+    }
 
     const emailStatus: { adminAction: boolean; user: boolean; hasKey: boolean; errors: string[] } = { adminAction: true, user: false, hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY), errors: [] };
     if (status === 'aprovada') {
@@ -496,7 +503,7 @@ export async function PATCH(request: Request) {
               plainPassword = `clube-${Math.random().toString(36).slice(2, 10)}`;
               const hashedPassword = await bcrypt.hash(plainPassword, 10);
               try {
-                await db.insert(colaboradoras).values({
+                await dbWrite.insert(colaboradoras).values({
                   email: normalizedUserEmail,
                   password: hashedPassword,
                   name: solicitacao.nome,

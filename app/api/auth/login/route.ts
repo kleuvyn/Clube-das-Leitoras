@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db, client } from '@/lib/db';
+import { db, dbWrite, client, isWriteBlockedError } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { sql, eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
@@ -41,14 +41,18 @@ export async function POST(request: Request) {
 
     if (consentimento) {
       try {
-        await db.update(colaboradoras).set({
+        await dbWrite.update(colaboradoras).set({
           gdprConsentido: true,
           gdprConsentidoEm: new Date(),
           gdprConsentimentoVersao: consentimentoVersao,
           gdprConsentimentoFinalidade: consentimentoFinalidade,
         }).where(eq(colaboradoras.id, user.id));
       } catch (err) {
-        console.warn('Falha ao gravar consentimento:', err);
+        if (isWriteBlockedError(err)) {
+          console.info('Consentimento não gravado: banco em modo somente leitura');
+        } else {
+          console.warn('Falha ao gravar consentimento:', err);
+        }
       }
     }
 
@@ -63,7 +67,15 @@ export async function POST(request: Request) {
     }
 
     if (user.mustChangePassword && user.tempPasswordExpiresAt && new Date(user.tempPasswordExpiresAt) >= new Date()) {
-      await db.update(colaboradoras).set({ tempPasswordExpiresAt: new Date(0) }).where(eq(colaboradoras.id, user.id));
+      try {
+        await dbWrite.update(colaboradoras).set({ tempPasswordExpiresAt: new Date(0) }).where(eq(colaboradoras.id, user.id));
+      } catch (err) {
+        if (isWriteBlockedError(err)) {
+          console.info('Não foi possível limpar tempPasswordExpiresAt: banco em modo somente leitura');
+        } else {
+          console.warn('Falha ao limpar tempPasswordExpiresAt:', err);
+        }
+      }
     }
 
     const { password: _, ...userWithoutPassword } = user;
@@ -104,11 +116,15 @@ export async function POST(request: Request) {
     });
 
     try {
-      await db
+      await dbWrite
         .update(colaboradoras)
         .set({ lastLogin: new Date() })
         .where(eq(colaboradoras.id, user.id));
-    } catch (_) {}
+    } catch (err) {
+      if (isWriteBlockedError(err)) {
+        console.info('Não foi possível gravar lastLogin: banco em modo somente leitura');
+      }
+    }
 
     return NextResponse.json({
       status: 'SUCCESS',

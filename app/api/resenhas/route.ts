@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { resenhas } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { analyzeContentModeration } from '@/lib/content-moderation';
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(resenhas).values({
+    const [inserted] = await dbWrite.insert(resenhas).values({
       title,
       book: body.book ?? null,
       author: body.author ?? null,
@@ -108,7 +108,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Edição bloqueada por conteúdo impróprio.' }, { status: 400 });
     }
 
-    const updated = await db.update(resenhas)
+    const updated = await dbWrite.update(resenhas)
       .set({
         title: body.title,
         book: body.book,
@@ -139,7 +139,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
 
-    const result = await db.delete(resenhas).where(eq(resenhas.id, id)).returning();
+    const result = await dbWrite.delete(resenhas).where(eq(resenhas.id, id)).returning();
     if (!result.length) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
     
     return NextResponse.json({ success: true });

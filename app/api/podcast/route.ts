@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { podcasts } from '@/lib/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'O título do episódio é obrigatório' }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(podcasts).values({
+    const [inserted] = await dbWrite.insert(podcasts).values({
       titulo: body.titulo,
       convidada: body.convidada ?? null,
       duracao: body.duracao ?? null,
@@ -106,7 +106,7 @@ export async function PATCH(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    const updated = await db.update(podcasts)
+    const updated = await dbWrite.update(podcasts)
       .set({
         titulo: body.titulo,
         convidada: body.convidada,
@@ -138,7 +138,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    await db.delete(podcasts).where(eq(podcasts.id, id));
+    await dbWrite.delete(podcasts).where(eq(podcasts.id, id));
     return NextResponse.json({ success: true });
   } catch (err) {
     return NextResponse.json({ error: 'Erro ao remover episódio' }, { status: 500 });

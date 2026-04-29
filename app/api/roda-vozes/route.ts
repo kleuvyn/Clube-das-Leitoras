@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db, client } from '@/lib/db';
+import { db, dbWrite, client } from '@/lib/db';
 import { rodaVozes, participantesRodaVozes } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
@@ -58,7 +58,7 @@ export async function GET() {
         titulo: 'Roda de Vozes',
         status: 'ativa',
       };
-      const insert = await db.insert(rodaVozes).values(novaRoda).returning();
+      const insert = await dbWrite.insert(rodaVozes).values(novaRoda).returning();
       roda = insert[0];
     }
 
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
         titulo: 'Roda de Vozes',
         status: 'ativa',
       };
-      const insert = await db.insert(rodaVozes).values(novaRoda).returning();
+      const insert = await dbWrite.insert(rodaVozes).values(novaRoda).returning();
       roda = insert[0];
     }
 

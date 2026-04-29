@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-    const inserted = await db.insert(colaboradoras).values({
+    const inserted = await dbWrite.insert(colaboradoras).values({
       email: normalizedEmail,
       password: hashedPassword,
       name: name ?? normalizedEmail.split('@')[0],
@@ -138,7 +138,7 @@ export async function PATCH(request: Request) {
       newStatus = active ? 'ativa' : user.status === 'excluida' ? 'excluida' : 'bloqueada';
     }
 
-    await db.update(colaboradoras).set({
+    await dbWrite.update(colaboradoras).set({
       name: name ?? user.name,
       role: role ?? user.role,
       active: newActive,
@@ -175,7 +175,7 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'A conta mestre do clube não pode ser removida' }, { status: 403 });
     }
 
-    await db.delete(colaboradoras).where(eq(colaboradoras.id, id));
+    await dbWrite.delete(colaboradoras).where(eq(colaboradoras.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

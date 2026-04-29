@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { encontros } from '@/lib/db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { requireAdminOrColaboradora } from '@/lib/auth';
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
     const slug = `${titulo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replace(/[^\w-]/g, '-')}-${Date.now()}`;
 
-    const inserted = await db.insert(encontros).values({
+    const inserted = await dbWrite.insert(encontros).values({
       titulo,
       descricao,
       local,
@@ -89,7 +89,7 @@ export async function PATCH(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    const updated = await db.update(encontros)
+    const updated = await dbWrite.update(encontros)
       .set({
         ...body,
         data: body.data ? new Date(body.data) : undefined,
@@ -112,7 +112,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    await db.delete(encontros).where(eq(encontros.id, id));
+    await dbWrite.delete(encontros).where(eq(encontros.id, id));
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao deletar' }, { status: 500 });

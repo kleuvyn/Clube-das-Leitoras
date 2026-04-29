@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { escritoras } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Nome e título do livro são obrigatórios' }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(escritoras).values({
+    const [inserted] = await dbWrite.insert(escritoras).values({
       nome: body.nome,
       livroTitulo: body.livroTitulo,
       genero: body.genero ?? null,
@@ -83,7 +83,7 @@ export async function PATCH(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    const [updated] = await db.update(escritoras)
+    const [updated] = await dbWrite.update(escritoras)
       .set({
         nome: body.nome,
         livroTitulo: body.livroTitulo,
@@ -112,7 +112,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    await db.delete(escritoras).where(eq(escritoras.id, id));
+    await dbWrite.delete(escritoras).where(eq(escritoras.id, id));
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: 'Erro ao remover' }, { status: 500 });

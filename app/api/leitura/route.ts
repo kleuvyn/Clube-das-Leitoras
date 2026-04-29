@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { leituras } from '@/lib/db/schema'; 
 import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     
     if (!body.tema) return NextResponse.json({ error: 'Tema é obrigatório' }, { status: 400 });
 
-    const [inserted] = await db.insert(leituras).values({
+    const [inserted] = await dbWrite.insert(leituras).values({
       title: body.tema,           
       link: body.linkMeet ?? null,
       linkLive: body.linkLive ?? null,
@@ -126,7 +126,7 @@ export async function PATCH(request: Request) {
     if (body.data !== undefined) campos.data = body.data;
     if (body.status !== undefined) campos.status = body.status;
 
-    const [updated] = await db.update(leituras).set(campos).where(eq(leituras.id, id)).returning();
+    const [updated] = await dbWrite.update(leituras).set(campos).where(eq(leituras.id, id)).returning();
     return NextResponse.json(updated);
   } catch (err) {
     console.error('Erro PATCH /api/leitura:', err);
@@ -141,7 +141,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    await db.delete(leituras).where(eq(leituras.id, id));
+    await dbWrite.delete(leituras).where(eq(leituras.id, id));
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Erro DELETE /api/leitura:', err);

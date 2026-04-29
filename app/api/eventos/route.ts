@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { encontros, eventoConfirmacoes } from '@/lib/db/schema';
 import { eq, desc, sql, and, inArray } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
       .replace(/\s+/g, '-')
       .concat(`-${Date.now()}`);
 
-    const [inserted] = await db.insert(encontros).values({
+    const [inserted] = await dbWrite.insert(encontros).values({
       titulo: body.title,
       descricao: body.description ?? '',
       local: body.location ?? 'A definir',
@@ -164,7 +164,7 @@ export async function PATCH(req: NextRequest) {
       if (!isNaN(d.getTime())) updateData.data = d;
     }
 
-    const [updated] = await db.update(encontros)
+    const [updated] = await dbWrite.update(encontros)
       .set(updateData)
       .where(eq(encontros.id, targetId))
       .returning();
@@ -186,7 +186,7 @@ export async function DELETE(req: NextRequest) {
     
     if (!id) return NextResponse.json({ error: 'ID necessário.' }, { status: 400 });
 
-    await db.delete(encontros).where(eq(encontros.id, id));
+    await dbWrite.delete(encontros).where(eq(encontros.id, id));
     return NextResponse.json({ success: true });
   } catch (err) {
     return NextResponse.json({ error: 'Erro ao excluir.' }, { status: 500 });

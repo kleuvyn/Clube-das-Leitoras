@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { rodaonline } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     if (!body.title) return NextResponse.json({ error: 'Título obrigatório' }, { status: 400 });
 
-    const [inserted] = await db.insert(rodaonline).values({
+    const [inserted] = await dbWrite.insert(rodaonline).values({
       title: body.title,
       book: body.book ?? null,
       author: body.author ?? null,
@@ -94,7 +94,7 @@ export async function PATCH(request: Request) {
     const [existing] = await db.select().from(rodaonline).where(eq(rodaonline.id, id));
     if (!existing) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
-    const [updated] = await db.update(rodaonline)
+    const [updated] = await dbWrite.update(rodaonline)
       .set({
         title: body.title ?? existing.title,
         book: body.book ?? existing.book,
@@ -132,7 +132,7 @@ export async function DELETE(request: Request) {
     const [existing] = await db.select().from(rodaonline).where(eq(rodaonline.id, id));
     if (!existing) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
-    await db.delete(rodaonline).where(eq(rodaonline.id, id));
+    await dbWrite.delete(rodaonline).where(eq(rodaonline.id, id));
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Erro DELETE /api/rodaonline:', err);

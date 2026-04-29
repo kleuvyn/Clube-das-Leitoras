@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { configModeracao } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdminOrColaboradora } from '@/lib/auth';
@@ -25,11 +25,11 @@ export async function PATCH(request: Request) {
 
     const existing = await db.select().from(configModeracao).limit(1);
     if (existing.length > 0) {
-      await db.update(configModeracao)
+      await dbWrite.update(configModeracao)
         .set({ palavrasExtras, updatedAt: new Date() })
         .where(eq(configModeracao.id, existing[0].id));
     } else {
-      await db.insert(configModeracao).values({ palavrasExtras });
+      await dbWrite.insert(configModeracao).values({ palavrasExtras });
     }
 
     return NextResponse.json({ success: true, palavrasExtras });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db, client } from '@/lib/db';
+import { db, dbWrite, client } from '@/lib/db';
 import { dicas } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Título e descrição (resumo) são obrigatórios' }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(dicas).values({
+    const [inserted] = await dbWrite.insert(dicas).values({
       categoria: body.categoria ?? 'Dicas da Gabi',
       titulo: body.titulo,
       descricao: body.descricao,
@@ -123,7 +123,7 @@ export async function PATCH(request: Request) {
     if (body.textoCompleto !== undefined) updateData.textoCompleto = body.textoCompleto;
     if (body.iconName !== undefined) updateData.iconName = body.iconName;
 
-    const updated = await db.update(dicas)
+    const updated = await dbWrite.update(dicas)
       .set(updateData)
       .where(eq(dicas.id, id))
       .returning();
@@ -145,7 +145,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID é obrigatório' }, { status: 400 });
 
-    const result = await db.delete(dicas)
+    const result = await dbWrite.delete(dicas)
       .where(eq(dicas.id, id))
       .returning();
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { livros, votacoes, votacaoConfig, votacoesHistorico } from '@/lib/db/schema';
 import { eq, desc, and, sql, inArray } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Registra o voto
-    await db.insert(votacoes).values({
+    await dbWrite.insert(votacoes).values({
       livro_id: opcaoId,
       usuario_email: voterKey,
     });
@@ -146,7 +146,7 @@ export async function PATCH(request: Request) {
       const vencedor = ranking[0];
 
       if (vencedor) {
-        await db.insert(votacoesHistorico).values({
+        await dbWrite.insert(votacoesHistorico).values({
           vencedorTitulo: vencedor.titulo,
           vencedorAutor: vencedor.autor,
           vencedorVotos: vencedor.votos,
@@ -156,26 +156,26 @@ export async function PATCH(request: Request) {
         });
 
         for (const livro of allLivros) {
-          await db.update(livros).set({ tipo: 'arquivado' }).where(eq(livros.id, livro.id));
+          await dbWrite.update(livros).set({ tipo: 'arquivado' }).where(eq(livros.id, livro.id));
         }
       }
 
-      await db.delete(votacoes);
-      await db.update(votacaoConfig).set({ ativa: false });
+      await dbWrite.delete(votacoes);
+      await dbWrite.update(votacaoConfig).set({ ativa: false });
       return NextResponse.json({ success: true });
     }
 
     if (body.novaVotacao) {
-      await db.delete(votacoes);
-      await db.update(livros).set({ tipo: 'arquivado' }).where(eq(livros.tipo, 'candidato'));
-      await db.update(votacaoConfig).set({ ativa: true, prazo: '' });
+      await dbWrite.delete(votacoes);
+      await dbWrite.update(livros).set({ tipo: 'arquivado' }).where(eq(livros.tipo, 'candidato'));
+      await dbWrite.update(votacaoConfig).set({ ativa: true, prazo: '' });
       return NextResponse.json({ success: true });
     }
 
     const ativa = body.ativa !== undefined ? Boolean(body.ativa) : undefined;
     const prazo = body.prazo;
     
-    await db.update(votacaoConfig).set({ 
+    await dbWrite.update(votacaoConfig).set({ 
       ...(ativa !== undefined && { ativa }),
       ...(prazo !== undefined && { prazo })
     });

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { parcerias } from '@/lib/db/schema';
 import { eq, desc, asc, sql } from 'drizzle-orm';
 
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'O nome da parceria é obrigatório' }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(parcerias).values({
+    const [inserted] = await dbWrite.insert(parcerias).values({
       name,
       link: body.link ?? null,
       description: description ?? null,
@@ -92,7 +92,7 @@ export async function PATCH(request: Request) {
     const description = body.description || body.info;
     const imagem = body.imagem || body.img;
 
-    const updated = await db.update(parcerias)
+    const updated = await dbWrite.update(parcerias)
       .set({
         name,
         link: body.link,
@@ -119,7 +119,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    const result = await db.delete(parcerias)
+    const result = await dbWrite.delete(parcerias)
       .where(eq(parcerias.id, id))
       .returning();
 

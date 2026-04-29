@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const user = await requireMember();
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
-    await db.update(colaboradoras).set({
+    await dbWrite.update(colaboradoras).set({
       gdprConsentido: false,
       gdprConsentimentoVersao: null,
       gdprConsentimentoFinalidade: null,

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -36,7 +36,7 @@ export async function PATCH(request: Request) {
       gdprConsentidoEm: body.gdprConsentido ? new Date() : user.gdprConsentidoEm,
     };
 
-    await db.update(colaboradoras).set(updated).where(eq(colaboradoras.id, user.id));
+    await dbWrite.update(colaboradoras).set(updated).where(eq(colaboradoras.id, user.id));
 
     return NextResponse.json({ success: true, message: 'Dados atualizados' }, { status: 200 });
   } catch (error: any) {
@@ -50,7 +50,7 @@ export async function DELETE() {
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
     // Tratamento do direito ao esquecimento: desativação e anonimização parcial
-    await db.update(colaboradoras).set({
+    await dbWrite.update(colaboradoras).set({
       active: false,
       status: 'excluida',
       email: `${user.id}@deleted.local`,

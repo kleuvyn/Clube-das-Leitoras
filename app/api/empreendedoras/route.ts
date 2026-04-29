@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { empreendedoras } from '@/lib/db/schema';
 import { eq, asc, sql } from 'drizzle-orm';
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'O nome do negócio é obrigatório' }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(empreendedoras).values({
+    const [inserted] = await dbWrite.insert(empreendedoras).values({
       name: body.negocio,
       feitoPor: body.nome,
       frase: body.frase ?? null,
@@ -93,7 +93,7 @@ export async function PATCH(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    const updated = await db.update(empreendedoras)
+    const updated = await dbWrite.update(empreendedoras)
       .set({
         name: body.negocio,
         feitoPor: body.nome,
@@ -119,7 +119,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
 
-    await db.delete(empreendedoras).where(eq(empreendedoras.id, id));
+    await dbWrite.delete(empreendedoras).where(eq(empreendedoras.id, id));
     
     return NextResponse.json({ success: true });
   } catch (err: any) {

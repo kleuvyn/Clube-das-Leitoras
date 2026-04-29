@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { livroDoMes, resenhas } from '@/lib/db/schema';
 import { desc, eq, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -114,7 +114,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Livro e autora são obrigatórios' }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(livroDoMes).values({
+    const [inserted] = await dbWrite.insert(livroDoMes).values({
       mes: body.mes ?? null,
       num: body.num ?? null,
       ano: body.ano ? Number(body.ano) : new Date().getFullYear(),
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     
     const mesAno = [body.mes, body.ano ? String(body.ano) : String(new Date().getFullYear())]
       .filter(Boolean).join('/');
-    await db.insert(resenhas).values({
+    await dbWrite.insert(resenhas).values({
       title: `Resenha: ${body.livro}`,
       book: body.livro,
       author: body.autora,
@@ -164,7 +164,7 @@ export async function PATCH(request: Request) {
 
     const body = await request.json();
 
-    const [updated] = await db.update(livroDoMes)
+    const [updated] = await dbWrite.update(livroDoMes)
       .set({
         mes: body.mes ?? null,
         num: body.num ?? null,
@@ -198,7 +198,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
 
-    await db.delete(livroDoMes).where(eq(livroDoMes.id, id));
+    await dbWrite.delete(livroDoMes).where(eq(livroDoMes.id, id));
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('Erro DELETE /api/livro-do-mes:', err);

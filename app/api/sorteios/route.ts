@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db, client } from '@/lib/db';
+import { db, dbWrite, client } from '@/lib/db';
 import { sorteiosParticipantes, sorteiosHistorico, sorteiosPremios, sorteiosConfig } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'A urna está fechada para novos nomes.' }, { status: 403 });
       }
 
-      const result = await db.insert(sorteiosParticipantes).values({
+      const result = await dbWrite.insert(sorteiosParticipantes).values({
         nome: payload.nome,
         mesBase: payload.mesBase,
       }).returning();
@@ -85,15 +85,15 @@ export async function POST(req: Request) {
 
     if (action === 'removeParticipante') {
       if (payload.id) {
-        await db.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.id, payload.id));
+        await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.id, payload.id));
       } else {
-        await db.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.nome, payload.nome));
+        await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.nome, payload.nome));
       }
       return NextResponse.json({ success: true });
     }
 
     if (action === 'salvarHistorico') {
-      const result = await db.insert(sorteiosHistorico).values({
+      const result = await dbWrite.insert(sorteiosHistorico).values({
         nome: payload.nome,
         premio: payload.premio,
         mesBase: payload.mesBase,
@@ -101,16 +101,16 @@ export async function POST(req: Request) {
 
       // Remove apenas o vencedor atual da urna, assim ele não pode ser sorteado novamente
       if (payload.id) {
-        await db.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.id, payload.id));
+        await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.id, payload.id));
       } else {
-        await db.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.nome, payload.nome));
+        await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.nome, payload.nome));
       }
 
       return NextResponse.json(result[0]);
     }
 
     if (action === 'addPremio') {
-      const result = await db.insert(sorteiosPremios).values({
+      const result = await dbWrite.insert(sorteiosPremios).values({
         premio: payload.premio,
         mesBase: payload.mesBase,
       }).returning();
@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     }
 
     if (action === 'setUrnaStatus') {
-      const updated = await db.update(sorteiosConfig)
+      const updated = await dbWrite.update(sorteiosConfig)
         .set({
           urnaAberta: payload.urnaAberta ? 1 : 0,
           updatedAt: new Date(),
@@ -127,7 +127,7 @@ export async function POST(req: Request) {
         .returning();
 
       if (!updated.length) {
-        await db.insert(sorteiosConfig).values({
+        await dbWrite.insert(sorteiosConfig).values({
           mesBase: payload.mesBase,
           urnaAberta: payload.urnaAberta ? 1 : 0,
         });
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
     }
 
     if (action === 'removePremio') {
-      await db.delete(sorteiosPremios).where(eq(sorteiosPremios.id, payload.id));
+      await dbWrite.delete(sorteiosPremios).where(eq(sorteiosPremios.id, payload.id));
       return NextResponse.json({ success: true });
     }
 

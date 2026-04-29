@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { reflexoesLobos } from '@/lib/db/schema';
 import { analyzeContentModeration } from '@/lib/content-moderation';
 import { eq, desc, sql } from 'drizzle-orm';
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Conteúdo não permitido' }, { status: 422 });
     }
 
-    const [inserted] = await db.insert(reflexoesLobos).values({
+    const [inserted] = await dbWrite.insert(reflexoesLobos).values({
       leituraId,
       autoraNome: autoraNome.trim(),
       autoraEmail: autoraEmail?.trim() || null,
@@ -89,7 +89,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    await db.delete(reflexoesLobos).where(eq(reflexoesLobos.id, id));
+    await dbWrite.delete(reflexoesLobos).where(eq(reflexoesLobos.id, id));
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Erro DELETE /api/leitura/reflexoes:', err);

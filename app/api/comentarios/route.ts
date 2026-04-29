@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { comentarios, configModeracao } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { analyzeContentModeration } from '@/lib/content-moderation';
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    const [inserted] = await db.insert(comentarios).values({
+    const [inserted] = await dbWrite.insert(comentarios).values({
       livroDoMesId: livroDoMesId || null,
       resenhaId: resenhaId || null,
       autoraNome: autoraNome.trim(),
@@ -119,7 +119,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID obrigatório.' }, { status: 400 });
 
-    await db.delete(comentarios).where(eq(comentarios.id, id));
+    await dbWrite.delete(comentarios).where(eq(comentarios.id, id));
     return NextResponse.json({ success: true });
   } catch (err: any) {
     if (err?.message?.includes('401') || err?.message?.includes('Sem permissão')) {

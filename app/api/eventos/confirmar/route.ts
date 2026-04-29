@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { db, client } from '@/lib/db';
+import { db, dbWrite, client } from '@/lib/db';
 import { eventoConfirmacoes } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -52,7 +52,7 @@ export async function DELETE(req: NextRequest) {
     const email = searchParams.get('email');
     if (!eventoId || !email) return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 });
 
-    await db.delete(eventoConfirmacoes).where(
+    await dbWrite.delete(eventoConfirmacoes).where(
       and(eq(eventoConfirmacoes.eventoId, eventoId), eq(eventoConfirmacoes.usuarioEmail, email))
     );
     return NextResponse.json({ ok: true, status: null });

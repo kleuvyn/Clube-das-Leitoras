@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { livros, votacoes } from '@/lib/db/schema';
 import { eq, desc, and, sql, ne } from 'drizzle-orm';
 import { requireAdminOrColaboradora } from '@/lib/auth';
@@ -80,13 +80,13 @@ export async function POST(request: Request) {
 
     if (existing) {
       
-      await db.update(livros)
+      await dbWrite.update(livros)
         .set({ votos: sql`${livros.votos} + 1` })
         .where(eq(livros.id, existing.id));
 
       
       if (isVotacao && voterKey) {
-        await db.insert(votacoes).values({ livro_id: existing.id, usuario_email: voterKey });
+        await dbWrite.insert(votacoes).values({ livro_id: existing.id, usuario_email: voterKey });
       }
 
       return NextResponse.json({ message: 'Voto computado!', livroId: existing.id, data: existing }, { status: 200 });
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
     const mesStr = mes ? String(mes) : String(new Date().getMonth() + 1);
     const anoInt = ano ? Number(ano) : new Date().getFullYear();
 
-    const [inserted] = await db.insert(livros).values({
+    const [inserted] = await dbWrite.insert(livros).values({
       titulo,
       autor,
       sinopse: sinopse ?? null,
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
 
     
     if (isVotacao && voterKey) {
-      await db.insert(votacoes).values({ livro_id: inserted.id, usuario_email: voterKey });
+      await dbWrite.insert(votacoes).values({ livro_id: inserted.id, usuario_email: voterKey });
     }
 
     return NextResponse.json({ ...inserted, livroId: inserted.id }, { status: 201 });
@@ -142,7 +142,7 @@ export async function PATCH(request: Request) {
     if (linkCompra !== undefined) updateData.linkCompra = linkCompra;
     if (tipo !== undefined) updateData.tipo = tipo;
 
-    const updated = await db.update(livros)
+    const updated = await dbWrite.update(livros)
       .set(updateData)
       .where(eq(livros.id, id))
       .returning();
@@ -161,7 +161,7 @@ export async function DELETE(request: Request) {
     
     if (!id) return NextResponse.json({ error: 'ID necessário' }, { status: 400 });
 
-    await db.delete(livros).where(eq(livros.id, id));
+    await dbWrite.delete(livros).where(eq(livros.id, id));
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao deletar' }, { status: 500 });

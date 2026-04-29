@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { db, client } from '@/lib/db';
+import { db, dbWrite, client } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { sql, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       await insertPasswordHistory(user.id, user.password, user.mustChangePassword ? 'temporary' : 'permanent');
     }
 
-    await db.update(colaboradoras).set({
+    await dbWrite.update(colaboradoras).set({
       password: hashedPassword,
       active: true,
       status: 'ativa',

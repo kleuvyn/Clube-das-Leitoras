@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { configModeracao } from '@/lib/db/schema';
 import { BLOCKED_TERMS } from '@/lib/content-moderation';
 
@@ -34,9 +34,9 @@ export async function POST(request: Request) {
 
     const existing = await db.select().from(configModeracao).limit(1);
     if (existing.length === 0) {
-      await db.insert(configModeracao).values({ palavrasExtras: rawExtras, palavrasRemovidasBase: rawRemoved });
+      await dbWrite.insert(configModeracao).values({ palavrasExtras: rawExtras, palavrasRemovidasBase: rawRemoved });
     } else {
-      await db.update(configModeracao).set({ palavrasExtras: rawExtras, palavrasRemovidasBase: rawRemoved, updatedAt: new Date() });
+      await dbWrite.update(configModeracao).set({ palavrasExtras: rawExtras, palavrasRemovidasBase: rawRemoved, updatedAt: new Date() });
     }
 
     return NextResponse.json({ success: true, extras, removedBase });

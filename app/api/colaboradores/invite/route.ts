@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { db, client } from '@/lib/db';
+import { db, dbWrite, client } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { sql, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth';
@@ -57,7 +57,7 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
-    await db.insert(colaboradoras).values({
+    await dbWrite.insert(colaboradoras).values({
       email,
       role,
       password: hashedPassword,

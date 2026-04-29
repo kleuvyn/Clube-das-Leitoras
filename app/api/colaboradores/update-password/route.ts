@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     const [existing] = await db.select().from(colaboradoras).where(eq(colaboradoras.id, userId));
     if (!existing) return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
 
-    await db.update(colaboradoras).set({ password: hashed, mustChangePassword: false }).where(eq(colaboradoras.id, userId));
+    await dbWrite.update(colaboradoras).set({ password: hashed, mustChangePassword: false }).where(eq(colaboradoras.id, userId));
 
     return NextResponse.json({ success: true, message: 'Senha atualizada com sucesso' }, { status: 200 });
   } catch (error) {

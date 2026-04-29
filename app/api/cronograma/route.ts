@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { cronograma } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { notificarLeitoras } from '@/lib/notificacao-email';
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
     await requireAdminOrColaboradora();
     const body = await request.json();
 
-    const [inserted] = await db.insert(cronograma).values({
+    const [inserted] = await dbWrite.insert(cronograma).values({
       title: body.title || 'Cronograma',
       notes: body.notes || null,
       imageUrl: body.imageUrl || null,
@@ -100,7 +100,7 @@ export async function PATCH(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID necessário para atualizar' }, { status: 400 });
 
-    const updated = await db.update(cronograma)
+    const updated = await dbWrite.update(cronograma)
       .set({
         title: body.title,
         notes: body.notes || null,
@@ -130,7 +130,7 @@ export async function DELETE(request: Request) {
 
     if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 });
 
-    await db.delete(cronograma).where(eq(cronograma.id, id)); 
+    await dbWrite.delete(cronograma).where(eq(cronograma.id, id)); 
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('Erro DELETE /api/cronograma:', err);

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
@@ -66,7 +66,7 @@ export async function PATCH(req: Request) {
     }
     const hashed = await bcrypt.hash(newPass, 10);
 
-    await db.update(colaboradoras).set({ password: hashed, mustChangePassword: false, tempPasswordExpiresAt: null }).where(eq(colaboradoras.id, user.id));
+    await dbWrite.update(colaboradoras).set({ password: hashed, mustChangePassword: false, tempPasswordExpiresAt: null }).where(eq(colaboradoras.id, user.id));
 
     return NextResponse.json({ success: true, message: 'Senha alterada com sucesso' });
   } catch (err) {

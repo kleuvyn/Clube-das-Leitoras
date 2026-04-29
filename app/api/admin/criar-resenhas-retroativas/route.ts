@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, dbWrite } from '@/lib/db';
 import { livroDoMes, resenhas } from '@/lib/db/schema';
 import { sql } from 'drizzle-orm';
 
@@ -35,7 +35,7 @@ export async function GET() {
       const mesAno = [livro.mes, livro.ano ? String(livro.ano) : '']
         .filter(Boolean).join('/');
 
-      await db.insert(resenhas).values({
+      await dbWrite.insert(resenhas).values({
         title: `Resenha: ${livro.livro}`,
         book: livro.livro,
         author: livro.autora ?? null,

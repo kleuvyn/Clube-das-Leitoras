@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { client, db } from '@/lib/db';
+import { client, db, dbWrite } from '@/lib/db';
 import { colaboradoras, solicitacoes } from '@/lib/db/schema';
 import { eq, or, sql } from 'drizzle-orm';
 
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
     const hasApprovedAt = await hasApprovedAtColumn();
     if (hasApprovedAt) {
-      await db.insert(solicitacoes).values({
+      await dbWrite.insert(solicitacoes).values({
         tipo: 'leitora',
         nome: name,
         email,
