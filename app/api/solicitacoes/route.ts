@@ -90,8 +90,15 @@ async function requireSolicitacoesAdmin(request: Request) {
 }
 
 async function hasApprovedAtColumn() {
-  const result = await client.execute('PRAGMA table_info(solicitacoes)');
-  return result.rows.some((row: any) => row?.name === 'approved_at');
+  const result = await client.execute("PRAGMA table_info('solicitacoes')");
+  return result.rows.some((row: any) => {
+    if (!row) return false;
+    if (typeof row === 'object' && row !== null) {
+      if ('name' in row) return row.name === 'approved_at';
+      if ('0' in row && row[0] === 'approved_at') return true;
+    }
+    return false;
+  });
 }
 
 export async function GET(request: Request) {
@@ -281,13 +288,16 @@ export async function POST(request: Request) {
     if (normalizedNome) duplicateConditions.push(sql`LOWER(${solicitacoes.nome}) = ${normalizedNome}`);
 
     if (duplicateConditions.length > 0) {
-      const [existingSolicitacao] = await db.select().from(solicitacoes).where(or(...duplicateConditions));
+      const [existingSolicitacao] = await db
+        .select({ id: solicitacoes.id })
+        .from(solicitacoes)
+        .where(or(...duplicateConditions));
       if (existingSolicitacao) {
         return NextResponse.json({ error: 'Já existe uma solicitação com este e-mail, telefone ou nome. Aguarde a análise antes de enviar novamente.' }, { status: 409 });
       }
     }
 
-    // 1. Salva no Banco de Dados (Corrigido o erro de sintaxe aqui)
+    // 1. Salva no Banco de Dados
     const [created] = await dbWrite.insert(solicitacoes).values({
       tipo,
       nome,
