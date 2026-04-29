@@ -300,7 +300,12 @@ export default function PaginaParceriasDNA() {
                                 mensagem: `${parceriaDescricao}`,
                               }),
                             });
-                            if (!response.ok) throw new Error();
+                            const data = await response.json().catch(() => ({}));
+                            if (!response.ok) {
+                              const message = data?.error || 'Erro ao enviar cadastro de parceria.';
+                              toast.error(message);
+                              return;
+                            }
                             setParceriaEnviado(true);
                             toast.success('Cadastro de parceria enviado!');
                             setParceriaNome('');
@@ -311,6 +316,7 @@ export default function PaginaParceriasDNA() {
                             setParceriaDescricao('');
                             setParceriaLink('');
                           } catch (error) {
+                            console.error('[parcerias] erro ao enviar cadastro de parceria:', error);
                             toast.error('Erro ao enviar cadastro de parceria.');
                           } finally {
                             setParceriaEnviando(false);

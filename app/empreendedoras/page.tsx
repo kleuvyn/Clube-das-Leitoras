@@ -149,7 +149,12 @@ export default function VitrineEmpreendedoras() {
           mensagem: detalhesVal,
         }),
       });
-      if (!res.ok) throw new Error("Falha ao enviar");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = data?.error || "Erro ao enviar solicitação.";
+        alert(message);
+        return;
+      }
       setSolEnviado(true);
       setSolNegocio("");
       setSolEmpreendedora("");
@@ -163,6 +168,7 @@ export default function VitrineEmpreendedoras() {
         setModalOpen(false);
       }, 3500);
     } catch (err) {
+      console.error("[empreendedoras] erro ao enviar solicitação:", err);
       alert("Erro ao enviar solicitação.");
     } finally {
       setSolEnviando(false);

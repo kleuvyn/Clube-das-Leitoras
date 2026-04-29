@@ -110,7 +110,12 @@ export default function EscritorasPage() {
           bio: solBio,
         }),
       });
-      if (!res.ok) throw new Error('Falha ao enviar');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const message = data?.error || 'Erro ao enviar sua obra. Tente novamente em instantes.';
+        alert(message);
+        return;
+      }
       setSolEnviado(true);
       
       // Limpar campos após sucesso
@@ -119,6 +124,7 @@ export default function EscritorasPage() {
       
       setTimeout(() => { setSolEnviado(false); setModalOpen(false); }, 3000);
     } catch (err) {
+      console.error('[escritoras] erro ao enviar solicitação:', err);
       alert('Erro ao enviar sua obra. Tente novamente em instantes.');
     } finally {
       setSolEnviando(false);
