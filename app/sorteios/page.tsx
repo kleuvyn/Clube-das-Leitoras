@@ -120,7 +120,7 @@ export default function SorteiosPage() {
       }
 
       setNome("");
-      setParticipantes((prev) => [{ nome: limpo }, ...prev]);
+      setParticipantes((prev) => [{ id: data.id, nome: limpo }, ...prev]);
       toast.success("Adicionada à urna com sucesso!");
       carregarDados();
     } catch (err: any) {

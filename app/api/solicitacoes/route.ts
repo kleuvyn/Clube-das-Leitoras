@@ -291,7 +291,7 @@ export async function POST(request: Request) {
       const [existingSolicitacao] = await db
         .select({ id: solicitacoes.id })
         .from(solicitacoes)
-        .where(or(...duplicateConditions));
+        .where(and(eq(solicitacoes.tipo, tipo), or(...duplicateConditions)));
       if (existingSolicitacao) {
         return NextResponse.json({ error: 'Já existe uma solicitação com este e-mail, telefone ou nome. Aguarde a análise antes de enviar novamente.' }, { status: 409 });
       }

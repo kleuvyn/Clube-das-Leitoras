@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { client, db, dbWrite } from '@/lib/db';
 import { colaboradoras, solicitacoes } from '@/lib/db/schema';
-import { eq, or, sql } from 'drizzle-orm';
+import { and, eq, or, sql } from 'drizzle-orm';
 
 const ADMIN_EMAIL = 'clubedasleitorasbsb@gmail.com';
 
@@ -66,7 +66,10 @@ export async function POST(request: Request) {
 
     if (duplicateConditions.length > 0) {
       const duplicateWhere = duplicateConditions.length === 1 ? duplicateConditions[0] : or(...duplicateConditions);
-      const [existingSolicitacao] = await db.select({ id: solicitacoes.id }).from(solicitacoes).where(duplicateWhere);
+      const [existingSolicitacao] = await db
+        .select({ id: solicitacoes.id })
+        .from(solicitacoes)
+        .where(and(eq(solicitacoes.tipo, 'leitora'), duplicateWhere));
       if (existingSolicitacao) {
         return NextResponse.json({ error: 'Já existe um cadastro em análise com este e-mail, telefone ou nome. Aguarde a aprovação antes de enviar novamente.' }, { status: 409 });
       }

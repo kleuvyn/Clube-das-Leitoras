@@ -48,12 +48,16 @@ export async function GET() {
   try {
     await ensureTableExists();
     const mesAtualRef = new Date().toISOString().substring(0, 7);
-    const participantes = await db.select().from(sorteiosParticipantes).orderBy(desc(sorteiosParticipantes.createdAt));
+    const participantes = await db
+      .select()
+      .from(sorteiosParticipantes)
+      .where(eq(sorteiosParticipantes.mesBase, mesAtualRef))
+      .orderBy(desc(sorteiosParticipantes.createdAt));
     const historico = await db.select().from(sorteiosHistorico).orderBy(desc(sorteiosHistorico.dataSorteio)).limit(20);
     const premios = await db.select().from(sorteiosPremios).orderBy(sorteiosPremios.createdAt);
     const configRows = await db.select().from(sorteiosConfig).where(eq(sorteiosConfig.mesBase, mesAtualRef)).orderBy(desc(sorteiosConfig.updatedAt)).limit(1);
     const urnaAberta = configRows.length > 0 ? configRows[0].urnaAberta === 1 : true;
-    return NextResponse.json({ participantes, historico, premios, urnaAberta });
+    return NextResponse.json({ participantes, historico, premios, urnaAberta, roda: { status: urnaAberta ? 'ativa' : 'pausada' } });
   } catch (error: any) {
     console.error("Erro interno GET sorteios:", error);
     return NextResponse.json({ error: 'Erro ao carregar dados', details: error?.message }, { status: 500 });
