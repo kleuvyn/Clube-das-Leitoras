@@ -275,7 +275,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (normalizedEmail) {
+    if (normalizedEmail && isLeitora) {
       const [existingColaboradora] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedEmail})`);
       if (existingColaboradora) {
         return NextResponse.json({ error: 'Este e-mail já está cadastrado no sistema. Use o acesso existente ou contate a curadoria.' }, { status: 409 });
