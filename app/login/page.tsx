@@ -184,7 +184,7 @@ export default function LoginCafeFuncional() {
           <div className="mt-10 flex flex-col items-center justify-center gap-6">
             <div className="flex flex-col items-center gap-2">
               <p className="text-[10px] tracking-[0.3em] uppercase text-[#8C7A66]/60 font-bold">
-                Ainda não ler conosco?
+                Ainda não lê conosco?
               </p>
               <Link 
                 href="/cadastro" 
