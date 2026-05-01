@@ -249,7 +249,8 @@ test('sorteios page accepts the full participant list and shows the new entries'
     'Nícia Morgado Clerot',
   ];
 
-  const mesBase = new Date().toISOString().slice(0, 7);
+  const now = new Date();
+  const mesBase = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   const chunkSize = 5;
   for (let i = 0; i < nomes.length; i += chunkSize) {

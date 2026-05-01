@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Gift, Loader2, PartyPopper, Quote, Shuffle, Trash2, Trophy } from "lucide-react";
 import { toast } from "sonner";
-import { normalizeDateValue } from '@/lib/utils';
+import { normalizeDateValue, getCurrentMonthReference } from '@/lib/utils';
 
 type SorteioHistorico = {
   id?: string;
@@ -22,9 +22,8 @@ const corFundo = "#FAFAF5";
 const corTexto = "#4A443F";
 const verdeMusgo = "#4F5E46";
 
-const mesAtualRef = new Date().toISOString().substring(0, 7);
-
 export default function SorteiosPage() {
+  const [mesBase, setMesBase] = useState(getCurrentMonthReference());
   const [nome, setNome] = useState("");
   const [premios, setPremios] = useState<string[]>([]);
   const [participantes, setParticipantes] = useState<Participante[]>([]);
@@ -46,11 +45,9 @@ export default function SorteiosPage() {
       if (data.historico) setHistorico(data.historico);
       if (data.urnaAberta !== undefined) setUrnaAberta(data.urnaAberta);
       if (data.roda?.status) setRodaStatus(data.roda.status);
+      if (data.activeMesBase) setMesBase(data.activeMesBase);
       if (data.premios) {
-        const premiosDoMes = data.premios
-          .filter((item: any) => item.mesBase === mesAtualRef)
-          .map((item: any) => item.premio);
-        setPremios(premiosDoMes);
+        setPremios(data.premios.map((item: any) => item.premio));
       }
     } catch (err) {
       console.error(err);
@@ -111,7 +108,7 @@ export default function SorteiosPage() {
       const res = await fetch("/api/sorteios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "addParticipante", payload: { nome: limpo, mesBase: mesAtualRef } }),
+        body: JSON.stringify({ action: "addParticipante", payload: { nome: limpo, mesBase } }),
       });
       const data = await res.json();
 
@@ -196,7 +193,7 @@ export default function SorteiosPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: 'salvarHistorico',
-              payload: { nome: vencedoraFinal.nome, premio: premioFinal, mesBase: mesAtualRef, id: vencedoraFinal.id },
+              payload: { nome: vencedoraFinal.nome, premio: premioFinal, mesBase, id: vencedoraFinal.id },
             }),
           });
           toast.success(`Parabéns, ${vencedoraFinal.nome}! Uma nova página se inicia.`);

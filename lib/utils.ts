@@ -121,3 +121,15 @@ export function formatMonthYear(date: Date): string {
   const year = date.getFullYear()
   return `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}/${year}`
 }
+
+export function getCurrentMonthReference(date = new Date(), timeZone = 'America/Sao_Paulo'): string {
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+  });
+  const parts = formatter.formatToParts(date);
+  const year = parts.find((part) => part.type === 'year')?.value ?? String(date.getFullYear());
+  const month = parts.find((part) => part.type === 'month')?.value ?? String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, dbWrite, client } from '@/lib/db';
 import { sorteiosParticipantes, sorteiosHistorico, sorteiosPremios, sorteiosConfig } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
+import { getCurrentMonthReference } from '@/lib/utils';
 import { requireAdmin } from '@/lib/auth';
 
 async function ensureTableExists() {
@@ -44,20 +45,50 @@ async function ensureTableExists() {
   }
 }
 
+async function getActiveSorteioMonthRef() {
+  const currentMonthRef = getCurrentMonthReference();
+  const currentConfigRows = await db
+    .select()
+    .from(sorteiosConfig)
+    .where(eq(sorteiosConfig.mesBase, currentMonthRef))
+    .orderBy(desc(sorteiosConfig.updatedAt))
+    .limit(1);
+
+  if (currentConfigRows.length > 0 && currentConfigRows[0].urnaAberta === 1) {
+    return { mesBase: currentMonthRef, configRow: currentConfigRows[0] };
+  }
+
+  const openConfigRows = await db
+    .select()
+    .from(sorteiosConfig)
+    .where(eq(sorteiosConfig.urnaAberta, 1))
+    .orderBy(desc(sorteiosConfig.updatedAt))
+    .limit(1);
+
+  if (openConfigRows.length > 0) {
+    return { mesBase: openConfigRows[0].mesBase, configRow: openConfigRows[0] };
+  }
+
+  return { mesBase: currentMonthRef, configRow: currentConfigRows[0] ?? null };
+}
+
 export async function GET() {
   try {
     await ensureTableExists();
-    const mesAtualRef = new Date().toISOString().substring(0, 7);
+    const { mesBase: mesAtualRef, configRow } = await getActiveSorteioMonthRef();
     const participantes = await db
       .select()
       .from(sorteiosParticipantes)
       .where(eq(sorteiosParticipantes.mesBase, mesAtualRef))
       .orderBy(desc(sorteiosParticipantes.createdAt));
     const historico = await db.select().from(sorteiosHistorico).orderBy(desc(sorteiosHistorico.dataSorteio)).limit(20);
-    const premios = await db.select().from(sorteiosPremios).orderBy(sorteiosPremios.createdAt);
-    const configRows = await db.select().from(sorteiosConfig).where(eq(sorteiosConfig.mesBase, mesAtualRef)).orderBy(desc(sorteiosConfig.updatedAt)).limit(1);
-    const urnaAberta = configRows.length > 0 ? configRows[0].urnaAberta === 1 : true;
-    return NextResponse.json({ participantes, historico, premios, urnaAberta, roda: { status: urnaAberta ? 'ativa' : 'pausada' } });
+    const premios = await db
+      .select()
+      .from(sorteiosPremios)
+      .where(eq(sorteiosPremios.mesBase, mesAtualRef))
+      .orderBy(sorteiosPremios.createdAt);
+    const urnaAberta = configRow ? configRow.urnaAberta === 1 : true;
+    return NextResponse.json({ participantes, historico, premios, urnaAberta, roda: { status: urnaAberta ? 'ativa' : 'pausada' }, activeMesBase: mesAtualRef });
   } catch (error: any) {
     console.error("Erro interno GET sorteios:", error);
     return NextResponse.json({ error: 'Erro ao carregar dados', details: error?.message }, { status: 500 });
@@ -73,8 +104,15 @@ export async function POST(req: Request) {
       await requireAdmin();
     }
 
+    const { mesBase: activeMesBase } = await getActiveSorteioMonthRef();
+
     if (action === 'addParticipante') {
-      const configRows = await db.select().from(sorteiosConfig).where(eq(sorteiosConfig.mesBase, payload.mesBase)).orderBy(desc(sorteiosConfig.updatedAt)).limit(1);
+      const configRows = await db
+        .select()
+        .from(sorteiosConfig)
+        .where(eq(sorteiosConfig.mesBase, activeMesBase))
+        .orderBy(desc(sorteiosConfig.updatedAt))
+        .limit(1);
       const urnaAberta = configRows.length === 0 || configRows[0].urnaAberta === 1;
       if (!urnaAberta) {
         return NextResponse.json({ error: 'A urna está fechada para novos nomes.' }, { status: 403 });
@@ -82,7 +120,7 @@ export async function POST(req: Request) {
 
       const result = await dbWrite.insert(sorteiosParticipantes).values({
         nome: payload.nome,
-        mesBase: payload.mesBase,
+        mesBase: activeMesBase,
       }).returning();
       return NextResponse.json(result[0]);
     }
@@ -100,7 +138,7 @@ export async function POST(req: Request) {
       const result = await dbWrite.insert(sorteiosHistorico).values({
         nome: payload.nome,
         premio: payload.premio,
-        mesBase: payload.mesBase,
+        mesBase: activeMesBase,
       }).returning();
 
       // Remove apenas o vencedor atual da urna, assim ele não pode ser sorteado novamente
@@ -116,7 +154,7 @@ export async function POST(req: Request) {
     if (action === 'addPremio') {
       const result = await dbWrite.insert(sorteiosPremios).values({
         premio: payload.premio,
-        mesBase: payload.mesBase,
+        mesBase: activeMesBase,
       }).returning();
       return NextResponse.json(result[0]);
     }
@@ -127,12 +165,12 @@ export async function POST(req: Request) {
           urnaAberta: payload.urnaAberta ? 1 : 0,
           updatedAt: new Date(),
         })
-        .where(eq(sorteiosConfig.mesBase, payload.mesBase))
+        .where(eq(sorteiosConfig.mesBase, activeMesBase))
         .returning();
 
       if (!updated.length) {
         await dbWrite.insert(sorteiosConfig).values({
-          mesBase: payload.mesBase,
+          mesBase: activeMesBase,
           urnaAberta: payload.urnaAberta ? 1 : 0,
         });
       }

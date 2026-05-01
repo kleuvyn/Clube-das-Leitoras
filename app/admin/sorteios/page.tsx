@@ -7,9 +7,7 @@ import {
   Users, PartyPopper, RefreshCw, Trophy, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { normalizeDateValue } from '@/lib/utils';
-
-const mesAtualRef = new Date().toISOString().substring(0, 7);
+import { normalizeDateValue, getCurrentMonthReference } from '@/lib/utils';
 
 type Participante = { id?: string; nome: string };
 type SorteioHistorico = { id?: string; nome: string; premio: string; dataSorteio?: string };
@@ -17,6 +15,7 @@ type SorteioPremio = { id: string; premio: string; mesBase: string };
 
 export default function AdminSorteiosPage() {
   const [loading, setLoading] = useState(true);
+  const [mesAtualRef, setMesAtualRef] = useState(getCurrentMonthReference());
   
   // States - Dados
   const [premios, setPremios] = useState<SorteioPremio[]>([]);
@@ -43,7 +42,8 @@ export default function AdminSorteiosPage() {
       if (!res.ok) throw new Error('Falha ao carregar dados do Sorteio.');
       const data = await res.json();
       
-      setPremios((data.premios || []).filter((item: any) => item.mesBase === mesAtualRef));
+      setMesAtualRef(data.activeMesBase ?? getCurrentMonthReference());
+      setPremios(data.premios || []);
       setParticipantes(data.participantes || []);
       setHistorico(data.historico || []);
       setUrnaAberta(data.urnaAberta ?? true);
