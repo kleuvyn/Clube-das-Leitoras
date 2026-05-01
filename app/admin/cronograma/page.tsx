@@ -46,7 +46,7 @@ function AdminContent() {
   const loadDados = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/cronograma');
+      const res = await fetch('/api/cronograma', { cache: 'no-store' });
       if (res.ok) {
         const dataArray = await res.json();
         const data = Array.isArray(dataArray)
@@ -260,8 +260,9 @@ function AdminContent() {
                 {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
               <input value={editandoMes.livro} onChange={e => setEditandoMes({...editandoMes, livro: e.target.value})} placeholder="Leitura do dia" className="p-3 bg-white rounded-xl text-sm outline-none border border-slate-100" />
-              <Button onClick={handleSalvarLista} className="rounded-xl h-full" style={{ backgroundColor: lavandaPrincipal }}>
+              <Button onClick={handleSalvarLista} className="rounded-xl h-full flex items-center justify-center gap-2 px-4 text-sm font-bold uppercase text-white" style={{ backgroundColor: lavandaPrincipal }}>
                 {editandoMes.index > -1 ? <Check size={20} /> : <Plus size={20} />}
+                {editandoMes.index > -1 ? 'Atualizar' : 'Adicionar'}
               </Button>
             </div>
 

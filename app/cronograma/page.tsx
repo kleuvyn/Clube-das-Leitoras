@@ -209,7 +209,13 @@ export default function CronogramaPage() {
                 {expandido && (
                   <div className="space-y-20 animate-in fade-in slide-in-from-top-4 duration-500">
 
-                    
+                    {crono.title && (
+                      <div className="space-y-4">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-[#2C3E50]">Capa do Mês</p>
+                        <h2 className="text-4xl md:text-5xl font-serif italic text-[#2C3E50]">{crono.title}</h2>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                       {crono.eventos.map((item, idx) => {
                         const n = mesNum(item.mes);
