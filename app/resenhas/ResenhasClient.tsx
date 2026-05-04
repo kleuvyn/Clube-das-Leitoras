@@ -328,7 +328,7 @@ function ResenhaCard({ resenha: r, periodo, aberta, onToggle }: {
           </button>
         )}
 
-        <ResenhaComments resenhaId={r.id} tituloResenha={r.title} aberto={aberta} />
+        <ResenhaComments resenhaId={r.id} tituloResenha={r.title} />
       </div>
 
       

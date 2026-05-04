@@ -13,7 +13,7 @@ import { normalizeDateValue, parseDateValue, formatMonthYear } from '@/lib/utils
 const marromPapel = '#8C7A66';
 const azulPetroleo = '#2C3E50';
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
     const [row] = await db.select().from(resenhas).where(eq(resenhas.id, id));
@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 
 
 
-export default async function ResenhaByIdPage({ params }: { params: { id: string } }) {
+export default async function ResenhaByIdPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!id) notFound();
 
