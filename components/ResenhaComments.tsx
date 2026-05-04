@@ -26,6 +26,7 @@ export default function ResenhaComments({ resenhaId, tituloResenha, aberto: aber
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
   const [nome, setNome] = useState('');
   const [texto, setTexto] = useState('');
 
@@ -92,8 +93,14 @@ export default function ResenhaComments({ resenhaId, tituloResenha, aberto: aber
           {aberto ? (
             <p className="text-lg italic font-light leading-tight" style={{ color: primaryFaded }}>Comentários</p>
           ) : (
-            <Link href={`/resenhas/${resenhaId}#comentarios`} className="text-lg italic font-light leading-tight underline" style={{ color: primaryFaded }}>
-              Abrir Caderno Proibido
+            <Link 
+              href={`/resenhas/${resenhaId}#comentarios`} 
+              className="text-lg italic font-light leading-tight underline flex items-center gap-2" 
+              style={{ color: primaryFaded }}
+              onClick={() => setIsNavigating(true)}
+            >
+              Abrir {tituloResenha ?? 'Comentários'}
+              {isNavigating && <Loader2 size={14} className="animate-spin opacity-50" />}
             </Link>
           )}
         </div>
