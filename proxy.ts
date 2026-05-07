@@ -25,8 +25,9 @@ export function proxy(request: NextRequest) {
   }
 
   if (pathname === '/nova-senha') {
+    const adminToken = request.cookies.get('clube-admin-token')?.value;
     const convidadaToken = request.cookies.get('clube-sessao')?.value;
-    if (!convidadaToken) {
+    if (!adminToken && !convidadaToken) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
   }
