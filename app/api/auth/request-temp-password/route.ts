@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db, dbWrite, client } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
-import { sql, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import {
   generateUniqueTempPassword,
   getRecentPasswordHistory,
@@ -57,6 +57,33 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
     const expiresAt = new Date(Date.now() + TEMP_PASSWORD_VALIDITY_MS);
 
+    const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'Serviço de e-mail não configurado. Contate o administrador.' },
+        { status: 500 },
+      );
+    }
+
+    try {
+      const { sendEmail } = await import('@/lib/email-client');
+      const { cartaAprovacaoComSenha } = await import('@/lib/email-templates');
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
+
+      await sendEmail({
+        from: getFromAddress(),
+        to: user.email,
+        subject: '🔐 Sua nova senha temporária para o Clube das Leitoras',
+        html: cartaAprovacaoComSenha({ nome: user.name ?? user.email, email: user.email, senha: tempPassword, siteUrl }),
+      });
+    } catch (error) {
+      console.error('Erro ao enviar e-mail de recuperação:', error);
+      return NextResponse.json(
+        { error: 'Não foi possível enviar o e-mail de recuperação. Tente novamente mais tarde.' },
+        { status: 500 },
+      );
+    }
+
     await insertPasswordHistory(user.id, user.password, user.mustChangePassword ? 'temporary' : 'permanent');
 
     await dbWrite.update(colaboradoras).set({
@@ -64,24 +91,6 @@ export async function POST(request: Request) {
       mustChangePassword: true,
       tempPasswordExpiresAt: expiresAt,
     }).where(eq(colaboradoras.id, user.id));
-
-    const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
-    if (apiKey) {
-      try {
-        const { sendEmail } = await import('@/lib/email-client');
-        const { cartaAprovacaoComSenha } = await import('@/lib/email-templates');
-        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://clubedasleitoras.com.br';
-
-        await sendEmail({
-          from: getFromAddress(),
-          to: user.email,
-          subject: '🔐 Sua nova senha temporária para o Clube das Leitoras',
-          html: cartaAprovacaoComSenha({ nome: user.name ?? user.email, email: user.email, senha: tempPassword, siteUrl }),
-        });
-      } catch (error) {
-        console.error('Erro ao enviar e-mail de recuperação:', error);
-      }
-    }
 
     return NextResponse.json(genericResponse, { status: 200 });
   } catch (error) {

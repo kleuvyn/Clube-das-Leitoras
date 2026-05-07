@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, dbWrite, client } from '@/lib/db';
 import { sorteiosParticipantes, sorteiosHistorico, sorteiosPremios, sorteiosConfig } from '@/lib/db/schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { getCurrentMonthReference } from '@/lib/utils';
 import { requireAdmin } from '@/lib/auth';
 
@@ -43,6 +43,10 @@ async function ensureTableExists() {
   } catch (err) {
     console.error('Erro ao verificar/criar tabelas de sorteios:', err);
   }
+}
+
+function normalizeParticipantName(name: string) {
+  return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR');
 }
 
 async function getActiveSorteioMonthRef() {
@@ -116,6 +120,18 @@ export async function POST(req: Request) {
       const urnaAberta = configRows.length === 0 || configRows[0].urnaAberta === 1;
       if (!urnaAberta) {
         return NextResponse.json({ error: 'A urna está fechada para novos nomes.' }, { status: 403 });
+      }
+
+      const nomeNormalizado = normalizeParticipantName(payload.nome);
+      const duplicate = await db
+        .select()
+        .from(sorteiosParticipantes)
+        .where(eq(sorteiosParticipantes.mesBase, activeMesBase))
+        .where(sql`LOWER(${sorteiosParticipantes.nome}) = ${nomeNormalizado}`)
+        .limit(1);
+
+      if (duplicate.length > 0) {
+        return NextResponse.json({ error: 'Esse nome já está na urna deste mês.' }, { status: 409 });
       }
 
       const result = await dbWrite.insert(sorteiosParticipantes).values({

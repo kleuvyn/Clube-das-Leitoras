@@ -14,7 +14,7 @@ interface AdminContextType {
   isLoading: boolean;
   isAdmin: boolean;
   currentUser: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   changePassword: (newPassword: string) => Promise<void>;
   listColaboradoras?: () => Promise<any[]>;
@@ -84,6 +84,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
       setCurrentUser(payload.user);
       setIsAuthenticated(true);
+      return payload.user;
     } catch (error) {
       throw error;
     } finally {

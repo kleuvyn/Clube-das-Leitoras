@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 // (mustChangePassword = true). Não exige a senha antiga.
 export async function POST(req: Request) {
   const cookieStore = await cookies();
-  const rawToken = cookieStore.get('clube-sessao')?.value;
+  const rawToken = cookieStore.get('clube-sessao')?.value ?? cookieStore.get('clube-admin-token')?.value;
 
   if (!rawToken) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Sessão inválida' }, { status: 401 });
   }
 
-  if (!tokenData || tokenData.role !== 'convidada') {
+  if (!tokenData || !['convidada', 'colaboradora', 'admin'].includes(tokenData.role)) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
   }
 

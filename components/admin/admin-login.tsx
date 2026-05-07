@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAdmin } from '@/lib/admin-context';
 import { Button } from '@/components/ui/button';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
 
 export function AdminLogin() {
   const { login } = useAdmin();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,9 +20,12 @@ export function AdminLogin() {
     setError('');
 
     try {
-      
-      await login(email, password);
-      
+      const user = await login(email, password);
+      if (user?.mustChangePassword) {
+        router.push('/nova-senha');
+      } else {
+        router.push('/admin');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'E-mail ou senha incorretos');
     } finally {
@@ -114,6 +119,11 @@ export function AdminLogin() {
         <p className="text-center text-slate-500 text-[11px] font-medium tracking-wide">
           Ambiente restrito às participantes do Clube das Leitoras
         </p>
+        <div className="text-center mt-4">
+          <a href="/recuperar-senha" className="text-[10px] uppercase tracking-[0.35em] text-purple-200 hover:text-white transition-colors">
+            Esqueci minha senha
+          </a>
+        </div>
       </div>
     </div>
   );
