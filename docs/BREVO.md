@@ -15,7 +15,7 @@ Observação: o projeto aceita `RESEND_API_KEY`/`RESEND_FROM` como fallback temp
 Execute localmente:
 
 ```bash
-pnpm add sib-api-v3-sdk
+pnpm add @getbrevo/brevo
 ```
 
 4) Reinício

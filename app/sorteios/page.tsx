@@ -203,7 +203,7 @@ export default function SorteiosPage() {
     <div
       className="min-h-screen font-alice pb-28 pt-28 lg:pt-32 relative overflow-hidden"
       style={{
-        background: `#F4EEE6 url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')`,
+        background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')`,
         color: corTexto,
       }}
     >
@@ -216,13 +216,9 @@ export default function SorteiosPage() {
           <div className="h-px w-12 bg-[#7e6d60]/30" />
         </div>
 
-        <h1 className="text-4xl md:text-[64px] tracking-[-0.02em] leading-[0.92] mb-8">
-          <span className="italic font-light" style={{ color: corTexto }}>
-            Sorteios do
-          </span>{' '}
-          <span className="italic font-light" style={{ color: corDestaque }}>
-            Clube
-          </span>
+        <h1 className="text-7xl md:text-[100px] tracking-tighter leading-[0.8] mb-10 drop-shadow-sm">
+          <span className="text-[#2C3E50]">Sorteios do</span><br className="md:hidden" />
+          <span className="italic font-light text-[#B04D4A]"> Clube</span>
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-[0.95fr_0.7fr] gap-8 text-left max-w-4xl mx-auto pt-8 border-t border-[#7e6d60]/15">
@@ -290,8 +286,11 @@ export default function SorteiosPage() {
             >
               <button
                 type="button"
-                onClick={() => setSorteioZoomAberto(false)}
-                className="absolute right-4 top-4 z-10 rounded-full border border-white/80 bg-black/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white transition hover:bg-black"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSorteioZoomAberto(false);
+                }}
+                className="absolute right-4 top-4 z-[60] rounded-full border border-white/80 bg-black/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white transition hover:bg-black cursor-pointer shadow-md"
               >
                 Fechar
               </button>
@@ -309,9 +308,20 @@ export default function SorteiosPage() {
         <section className="lg:col-span-7 space-y-10">
           <div className="relative group">
             <div className="bg-white/95 border rounded-[1.5rem] p-8 md:p-10 shadow-[0_10px_25px_rgba(0,0,0,0.06)] relative z-10" style={{ borderColor: `${corDestaque}30` }}>
-              <h2 className="text-[10px] font-semibold uppercase tracking-[0.35em] mb-7" style={{ color: corDestaque }}>
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.35em] mb-6" style={{ color: corDestaque }}>
                 A Urna
               </h2>
+
+              <ul className="mb-8 space-y-2.5 text-[0.9rem] opacity-85 leading-relaxed" style={{ color: corTexto }}>
+                <li className="flex items-start gap-2.5">
+                  <span className="h-[4px] w-[4px] min-w-[4px] rounded-full mt-2" style={{ backgroundColor: corDestaque }}></span>
+                  <span>Coloque <strong className="text-[16px] font-bold italic uppercase tracking-[0.35em]" style={{ color: corDestaque }}>NOME E SOBRENOME</strong> na urna de participação.</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="h-[4px] w-[4px] min-w-[4px] rounded-full mt-2" style={{ backgroundColor: corDestaque }}></span>
+                  Será permitido apenas um nome por cadastro.
+                </li>
+              </ul>
 
               <form onSubmit={adicionarParticipante} className="flex flex-col sm:flex-row gap-4 mb-10">
                 <input

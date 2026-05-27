@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, dbWrite, client } from '@/lib/db';
 import { sorteiosParticipantes, sorteiosHistorico, sorteiosPremios, sorteiosConfig } from '@/lib/db/schema';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq, sql, and } from 'drizzle-orm';
 import { getCurrentMonthReference } from '@/lib/utils';
 import { requireAdmin } from '@/lib/auth';
 
@@ -148,8 +148,12 @@ export async function POST(req: Request) {
       const duplicate = await db
         .select()
         .from(sorteiosParticipantes)
-        .where(eq(sorteiosParticipantes.mesBase, activeMesBase))
-        .where(sql`LOWER(${sorteiosParticipantes.nome}) = ${nomeNormalizado}`)
+        .where(
+          and(
+            eq(sorteiosParticipantes.mesBase, activeMesBase),
+            sql`LOWER(${sorteiosParticipantes.nome}) = ${nomeNormalizado}`
+          )
+        )
         .limit(1);
 
       if (duplicate.length > 0) {
@@ -167,7 +171,12 @@ export async function POST(req: Request) {
       if (payload.id) {
         await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.id, payload.id));
       } else {
-        await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.nome, payload.nome));
+        await dbWrite.delete(sorteiosParticipantes).where(
+          and(
+            eq(sorteiosParticipantes.nome, payload.nome),
+            eq(sorteiosParticipantes.mesBase, activeMesBase)
+          )
+        );
       }
       return NextResponse.json({ success: true });
     }
@@ -184,7 +193,12 @@ export async function POST(req: Request) {
       if (payload.id) {
         await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.id, payload.id));
       } else {
-        await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.nome, payload.nome));
+        await dbWrite.delete(sorteiosParticipantes).where(
+          and(
+            eq(sorteiosParticipantes.nome, payload.nome),
+            eq(sorteiosParticipantes.mesBase, activeMesBase)
+          )
+        );
       }
 
       return NextResponse.json(result[0]);
