@@ -7,6 +7,14 @@ const globalForDb = globalThis as unknown as {
   writeClient: ReturnType<typeof createClient> | undefined;
 };
 
+// Se não tiver variável nenhuma, o build precisa estourar informando exatamente o erro,
+// ou a aplicação retornará "dummy.db" que gera "no such table".
+const rawDatabaseUrl = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL;
+
+if (!rawDatabaseUrl) {
+  console.warn("⚠️ AVISO: Nenhuma variável TURSO_DATABASE_URL ou DATABASE_URL foi encontrada nas variáveis de ambiente! O build pode falhar se precisar consultar o banco de dados.");
+}
+
 function sanitizeUrl(rawUrl?: string): string {
   if (!rawUrl) return 'file:dummy.db';
   try {
@@ -16,21 +24,18 @@ function sanitizeUrl(rawUrl?: string): string {
     url.searchParams.delete('pgbouncer');
     url.searchParams.delete('connect_timeout');
     
-    if (url.protocol === 'postgres:' || url.protocol === 'postgresql:') {
-      // Return a dummy url to prevent build crashes if Vercel injects Postgres URL by mistake
-      if (typeof process !== 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
-        return 'file:dummy.db';
-      }
-    }
+    // Removido o teste com file:dummy.db para postgres,
+    // garantindo que ele não mascare falhas que exigem os dados verdadeiros na geração de páginas estáticas.
+    
     return url.toString();
   } catch {
     return rawUrl || 'file:dummy.db';
   }
 }
 
-const readUrl = sanitizeUrl(process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL!);
+const readUrl = sanitizeUrl(rawDatabaseUrl);
 const readAuthToken = process.env.TURSO_AUTH_TOKEN ?? process.env.DATABASE_AUTH_TOKEN ?? '';
-const writeUrl = sanitizeUrl(process.env.TURSO_WRITE_URL ?? process.env.DATABASE_WRITE_URL ?? process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL!);
+const writeUrl = sanitizeUrl(process.env.TURSO_WRITE_URL ?? process.env.DATABASE_WRITE_URL ?? process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL);
 
 const explicitWriteAuthToken = process.env.TURSO_WRITE_AUTH_TOKEN ?? process.env.DATABASE_WRITE_AUTH_TOKEN;
 const writeAuthToken = explicitWriteAuthToken ?? readAuthToken;
