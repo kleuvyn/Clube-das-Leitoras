@@ -402,14 +402,17 @@ export default function CarteirinhaPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6">
           <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] bg-white shadow-2xl transition-transform duration-700 ease-out"
             style={{
-              transform: cardExpanded ? 'perspective(1400px) rotateY(0deg) scale(1)' : 'perspective(1400px) rotateY(-20deg) scale(0.93)',
+              transform: cardExpanded ? 'perspective(1400px) rotateY(0deg) scale(1)' : 'perspective(1400px) rotateY(-32deg) scale(0.92)',
               opacity: cardExpanded ? 1 : 0.88,
+              transformStyle: 'preserve-3d',
+              backfaceVisibility: 'hidden',
             }}
           >
             <button
               type="button"
               onClick={closeCard}
               className="absolute right-5 top-5 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm text-slate-700 hover:bg-slate-100"
+              aria-label="Fechar"
             >
               <X size={18} />
             </button>
@@ -419,9 +422,6 @@ export default function CarteirinhaPage() {
                   <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Apresente ao segurança</p>
                   <h2 className="text-2xl font-semibold text-slate-900">Carteirinha</h2>
                 </div>
-                <Button onClick={closeCard} className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-800">
-                  Fechar
-                </Button>
               </div>
               <div className="rounded-[2.5rem] overflow-hidden border border-slate-200 bg-slate-100">
                 <img src={user.carteirinhaUrl} alt="Carteirinha da leitora" className="w-full h-auto object-cover" />

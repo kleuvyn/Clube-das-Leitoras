@@ -65,6 +65,8 @@ export default function EscritorasAdmin() {
   const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
   const limit = 10;
   const [salvando, setSalvando] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
   const [editando, setEditando] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<typeof formVazio>(formVazio);
 
@@ -102,13 +104,8 @@ export default function EscritorasAdmin() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, target: 'add' | 'edit') => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const preview = URL.createObjectURL(file);
-    if (target === 'add') {
-      setFormData(f => ({ ...f, capaUrl: preview }));
-    } else {
-      setEditForm(f => ({ ...f, capaUrl: preview }));
-    }
-    setSalvando(true);
+    setUploading(true);
+
     try {
       const url = await uploadImagem(file);
       if (url) {
@@ -119,7 +116,8 @@ export default function EscritorasAdmin() {
         toast.error('Erro ao enviar capa.');
       }
     } finally {
-      setSalvando(false);
+      setUploading(false);
+      if (e.target) e.target.value = '';
     }
   };
 
@@ -338,12 +336,17 @@ export default function EscritorasAdmin() {
               className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:border-(--page-color) transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
-              {formData.capaUrl && !formData.capaUrl.startsWith('blob:') === false ? (
-                <img src={formData.capaUrl} alt="preview" className="h-32 object-contain mx-auto mb-2 rounded" />
+              {uploading ? (
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="animate-spin text-slate-400" size={24} />
+                  <p className="text-xs text-slate-400">Enviando capa...</p>
+                </div>
               ) : (
-                <Upload size={24} className="mx-auto mb-2 opacity-30" style={{ color: rosaPrincipal }} />
+                <>
+                  <Upload size={24} className="mx-auto mb-2 opacity-30" style={{ color: rosaPrincipal }} />
+                  <p className="text-xs text-slate-400">Clique para selecionar a capa</p>
+                </>
               )}
-              <p className="text-xs text-slate-400">Clique para selecionar a capa</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -355,7 +358,7 @@ export default function EscritorasAdmin() {
           )}
           {formData.capaUrl && (
             <div className="mt-3">
-              <img src={formData.capaUrl} alt="preview" className="h-36 object-contain rounded shadow-sm border border-slate-100" />
+              <img src={formData.capaUrl} alt="Capa do livro" className="h-36 object-contain rounded shadow-sm border border-slate-100" />
             </div>
           )}
         </Field>
@@ -363,8 +366,8 @@ export default function EscritorasAdmin() {
         <div className="flex justify-end pt-4">
           <Button
             onClick={handleSave}
-            disabled={salvando}
-            className="text-white px-10 py-6 h-auto rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:scale-[1.02] transition-all"
+            disabled={uploading || salvando}
+            className="text-white px-10 py-6 h-auto rounded-2xl font-bold uppercase text-[10px] tracking-[0.3em] shadow-lg hover:scale-[1.02] transition-all disabled:cursor-not-allowed disabled:opacity-50"
             style={{ backgroundColor: rosaPrincipal }}
           >
             {salvando ? <Loader2 size={16} className="animate-spin mr-2" /> : <Save size={16} className="mr-2" />}
@@ -446,13 +449,22 @@ export default function EscritorasAdmin() {
                         <input className={inputCls} placeholder="https://…/capa.jpg" value={editForm.capaUrl} onChange={e => setEditForm(f => ({ ...f, capaUrl: e.target.value }))} />
                       ) : (
                         <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:border-(--page-color) transition-colors" onClick={() => editFileInputRef.current?.click()}>
-                          <Upload size={20} className="mx-auto mb-1 opacity-30" style={{ color: rosaPrincipal }} />
-                          <p className="text-xs text-slate-400">Clique para trocar a capa</p>
+                          {uploading ? (
+                            <div className="flex flex-col items-center gap-3">
+                              <Loader2 className="animate-spin text-slate-400" size={20} />
+                              <p className="text-xs text-slate-400">Enviando capa...</p>
+                            </div>
+                          ) : (
+                            <>
+                              <Upload size={20} className="mx-auto mb-1 opacity-30" style={{ color: rosaPrincipal }} />
+                              <p className="text-xs text-slate-400">Clique para trocar a capa</p>
+                            </>
+                          )}
                           <input ref={editFileInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFileChange(e, 'edit')} />
                         </div>
                       )}
                       {editForm.capaUrl && (
-                        <img src={editForm.capaUrl} alt="preview" className="h-28 object-contain rounded shadow-sm border border-slate-100 mt-2" />
+                        <img src={editForm.capaUrl} alt="Capa do livro" className="h-28 object-contain rounded shadow-sm border border-slate-100 mt-2" />
                       )}
                     </div>
 
@@ -460,8 +472,8 @@ export default function EscritorasAdmin() {
                       <Button variant="outline" onClick={() => setEditando(null)}>
                         <X size={14} className="mr-1" /> Cancelar
                       </Button>
-                      <Button disabled={salvando} onClick={() => handleSalvarEdicao(item.id)}
-                        className="text-white" style={{ backgroundColor: rosaPrincipal }}>
+                      <Button disabled={uploading || salvando} onClick={() => handleSalvarEdicao(item.id)}
+                        className="text-white disabled:cursor-not-allowed disabled:opacity-50" style={{ backgroundColor: rosaPrincipal }}>
                         {salvando ? <Loader2 size={14} className="animate-spin mr-1" /> : <Check size={14} className="mr-1" />}
                         Salvar
                       </Button>
