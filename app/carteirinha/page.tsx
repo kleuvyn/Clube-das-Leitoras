@@ -124,10 +124,10 @@ export default function CarteirinhaPage() {
           <div className="max-w-3xl mx-auto text-left border-t border-black/10 pt-10">
             <div className="grid gap-8 md:grid-cols-2">
               <p className="text-base leading-relaxed opacity-60 text-black italic">
-                Para participar das rodas de leitura e ter acesso à sala da biblioteca, a carteirinha oficial do clube é o seu documento de identificação no encontro.
+                A carteirinha oficial é a sua chave de acesso aos debates literários. Mais do que um documento de identificação, ela é o símbolo da sua presença na nossa comunidade.
               </p>
               <p className="text-base leading-relaxed opacity-60 text-black italic">
-                Ela garante que você esteja cadastrada e identificada durante os encontros e rodadas do Clube das Leitoras.
+                Apresente-a para ter acesso à sala da biblioteca e garantir o seu lugar nas rodas de leitura e encontros especiais do Clube das Leitoras.
               </p>
             </div>
           </div>
