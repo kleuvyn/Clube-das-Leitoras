@@ -11,34 +11,53 @@ const globalForDb = globalThis as unknown as {
 // ou a aplicação retornará "dummy.db" que gera "no such table".
 const rawDatabaseUrl = process.env.TURSO_DATABASE_URL || process.env.DATABASE_URL;
 
+function isSupportedLibsqlUrl(urlString: string): boolean {
+  try {
+    const url = new URL(urlString);
+    return ['libsql:', 'https:', 'http:', 'wss:', 'ws:', 'file:'].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
 if (!rawDatabaseUrl) {
   console.warn("⚠️ AVISO: Nenhuma variável TURSO_DATABASE_URL ou DATABASE_URL foi encontrada nas variáveis de ambiente! O build pode falhar se precisar consultar o banco de dados.");
 }
 
-function sanitizeUrl(rawUrl?: string): string {
-  if (!rawUrl) return 'file:dummy.db';
+function sanitizeUrl(rawUrl?: string): string | undefined {
+  if (!rawUrl) return undefined;
   try {
     const url = new URL(rawUrl);
     url.searchParams.delete('channel_binding');
     url.searchParams.delete('sslmode');
     url.searchParams.delete('pgbouncer');
     url.searchParams.delete('connect_timeout');
-    
-    // Removido o teste com file:dummy.db para postgres,
-    // garantindo que ele não mascare falhas que exigem os dados verdadeiros na geração de páginas estáticas.
-    
     return url.toString();
   } catch {
-    return rawUrl || 'file:dummy.db';
+    return undefined;
   }
 }
 
-const readUrl = sanitizeUrl(rawDatabaseUrl);
+const selectedReadUrl = rawDatabaseUrl && isSupportedLibsqlUrl(rawDatabaseUrl) ? rawDatabaseUrl : undefined;
+if (rawDatabaseUrl && !selectedReadUrl) {
+  console.warn(`⚠️ Ignorando DATABASE_URL incompatível com libsql: ${rawDatabaseUrl}`);
+}
+const readUrl = sanitizeUrl(selectedReadUrl);
 const readAuthToken = process.env.TURSO_AUTH_TOKEN ?? process.env.DATABASE_AUTH_TOKEN ?? '';
-const writeUrl = sanitizeUrl(process.env.TURSO_WRITE_URL ?? process.env.DATABASE_WRITE_URL ?? process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL);
+
+const rawWriteUrl = process.env.TURSO_WRITE_URL || process.env.TURSO_DATABASE_URL || process.env.DATABASE_WRITE_URL || process.env.DATABASE_URL;
+const selectedWriteUrl = rawWriteUrl && isSupportedLibsqlUrl(rawWriteUrl) ? rawWriteUrl : undefined;
+if (rawWriteUrl && !selectedWriteUrl) {
+  console.warn(`⚠️ Ignorando DATABASE_WRITE_URL / TURSO_WRITE_URL incompatível com libsql: ${rawWriteUrl}`);
+}
+const writeUrl = sanitizeUrl(selectedWriteUrl);
 
 const explicitWriteAuthToken = process.env.TURSO_WRITE_AUTH_TOKEN ?? process.env.DATABASE_WRITE_AUTH_TOKEN;
 const writeAuthToken = explicitWriteAuthToken ?? readAuthToken;
+
+if (!readUrl) {
+  throw new Error('Nenhuma URL de banco de dados válida foi encontrada. Configure TURSO_DATABASE_URL ou DATABASE_URL com esquema libsql://, https://, wss://, ws:// ou file://.');
+}
 
 function decodeJwtPayload(token: string) {
   const parts = token.split('.');
