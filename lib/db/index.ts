@@ -28,12 +28,12 @@ function sanitizeUrl(rawUrl?: string): string {
   }
 }
 
-const readUrl = sanitizeUrl(process.env.DATABASE_URL!);
-const readAuthToken = process.env.DATABASE_AUTH_TOKEN ?? '';
-const writeUrl = sanitizeUrl(process.env.DATABASE_WRITE_URL ?? process.env.DATABASE_URL!);
+const readUrl = sanitizeUrl(process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL!);
+const readAuthToken = process.env.TURSO_AUTH_TOKEN ?? process.env.DATABASE_AUTH_TOKEN ?? '';
+const writeUrl = sanitizeUrl(process.env.TURSO_WRITE_URL ?? process.env.DATABASE_WRITE_URL ?? process.env.TURSO_DATABASE_URL ?? process.env.DATABASE_URL!);
 
-const explicitWriteAuthToken = process.env.DATABASE_WRITE_AUTH_TOKEN;
-const writeAuthToken = explicitWriteAuthToken ?? process.env.DATABASE_AUTH_TOKEN!;
+const explicitWriteAuthToken = process.env.TURSO_WRITE_AUTH_TOKEN ?? process.env.DATABASE_WRITE_AUTH_TOKEN;
+const writeAuthToken = explicitWriteAuthToken ?? readAuthToken;
 
 function decodeJwtPayload(token: string) {
   const parts = token.split('.');
