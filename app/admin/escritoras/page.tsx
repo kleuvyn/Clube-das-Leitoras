@@ -377,9 +377,11 @@ export default function EscritorasAdmin() {
       <section className="space-y-4">
         <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 flex items-center gap-2">
           <BookOpen size={14} style={{ color: rosaPrincipal }} />
-          Escritoras Cadastradas ({lista.length})
+          Escritoras Cadastradas ({pagination.total})
         </h3>
-        <p className="text-[10px] text-slate-500 italic">Cada livro aparece como um card separado, com sua capa exibida ao lado.</p>
+        <p className="text-[10px] text-slate-500 italic">
+          Mostrando {lista.length} de {pagination.total} escritoras. Cada livro aparece como um card separado, com sua capa exibida ao lado.
+        </p>
 
         {loading ? (
           <div className="text-center py-10 opacity-40 italic text-sm animate-pulse">Carregando...</div>
