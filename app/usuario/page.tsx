@@ -8,12 +8,14 @@ type User = {
   name: string;
   email: string;
   phone?: string | null;
+  carteirinhaUrl?: string | null;
 };
 
 export default function UsuarioPage() {
   const [user, setUser] = useState<User | null>(null);
   const [name, setName] = useState('');
   const [oldPassword, setOldPassword] = useState('');
+  const [showCard, setShowCard] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState<string | null>(null);
@@ -129,6 +131,26 @@ export default function UsuarioPage() {
               <label className="block text-sm font-medium text-slate-700">E-mail</label>
               <p className="mb-4 text-slate-600">{user.email}</p>
 
+              {user.carteirinhaUrl && (
+                <div className="mb-6 rounded-3xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  <p className="font-semibold">Sua carteirinha está pronta e disponível</p>
+                  <p className="text-xs text-amber-700 mb-3">A carteirinha enviada pela curadoria fica guardada no seu perfil para você apresentar quando precisar.</p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.2em] text-amber-800">Mostrar no site</p>
+                      <p className="text-[11px] text-amber-700">Clique para abrir e apresentar.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowCard(true)}
+                      className="inline-flex items-center gap-2 rounded-full bg-amber-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-amber-800"
+                    >
+                      Apresentar carteirinha
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <label className="block text-sm font-medium text-slate-700">Nome</label>
               <input
                 className="w-full p-3 mt-2 mb-4 border rounded-xl outline-none border-amber-200"
@@ -190,6 +212,32 @@ export default function UsuarioPage() {
           </section>
         )}
 
+        {showCard && user?.carteirinhaUrl && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="relative w-full max-w-3xl overflow-hidden rounded-4xl bg-white shadow-2xl">
+              <button
+                onClick={() => setShowCard(false)}
+                className="absolute right-4 top-4 rounded-full bg-slate-100 p-3 text-slate-600 hover:bg-slate-200"
+                aria-label="Fechar carteirinha"
+              >
+                ✕
+              </button>
+              <div className="p-6">
+                <h2 className="text-2xl font-semibold text-slate-900 mb-4">Sua carteirinha</h2>
+                {user.carteirinhaUrl.endsWith('.pdf') ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-slate-600">A carteirinha está disponível como PDF. Abra em uma nova aba para apresentar.</p>
+                    <a href={user.carteirinhaUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full bg-amber-900 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-amber-800">
+                      Abrir PDF
+                    </a>
+                  </div>
+                ) : (
+                  <img src={user.carteirinhaUrl} alt="Carteirinha da leitora" className="w-full rounded-3xl border border-slate-200 object-contain" />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         <footer className="pt-8 text-center">
           <p className="text-xs text-slate-500">Acesso apenas para usuários logadas.</p>
         </footer>

@@ -195,6 +195,23 @@ export default function EscritorasAdmin() {
     }
   };
 
+  const iniciarNovoLivro = (item: Escritora) => {
+    setEditando(null);
+    setUploadMode('url');
+    setFormData({
+      nome: item.nome || '',
+      livroTitulo: '',
+      genero: item.genero || 'Romance',
+      sinopse: '',
+      instagram: item.instagram || '',
+      linkCompra: '',
+      capaUrl: '',
+      site: item.site || '',
+      bio: item.bio || '',
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-500 pb-20 font-alice">
 
@@ -210,10 +227,11 @@ export default function EscritorasAdmin() {
       </header>
 
       
-      <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
+      <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-none space-y-6">
         <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 flex items-center gap-2">
           <Sparkles size={14} style={{ color: rosaPrincipal }} /> Nova Escritora
         </h3>
+        <p className="text-xs text-slate-500 italic">Use “Novo livro desta autora” nas cartas abaixo para cadastrar outra obra sem ter que repetir todos os dados da autora.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Field label="Nome da Escritora" icon={User}>
@@ -274,7 +292,7 @@ export default function EscritorasAdmin() {
 
         <Field label="Sinopse do Livro" icon={BookOpen}>
           <textarea
-            className={`${inputCls} min-h-[80px] resize-none`}
+            className={`${inputCls} min-h-20 resize-none`}
             placeholder="Uma breve sinopse..."
             value={formData.sinopse}
             onChange={e => setFormData(f => ({ ...f, sinopse: e.target.value }))}
@@ -283,7 +301,7 @@ export default function EscritorasAdmin() {
 
         <Field label="Bio da Escritora" icon={User}>
           <textarea
-            className={`${inputCls} min-h-[60px] resize-none`}
+            className={`${inputCls} min-h-15 resize-none`}
             placeholder="Breve apresentação da autora..."
             value={formData.bio}
             onChange={e => setFormData(f => ({ ...f, bio: e.target.value }))}
@@ -317,7 +335,7 @@ export default function EscritorasAdmin() {
             />
           ) : (
             <div
-              className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:border-[var(--page-color)] transition-colors"
+              className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:border-(--page-color) transition-colors"
               onClick={() => fileInputRef.current?.click()}
             >
               {formData.capaUrl && !formData.capaUrl.startsWith('blob:') === false ? (
@@ -361,6 +379,7 @@ export default function EscritorasAdmin() {
           <BookOpen size={14} style={{ color: rosaPrincipal }} />
           Escritoras Cadastradas ({lista.length})
         </h3>
+        <p className="text-[10px] text-slate-500 italic">Cada livro aparece como um card separado, com sua capa exibida ao lado.</p>
 
         {loading ? (
           <div className="text-center py-10 opacity-40 italic text-sm animate-pulse">Carregando...</div>
@@ -369,7 +388,7 @@ export default function EscritorasAdmin() {
         ) : (
           <div className="space-y-3">
             {lista.map(item => (
-              <div key={item.id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm">
+              <div key={item.id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-none">
                 {editando === item.id ? (
                   
                   <div className="p-8 space-y-5">
@@ -403,11 +422,11 @@ export default function EscritorasAdmin() {
                     </div>
                     <div className="space-y-1">
                       <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Sinopse</label>
-                      <textarea className={`${inputCls} min-h-[70px] resize-none`} value={editForm.sinopse} onChange={e => setEditForm(f => ({ ...f, sinopse: e.target.value }))} />
+                      <textarea className={`${inputCls} min-h-17.5 resize-none`} value={editForm.sinopse} onChange={e => setEditForm(f => ({ ...f, sinopse: e.target.value }))} />
                     </div>
                     <div className="space-y-1">
                       <label className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Bio</label>
-                      <textarea className={`${inputCls} min-h-[60px] resize-none`} value={editForm.bio} onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))} />
+                      <textarea className={`${inputCls} min-h-15 resize-none`} value={editForm.bio} onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))} />
                     </div>
                     
                     <div className="space-y-2">
@@ -424,7 +443,7 @@ export default function EscritorasAdmin() {
                       {editUploadMode === 'url' ? (
                         <input className={inputCls} placeholder="https://…/capa.jpg" value={editForm.capaUrl} onChange={e => setEditForm(f => ({ ...f, capaUrl: e.target.value }))} />
                       ) : (
-                        <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:border-[var(--page-color)] transition-colors" onClick={() => editFileInputRef.current?.click()}>
+                        <div className="border-2 border-dashed border-slate-200 rounded-2xl p-4 text-center cursor-pointer hover:border-(--page-color) transition-colors" onClick={() => editFileInputRef.current?.click()}>
                           <Upload size={20} className="mx-auto mb-1 opacity-30" style={{ color: rosaPrincipal }} />
                           <p className="text-xs text-slate-400">Clique para trocar a capa</p>
                           <input ref={editFileInputRef} type="file" accept="image/*" className="hidden" onChange={e => handleFileChange(e, 'edit')} />
@@ -450,10 +469,10 @@ export default function EscritorasAdmin() {
                   
                   <div className="flex items-start gap-6 p-6">
                     {item.capaUrl ? (
-                      <img src={item.capaUrl} alt={item.livroTitulo} className="w-14 h-20 object-cover rounded shadow-sm flex-shrink-0" />
+                      <img src={item.capaUrl} alt={item.livroTitulo} className="w-20 h-28 object-cover rounded shadow-sm shrink-0" />
                     ) : (
-                      <div className="w-14 h-20 rounded flex items-center justify-center flex-shrink-0" style={{ background: `${rosaPrincipal}15` }}>
-                        <BookOpen size={20} className="opacity-30" style={{ color: rosaPrincipal }} />
+                      <div className="w-20 h-28 rounded flex items-center justify-center shrink-0" style={{ background: `${rosaPrincipal}15` }}>
+                        <BookOpen size={24} className="opacity-30" style={{ color: rosaPrincipal }} />
                       </div>
                     )}
 
@@ -479,13 +498,20 @@ export default function EscritorasAdmin() {
                     </div>
 
                     {isAdmin && (
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex flex-col gap-2 shrink-0">
                       <button
                         onClick={() => iniciarEdicao(item)}
-                        className="p-2 rounded-xl border border-slate-200 hover:border-[var(--page-color)] text-slate-400 hover:text-[var(--page-color)] transition-all"
+                        className="p-2 rounded-xl border border-slate-200 hover:border-(--page-color) text-slate-400 hover:text-(--page-color) transition-all"
                         title="Editar"
                       >
                         <Edit2 size={14} />
+                      </button>
+                      <button
+                        onClick={() => iniciarNovoLivro(item)}
+                        className="p-2 rounded-xl border border-slate-200 hover:border-(--page-color) text-slate-400 hover:text-(--page-color) transition-all"
+                        title="Novo livro desta autora"
+                      >
+                        <BookOpen size={14} />
                       </button>
                       <button
                         onClick={() => handleDelete(item.id)}

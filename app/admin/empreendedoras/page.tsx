@@ -50,6 +50,9 @@ export default function EmpreendedorasAdmin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const logosCount = lista.filter(emp => !!emp.fotoUrl).length;
+  const noLogos = lista.length > 0 && logosCount === 0;
+
   const [formData, setFormData] = useState(FORM_VAZIO);
 
   const loadDados = async (pageNum = page) => {
@@ -231,10 +234,19 @@ export default function EmpreendedorasAdmin() {
 
       <hr className="border-slate-100" />
 
-      
+      {noLogos && (
+        <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-rose-700">
+          <p className="text-sm font-semibold">Nenhuma logo cadastrada ainda.</p>
+          <p className="text-sm leading-relaxed">Os registros existem, mas não há imagens salvas para as marcas. Use o botão editar para enviar o logo manualmente.</p>
+        </div>
+      )}
+
       <section className="space-y-6">
         <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 ml-4 flex items-center gap-2">
             <Store size={14} /> Marcas Catalogadas ({lista.length})
+            {lista.length > 0 && (
+              <span className="text-[10px] uppercase tracking-[0.3em] text-slate-400">{logosCount} com logo</span>
+            )}
         </h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

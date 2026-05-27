@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { client, db, dbWrite, isWriteBlockedError } from '@/lib/db';
-import { solicitacoes, colaboradoras } from '@/lib/db/schema';
-import { and, eq, desc, or, sql } from 'drizzle-orm';
+import { solicitacoes, colaboradoras, carteirinhas, empreendedoras, escritoras, parcerias } from '@/lib/db/schema';
+import { and, asc, eq, desc, or, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { mkdir, writeFile } from 'fs/promises';
+import path from 'path';
 
 // Se possível use o remetente já configurado na conta Resend (mesmo que já esteja validado no DNS)
 function getFromAddress() {
@@ -39,25 +41,150 @@ function normalizePhone(value?: string | null) {
   return value?.toString().replace(/\D/g, '').trim() || '';
 }
 
-function dedupeSolicitacoes(rows: any[]) {
-  const seenEmails = new Set<string>();
-  const seenPhones = new Set<string>();
-  const seenNames = new Set<string>();
+function isDataImageUrl(value?: string | null) {
+  if (!value) return false;
+  return /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\r\n]+$/i.test(value.trim());
+}
 
-  return rows.filter((item) => {
-    const email = normalizeEmail(item.email);
-    const phone = normalizePhone(item.telefone);
-    const name = item.nome?.toString().toLowerCase().trim() || '';
-    const duplicate = (email && seenEmails.has(email))
-      || (phone && seenPhones.has(phone))
-      || (name && seenNames.has(name));
+function sanitizeAssetUrl(value?: string | null) {
+  const normalized = value?.toString().trim() || '';
+  if (!normalized) return '';
+  if (isDataImageUrl(normalized)) return '';
+  return normalized;
+}
 
-    if (duplicate) return false;
-    if (email) seenEmails.add(email);
-    if (phone) seenPhones.add(phone);
-    if (name) seenNames.add(name);
-    return true;
-  });
+function extractDataImageFromValue(value?: string | null) {
+  if (!value) return '';
+  const match = value.match(/(data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\r\n]+)/i);
+  if (!match?.[1]) return '';
+  const normalized = match[1].replace(/\s+/g, '');
+  return isDataImageUrl(normalized) ? normalized : '';
+}
+
+async function resolveAssetUrl(rawValue?: string | null) {
+  const normalized = rawValue?.toString().trim() || '';
+  const dataImage = extractDataImageFromValue(normalized);
+  if (dataImage) {
+    try {
+      return await persistDataImage(dataImage);
+    } catch {
+      return '';
+    }
+  }
+  return sanitizeAssetUrl(normalized);
+}
+
+async function extractAndPersistDataImage(value?: string | null) {
+  const dataImage = extractDataImageFromValue(value);
+  if (!dataImage) return '';
+  try {
+    return await persistDataImage(dataImage);
+  } catch {
+    return '';
+  }
+}
+
+async function resolveStoredAssetUrl(rawValue?: string | null) {
+  const normalized = sanitizeAssetUrl(rawValue);
+  if (normalized) return normalized;
+  return await extractAndPersistDataImage(rawValue);
+}
+
+async function persistDataImage(dataUrl: string) {
+  const dataMatch = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/i);
+  if (!dataMatch) return '';
+
+  const mime = dataMatch[1].toLowerCase();
+  const base64Payload = dataMatch[2].replace(/\s+/g, '');
+  if (!base64Payload) return '';
+
+  const extByMime: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/jpg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  };
+  const ext = extByMime[mime] || 'png';
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    const { put } = await import('@vercel/blob');
+    const buffer = Buffer.from(base64Payload, 'base64');
+    const blob = await put(fileName, buffer, {
+      access: 'public',
+      contentType: mime,
+      store: process.env.BLOB_STORE_ID,
+    });
+    return blob.url;
+  }
+
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+  await mkdir(uploadsDir, { recursive: true });
+  const buffer = Buffer.from(base64Payload, 'base64');
+  await writeFile(path.join(uploadsDir, fileName), buffer);
+  return `/uploads/${fileName}`;
+}
+
+function extractMensagemValue(mensagem: string | null | undefined, labels: string[]) {
+  if (!mensagem) return '';
+  const lines = mensagem
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  for (const line of lines) {
+    const lowerLine = line.toLowerCase();
+    for (const label of labels) {
+      const lowerLabel = `${label.toLowerCase()}:`;
+      if (lowerLine.startsWith(lowerLabel)) {
+        return line.slice(lowerLabel.length).trim();
+      }
+    }
+  }
+
+  return '';
+}
+
+async function upsertEscritoraFromSolicitacao(solicitacao: any, fallbackFotoUrl?: string | null) {
+  const nomeEscritora = solicitacao.nome?.trim() || '';
+  const livroTituloEscritora = extractMensagemValue(solicitacao.mensagem, ['Título do Livro']);
+  if (!nomeEscritora || !livroTituloEscritora) return false;
+
+  const generoEscritora = extractMensagemValue(solicitacao.mensagem, ['Gênero Literário']);
+  const linkCompraEscritora = extractMensagemValue(solicitacao.mensagem, ['Link de Compra']);
+  const siteEscritora = extractMensagemValue(solicitacao.mensagem, ['Site / Blog']);
+  const sinopseEscritora = extractMensagemValue(solicitacao.mensagem, ['Sinopse do Livro']);
+  const bioEscritora = extractMensagemValue(solicitacao.mensagem, ['Bio da Escritora']);
+  const capaEscritora = await resolveAssetUrl(extractMensagemValue(solicitacao.mensagem, ['Capa']));
+  const effectiveCapaUrl = capaEscritora || fallbackFotoUrl || sanitizeAssetUrl(solicitacao.fotoUrl) || null;
+
+  const payload = {
+    nome: nomeEscritora,
+    livroTitulo: livroTituloEscritora,
+    genero: generoEscritora || null,
+    sinopse: sinopseEscritora || null,
+    instagram: solicitacao.instagram || null,
+    linkCompra: linkCompraEscritora || null,
+    capaUrl: effectiveCapaUrl,
+    site: siteEscritora || solicitacao.site || null,
+    bio: bioEscritora || null,
+  };
+
+  const [existingEscritora] = await db.select({ id: escritoras.id })
+    .from(escritoras)
+    .where(and(
+      sql`LOWER(${escritoras.nome}) = LOWER(${nomeEscritora})`,
+      sql`LOWER(${escritoras.livroTitulo}) = LOWER(${livroTituloEscritora})`,
+    ));
+
+  if (existingEscritora?.id) {
+    await dbWrite.update(escritoras).set(payload).where(eq(escritoras.id, existingEscritora.id));
+  } else {
+    await dbWrite.insert(escritoras).values(payload);
+  }
+
+  return true;
 }
 
 async function requireSolicitacoesAdmin(request: Request) {
@@ -128,6 +255,13 @@ export async function GET(request: Request) {
         : and(...filters);
 
     const includeApprovedAt = await hasApprovedAtColumn();
+    const carteirinhaUrlField = sql<string | null>`(
+      SELECT url FROM carteirinhas
+      WHERE solicitacao_id = ${solicitacoes.id}
+      ORDER BY created_at DESC
+      LIMIT 1
+    )`;
+
     const selectFields = includeApprovedAt
       ? {
           id: solicitacoes.id,
@@ -141,6 +275,7 @@ export async function GET(request: Request) {
           mensagem: solicitacoes.mensagem,
           enderecoCompleto: solicitacoes.enderecoCompleto,
           fotoUrl: solicitacoes.fotoUrl,
+          carteirinhaUrl: carteirinhaUrlField.as('carteirinhaUrl'),
           status: solicitacoes.status,
           createdAt: solicitacoes.createdAt,
           approvedAt: solicitacoes.approvedAt,
@@ -157,17 +292,69 @@ export async function GET(request: Request) {
           mensagem: solicitacoes.mensagem,
           enderecoCompleto: solicitacoes.enderecoCompleto,
           fotoUrl: solicitacoes.fotoUrl,
+          carteirinhaUrl: carteirinhaUrlField.as('carteirinhaUrl'),
           status: solicitacoes.status,
           createdAt: solicitacoes.createdAt,
           approvedAt: sql<null>`null`.as('approvedAt'),
         };
 
     const [rows, countResult] = await Promise.all([
-      db.select(selectFields).from(solicitacoes).where(whereClause).orderBy(desc(solicitacoes.createdAt)).limit(limit).offset(offset),
+      db.select(selectFields).from(solicitacoes).where(whereClause).orderBy(asc(solicitacoes.createdAt)).limit(limit).offset(offset),
       db.select({ count: sql<number>`cast(count(*) as integer)` }).from(solicitacoes).where(whereClause),
     ]);
 
-    const filteredRows = dedupeSolicitacoes(rows);
+    const normalizedRows = await Promise.all(rows.map(async (row: any) => {
+      const currentFotoUrl = sanitizeAssetUrl(row.fotoUrl);
+      if (currentFotoUrl) {
+        return { ...row, fotoUrl: currentFotoUrl };
+      }
+
+      const dataImageFromFotoUrl = await extractAndPersistDataImage(row.fotoUrl);
+      if (dataImageFromFotoUrl) {
+        try {
+          await dbWrite.update(solicitacoes).set({ fotoUrl: dataImageFromFotoUrl }).where(eq(solicitacoes.id, row.id));
+        } catch {
+          // Ignora falha de persistência e retorna fallback para renderização imediata.
+        }
+        return {
+          ...row,
+          fotoUrl: dataImageFromFotoUrl,
+        };
+      }
+
+      const fallbackFromMensagem = sanitizeAssetUrl(extractMensagemValue(row.mensagem, ['Logo', 'Capa']));
+      if (fallbackFromMensagem) {
+        try {
+          await dbWrite.update(solicitacoes).set({ fotoUrl: fallbackFromMensagem }).where(eq(solicitacoes.id, row.id));
+        } catch {
+          // Ignora falha de persistência e retorna fallback para renderização imediata.
+        }
+        return {
+          ...row,
+          fotoUrl: fallbackFromMensagem,
+        };
+      }
+
+      const dataImageFromMensagem = await extractAndPersistDataImage(row.mensagem);
+      if (dataImageFromMensagem) {
+        try {
+          await dbWrite.update(solicitacoes).set({ fotoUrl: dataImageFromMensagem }).where(eq(solicitacoes.id, row.id));
+          return {
+            ...row,
+            fotoUrl: dataImageFromMensagem,
+          };
+        } catch {
+          // Em caso de erro, mantém sem imagem para não quebrar listagem.
+        }
+      }
+
+      return {
+        ...row,
+        fotoUrl: null,
+      };
+    }));
+
+    const filteredRows = normalizedRows;
     if (!hasPagination) {
       return NextResponse.json(filteredRows);
     }
@@ -176,7 +363,7 @@ export async function GET(request: Request) {
     const pages = Math.ceil(total / limit);
 
     return NextResponse.json({
-      data: rows,
+      data: normalizedRows,
       pagination: { page, limit, total, pages, hasMore: page < pages }
     });
   } catch (error: any) {
@@ -210,12 +397,14 @@ export async function POST(request: Request) {
     const instagram = (body.instagram || '').toString().trim();
     const categoria = (body.categoria || '').toString().trim();
     const frase = (body.frase || '').toString().trim();
-    const proposta = (body.mensagem || '').toString().trim();
     const editora = (body.editora || '').toString().trim();
     const descricao = (body.descricao || '').toString().trim();
     const linkInstagram = (body.linkInstagram || body.instagram || '').toString().trim();
     const whatsapp = (body.whatsapp || '').toString().trim();
-    const fotoUrl = (body.fotoUrl || body.foto_url || body.foto || '').toString().trim();
+    const capaUrl = await resolveAssetUrl((body.capaUrl || '').toString().trim());
+    const logoUrl = await resolveAssetUrl((body.logoUrl || '').toString().trim());
+    const fotoUrlRaw = (body.fotoUrl || body.foto_url || body.foto || body.capaUrl || body.logoUrl || '').toString().trim();
+    const fotoUrl = await resolveAssetUrl(fotoUrlRaw);
 
     const birthdate = (body.birthdate || '').toString().trim();
     const tempoClube = (body.tempoClube || '').toString().trim();
@@ -235,16 +424,18 @@ export async function POST(request: Request) {
     if (isEmpreendedora && responsavel) details.push(`Empreendedora: ${responsavel}`);
     if (isEmpreendedora && categoria) details.push(`Categoria: ${categoria}`);
     if (isEmpreendedora && frase) details.push(`A Essência (Frase de impacto): ${frase}`);
-    if (isEmpreendedora && proposta) details.push(`O que você cria? (Detalhes): ${proposta}`);
+    if (isEmpreendedora && logoUrl) details.push(`Logo: ${logoUrl}`);
     if (isParceria && editora) details.push(`Nome da Editora: ${editora}`);
     if (isParceria && descricao) details.push(`Descrição: ${descricao}`);
     if (isParceria && linkInstagram) details.push(`Link / Instagram: ${linkInstagram}`);
+    if (isParceria && logoUrl) details.push(`Logo: ${logoUrl}`);
     if (isEscritora && livroTitulo) details.push(`Título do Livro: ${livroTitulo}`);
     if (isEscritora && genero) details.push(`Gênero Literário: ${genero}`);
     if (isEscritora && linkCompra) details.push(`Link de Compra: ${linkCompra}`);
     if (isEscritora && site) details.push(`Site / Blog: ${site}`);
     if (isEscritora && sinopse) details.push(`Sinopse do Livro: ${sinopse}`);
     if (isEscritora && bio) details.push(`Bio da Escritora: ${bio}`);
+    if (isEscritora && capaUrl) details.push(`Capa: ${capaUrl}`);
 
     const mensagemExtraBase = body.enderecoCompleto 
       ? `Endereço para mimos: ${body.enderecoCompleto}`
@@ -270,8 +461,8 @@ export async function POST(request: Request) {
     }
 
     if (tipo === 'empreendedora') {
-      if (!responsavel || !categoria || !frase || !proposta) {
-        return NextResponse.json({ error: 'Empreendedora, categoria, frase e detalhes são obrigatórios' }, { status: 400 });
+      if (!responsavel || !categoria || !frase) {
+        return NextResponse.json({ error: 'Empreendedora, categoria e frase são obrigatórios' }, { status: 400 });
       }
     }
 
@@ -325,6 +516,7 @@ export async function POST(request: Request) {
       mensagem: mensagemExtra || null,
       enderecoCompleto: body.enderecoCompleto || null,
       fotoUrl: fotoUrl || null,
+      carteirinhaUrl: null,
     });
 
     // 2. Envio de e-mail (Admin + Usuário)
@@ -345,7 +537,8 @@ export async function POST(request: Request) {
 
         const instagramHtml = body.instagram ? `<p><strong>Instagram:</strong> ${body.instagram}</p>` : '';
         const siteHtml = body.site ? `<p><strong>Site / Blog:</strong> ${body.site}</p>` : '';
-        const capaHtml = body.capaUrl ? `<p><strong>Capa:</strong> ${body.capaUrl}</p>` : '';        const logoHtml = body.logoUrl ? `<p><strong>Logo:</strong> ${body.logoUrl}</p>` : '';
+        const capaHtml = capaUrl ? `<p><strong>Capa:</strong> ${capaUrl}</p>` : '';
+        const logoHtml = logoUrl ? `<p><strong>Logo:</strong> ${logoUrl}</p>` : '';
         const parceriaFields = `
               <p><strong>Nome:</strong> ${nome || 'Não informado'}</p>
               <p><strong>Telefone:</strong> ${telefone || 'Não informado'}</p>
@@ -364,7 +557,6 @@ export async function POST(request: Request) {
               <p><strong>Instagram (@):</strong> ${instagram || 'Não informado'}</p>
               <p><strong>Categoria:</strong> ${categoria || 'Não informado'}</p>
               <p><strong>A Essência (Frase de impacto):</strong> ${frase || 'Não informado'}</p>
-              <p><strong>O que você cria? (Detalhes):</strong> ${proposta || 'Não informado'}</p>
             `;
 
         const leitoraFields = `
@@ -401,8 +593,8 @@ export async function POST(request: Request) {
               ${isEscritora ? escritoraFields : ''}
               ${capaHtml}
               ${logoHtml}
-              ${body.capaUrl ? `<div style="margin-top:12px"><p><strong>Visualização da capa:</strong></p><img src="${body.capaUrl}" alt="Capa do livro" style="max-width:360px;max-height:480px;display:block;border:1px solid #ddd;border-radius:8px;" /></div>` : ''}
-              ${body.logoUrl ? `<div style="margin-top:12px"><p><strong>Visualização do logo:</strong></p><img src="${body.logoUrl}" alt="Logo" style="max-width:360px;max-height:360px;display:block;border:1px solid #ddd;border-radius:8px;" /></div>` : ''}
+              ${capaUrl ? `<div style="margin-top:12px"><p><strong>Visualização da capa:</strong></p><img src="${capaUrl}" alt="Capa do livro" style="max-width:360px;max-height:480px;display:block;border:1px solid #ddd;border-radius:8px;" /></div>` : ''}
+              ${logoUrl ? `<div style="margin-top:12px"><p><strong>Visualização do logo:</strong></p><img src="${logoUrl}" alt="Logo" style="max-width:360px;max-height:360px;display:block;border:1px solid #ddd;border-radius:8px;" /></div>` : ''}
               <p><strong>Observações:</strong> ${mensagemExtra || 'Sem mensagem'}</p>
             `;
         await sendEmail({
@@ -459,10 +651,20 @@ export async function PATCH(request: Request) {
   try {
     await requireSolicitacoesAdmin(request);
     const body = await request.json();
-    const { id, status } = body;
+    const { id, status, carteirinhaUrl, resendEmail } = body;
+    const isResend = resendEmail === true;
+    const rawFotoUrl = typeof body.fotoUrl === 'string' ? body.fotoUrl : '';
+    const normalizedFotoUrl = sanitizeAssetUrl(rawFotoUrl);
+    const resolvedFotoUrl = await resolveAssetUrl((body.fotoUrl || body.foto_url || body.foto || '').toString().trim());
+    const effectiveFotoUrl = resolvedFotoUrl || normalizedFotoUrl;
+    const isFotoUpload = effectiveFotoUrl.length > 0;
 
-    if (!id || !status || !['aprovada', 'rejeitada'].includes(status)) {
-      return NextResponse.json({ error: 'ID e status válidos são obrigatórios.' }, { status: 400 });
+    if (!id || (!status && !carteirinhaUrl && !isFotoUpload && !isResend)) {
+      return NextResponse.json({ error: 'ID e status, URL da carteirinha, URL da foto ou resendEmail são obrigatórios.' }, { status: 400 });
+    }
+
+    if (status && !['aprovada', 'rejeitada'].includes(status)) {
+      return NextResponse.json({ error: 'Status inválido.' }, { status: 400 });
     }
 
     const includeApprovedAt = await hasApprovedAtColumn();
@@ -475,6 +677,7 @@ export async function PATCH(request: Request) {
           telefone: solicitacoes.telefone,
           whatsapp: solicitacoes.whatsapp,
           fotoUrl: solicitacoes.fotoUrl,
+          carteirinhaUrl: solicitacoes.carteirinhaUrl,
           site: solicitacoes.site,
           instagram: solicitacoes.instagram,
           mensagem: solicitacoes.mensagem,
@@ -491,6 +694,7 @@ export async function PATCH(request: Request) {
           telefone: solicitacoes.telefone,
           whatsapp: solicitacoes.whatsapp,
           fotoUrl: solicitacoes.fotoUrl,
+          carteirinhaUrl: solicitacoes.carteirinhaUrl,
           site: solicitacoes.site,
           instagram: solicitacoes.instagram,
           mensagem: solicitacoes.mensagem,
@@ -503,18 +707,189 @@ export async function PATCH(request: Request) {
     const [solicitacao] = await db.select(selectFields).from(solicitacoes).where(eq(solicitacoes.id, id));
     if (!solicitacao) return NextResponse.json({ error: 'Não encontrado' }, { status: 404 });
 
+    const isCardUpload = typeof carteirinhaUrl === 'string' && carteirinhaUrl.trim().length > 0;
+
+    if (resendEmail === true && solicitacao.status !== 'aprovada') {
+      return NextResponse.json({ error: 'Só é possível reenviar e-mail para solicitações aprovadas.' }, { status: 400 });
+    }
+
+    const updateValues: any = {};
+    if (status) {
+      if (includeApprovedAt) {
+        updateValues.status = status;
+        updateValues.approvedAt = status === 'aprovada' ? new Date() : null;
+      } else {
+        updateValues.status = status;
+      }
+    }
+    if (isFotoUpload) {
+      updateValues.fotoUrl = effectiveFotoUrl;
+    }
+
+    const resolvedStoredSolicitacaoFotoUrl = await resolveStoredAssetUrl(solicitacao.fotoUrl);
+    const effectiveSolicitacaoFotoUrl = effectiveFotoUrl || resolvedStoredSolicitacaoFotoUrl;
+    if (!updateValues.fotoUrl && resolvedStoredSolicitacaoFotoUrl && sanitizeAssetUrl(solicitacao.fotoUrl) !== resolvedStoredSolicitacaoFotoUrl) {
+      updateValues.fotoUrl = resolvedStoredSolicitacaoFotoUrl;
+    }
+
     try {
-      await dbWrite.update(solicitacoes).set(includeApprovedAt ? { status, approvedAt: status === 'aprovada' ? new Date() : null } : { status }).where(eq(solicitacoes.id, id));
+      if (Object.keys(updateValues).length > 0) {
+        await dbWrite.update(solicitacoes).set(updateValues).where(eq(solicitacoes.id, id));
+      }
+
+      const wasAlreadyApproved = solicitacao.status === 'aprovada';
+      const shouldSyncApprovedRecords = status === 'aprovada' || (wasAlreadyApproved && isFotoUpload);
+
+      if (shouldSyncApprovedRecords && solicitacao.tipo === 'empreendedora') {
+        const negocio = solicitacao.nome?.trim() || '';
+        const nomeEmpreendedora = extractMensagemValue(solicitacao.mensagem, ['Empreendedora']);
+        const categoriaEmpreendedora = extractMensagemValue(solicitacao.mensagem, ['Categoria']);
+        const fraseEmpreendedora = extractMensagemValue(solicitacao.mensagem, ['A Essência (Frase de impacto)']);
+        const logoEmpreendedora = await resolveAssetUrl(extractMensagemValue(solicitacao.mensagem, ['Logo']));
+
+        if (negocio) {
+          const empFilters: any[] = [sql`LOWER(${empreendedoras.name}) = LOWER(${negocio})`];
+          if (nomeEmpreendedora) {
+            empFilters.push(sql`LOWER(${empreendedoras.feitoPor}) = LOWER(${nomeEmpreendedora})`);
+          }
+
+          const whereEmp = empFilters.length === 1 ? empFilters[0] : and(...empFilters);
+          const [existingEmpreendedora] = await db
+            .select({ id: empreendedoras.id })
+            .from(empreendedoras)
+            .where(whereEmp);
+
+          const payload = {
+            name: negocio,
+            feitoPor: nomeEmpreendedora || null,
+            frase: fraseEmpreendedora || null,
+            categoria: categoriaEmpreendedora || null,
+            instagram: solicitacao.instagram || null,
+            logoUrl: logoEmpreendedora || effectiveSolicitacaoFotoUrl || null,
+            website: solicitacao.site || null,
+            bio: null,
+          };
+
+          if (existingEmpreendedora?.id) {
+            await dbWrite
+              .update(empreendedoras)
+              .set(payload)
+              .where(eq(empreendedoras.id, existingEmpreendedora.id));
+          } else {
+            await dbWrite.insert(empreendedoras).values(payload);
+          }
+        }
+      }
+
+      if (shouldSyncApprovedRecords && solicitacao.tipo === 'escritora') {
+        await upsertEscritoraFromSolicitacao(solicitacao, effectiveSolicitacaoFotoUrl);
+      }
+
+      if (shouldSyncApprovedRecords && solicitacao.tipo === 'parceria') {
+        const nomeEditora = extractMensagemValue(solicitacao.mensagem, ['Nome da Editora']);
+        const descricaoParceria = extractMensagemValue(solicitacao.mensagem, ['Descrição']);
+        const linkParceria = extractMensagemValue(solicitacao.mensagem, ['Link / Instagram']);
+        const logoParceria = await resolveAssetUrl(extractMensagemValue(solicitacao.mensagem, ['Logo']));
+        const nomeParceria = nomeEditora || solicitacao.nome?.trim() || '';
+
+        if (nomeParceria) {
+          const [existingParceria] = await db
+            .select({ id: parcerias.id })
+            .from(parcerias)
+            .where(sql`LOWER(${parcerias.name}) = LOWER(${nomeParceria})`);
+
+          const payload = {
+            name: nomeParceria,
+            link: solicitacao.site || linkParceria || null,
+            description: descricaoParceria || null,
+            imagem: logoParceria || effectiveSolicitacaoFotoUrl || null,
+          };
+
+          if (existingParceria?.id) {
+            await dbWrite
+              .update(parcerias)
+              .set(payload)
+              .where(eq(parcerias.id, existingParceria.id));
+          } else {
+            await dbWrite.insert(parcerias).values(payload);
+          }
+        }
+      }
+
+      if (isCardUpload) {
+        const cardUrl = carteirinhaUrl.trim();
+        const normalizedUserEmail = normalizeEmail(solicitacao.email);
+        let colaboradoraId: string | null = null;
+
+        if (normalizedUserEmail) {
+          const [existingUser] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedUserEmail})`);
+          colaboradoraId = existingUser?.id ?? null;
+          if (colaboradoraId) {
+            await dbWrite.update(colaboradoras).set({ carteirinhaUrl: cardUrl }).where(eq(colaboradoras.id, colaboradoraId));
+          }
+        }
+
+        await dbWrite.insert(carteirinhas).values({
+          solicitacaoId: id,
+          colaboradoraId,
+          url: cardUrl,
+        });
+      }
     } catch (err) {
       if (isWriteBlockedError(err)) {
-        return NextResponse.json({ error: 'Não é possível aprovar solicitações: banco em modo somente leitura' }, { status: 503 });
+        return NextResponse.json({ error: 'Não é possível atualizar solicitações: banco em modo somente leitura' }, { status: 503 });
       }
       throw err;
     }
 
     const emailStatus: { adminAction: boolean; user: boolean; hasKey: boolean; errors: string[] } = { adminAction: true, user: false, hasKey: !!(process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY), errors: [] };
+    const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
+
+    if (isResend) {
+      if (!solicitacao.carteirinhaUrl) {
+        return NextResponse.json({ error: 'Não há carteirinha cadastrada para reenviar.' }, { status: 400 });
+      }
+
+      if (!apiKey) {
+        console.warn('BREVO_API_KEY não configurada. E-mail de reenviar não será enviado.');
+        emailStatus.errors.push('BREVO_API_KEY não configurada');
+      } else {
+        try {
+          const { sendEmail } = await import('@/lib/email-client');
+          const { cartaCarteirinhaDisponivel } = await import('@/lib/email-templates');
+          const normalizedUserEmail = normalizeEmail(solicitacao.email);
+          if (!normalizedUserEmail) {
+            emailStatus.errors.push('E-mail inválido para reenvio.');
+          } else {
+            await sendEmail({
+              from: getFromAddress(),
+              to: normalizedUserEmail,
+              subject: 'Sua carteirinha já está disponível – Clube das Leitoras',
+              html: cartaCarteirinhaDisponivel({
+                nome: solicitacao.nome,
+                cartaUrl: solicitacao.carteirinhaUrl,
+                siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
+              }),
+            });
+            emailStatus.user = true;
+            console.log('✅ E-mail de carteirinha reenviado para:', normalizedUserEmail);
+          }
+        } catch (err: any) {
+          const errorMessage = err && err instanceof Error ? err.message : String(err);
+          console.error('❌ Erro ao reenviar e-mail da carteirinha:', err);
+          if (err?.status === 403 || /403/.test(errorMessage)) {
+            emailStatus.errors.push('user:403 - Brevo não autorizado. Verifique remetente/destinatário e token.');
+          } else {
+            emailStatus.errors.push(errorMessage);
+          }
+        }
+      }
+
+      (emailStatus as any).sent = !!emailStatus.user;
+      return NextResponse.json({ success: true, emailStatus }, { status: 200 });
+    }
+
     if (status === 'aprovada') {
-      const apiKey = process.env.BREVO_API_KEY ?? process.env.RESEND_API_KEY;
       if (!apiKey) {
         console.warn('BREVO_API_KEY não configurada. E-mail de aprovação não será enviado.');
         emailStatus.errors.push('BREVO_API_KEY não configurada');
@@ -606,6 +981,55 @@ export async function PATCH(request: Request) {
             } else {
               emailStatus.errors.push(errorMessage);
             }
+          }
+        }
+      }
+    }
+
+    if (typeof carteirinhaUrl === 'string' && carteirinhaUrl.trim().length > 0) {
+      const normalizedUserEmail = normalizeEmail(solicitacao.email);
+      if (!apiKey) {
+        console.warn('BREVO_API_KEY não configurada. E-mail da carteirinha não será enviado.');
+        emailStatus.errors.push('BREVO_API_KEY não configurada');
+      } else if (!normalizedUserEmail) {
+        emailStatus.errors.push('E-mail inválido para envio de carteirinha.');
+      } else {
+        try {
+          const { sendEmail } = await import('@/lib/email-client');
+          const { cartaCarteirinhaDisponivel } = await import('@/lib/email-templates');
+          const cardUrl = carteirinhaUrl.trim();
+          const [existingUser] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedUserEmail})`);
+          const colaboradoraId = existingUser?.id ?? null;
+
+          await dbWrite.insert(carteirinhas).values({
+            solicitacaoId: solicitacao.id,
+            colaboradoraId,
+            url: cardUrl,
+          });
+
+          if (colaboradoraId) {
+            await dbWrite.update(colaboradoras).set({ carteirinhaUrl: cardUrl }).where(eq(colaboradoras.id, colaboradoraId));
+          }
+
+          await sendEmail({
+            from: getFromAddress(),
+            to: normalizedUserEmail,
+            subject: 'Sua carteirinha já está disponível – Clube das Leitoras',
+            html: cartaCarteirinhaDisponivel({
+              nome: solicitacao.nome,
+              cartaUrl: cardUrl,
+              siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://clubedasleitoras.com.br',
+            }),
+          });
+          emailStatus.user = true;
+          console.log('✅ E-mail com carteirinha enviado para:', normalizedUserEmail);
+        } catch (err: any) {
+          const errorMessage = err && err instanceof Error ? err.message : String(err);
+          console.error('❌ Erro ao enviar e-mail da carteirinha:', err);
+          if (err?.status === 403 || /403/.test(errorMessage)) {
+            emailStatus.errors.push('user:403 - Brevo não autorizado. Verifique remitente/destinatário e token.');
+          } else {
+            emailStatus.errors.push(errorMessage);
           }
         }
       }

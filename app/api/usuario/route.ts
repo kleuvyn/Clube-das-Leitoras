@@ -1,16 +1,23 @@
 import { NextResponse } from 'next/server';
 import { requireMember } from '@/lib/auth';
 import { db, dbWrite } from '@/lib/db';
-import { colaboradoras } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { colaboradoras, carteirinhas } from '@/lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   try {
     const user = await requireMember();
     if (!user) return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
 
+    const [card] = await db
+      .select({ url: carteirinhas.url })
+      .from(carteirinhas)
+      .where(eq(carteirinhas.colaboradoraId, user.id))
+      .orderBy(desc(carteirinhas.createdAt))
+      .limit(1);
+
     const { password: _, ...userWithoutPassword } = user;
-    return NextResponse.json({ user: userWithoutPassword }, { status: 200 });
+    return NextResponse.json({ user: { ...userWithoutPassword, carteirinhaUrl: card?.url ?? null } }, { status: 200 });
   } catch (error: any) {
     return NextResponse.json({ error: error?.message ?? 'Erro ao buscar dados do usuário' }, { status: error?.status ?? 500 });
   }
