@@ -31,7 +31,10 @@ export default function LeitorasAdmin() {
   const load = async (pageNum = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/colaboradores?page=${pageNum}&limit=${limit}`);
+      const params = new URLSearchParams({ page: String(pageNum), limit: String(limit) });
+      if (statusFilter !== 'todas') params.append('status', statusFilter);
+      if (searchTerm.trim()) params.append('search', searchTerm.trim());
+      const res = await fetch(`/api/colaboradores?${params.toString()}`, { credentials: 'include' });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLista(Array.isArray(data.data) ? data.data : []);
@@ -41,7 +44,7 @@ export default function LeitorasAdmin() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load(1); }, []);
+  useEffect(() => { load(1); }, [statusFilter, searchTerm]);
 
   const scrollTop = () => document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -63,6 +66,7 @@ export default function LeitorasAdmin() {
     try {
       const res = await fetch('/api/colaboradores/invite', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, name, role: inviteRole }),
       });
@@ -93,6 +97,7 @@ export default function LeitorasAdmin() {
     try {
       const res = await fetch('/api/colaboradores', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: u.id, status: 'bloqueada' }),
       });
@@ -112,6 +117,7 @@ export default function LeitorasAdmin() {
     try {
       const res = await fetch('/api/colaboradores', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: u.id, status: 'ativa' }),
       });
@@ -131,6 +137,7 @@ export default function LeitorasAdmin() {
     try {
       const res = await fetch('/api/colaboradores', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: u.id, status: 'excluida' }),
       });
@@ -147,7 +154,7 @@ export default function LeitorasAdmin() {
   const handleDelete = async (u: any) => {
     if (!confirm(`Remover o acesso de "${u.name}"? Esta ação não pode ser desfeita.`)) return;
     try {
-      const res = await fetch(`/api/colaboradores?id=${u.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/colaboradores?id=${u.id}`, { method: 'DELETE', credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Erro ao remover');
       toast.success(`${u.name} removida do clube.`);
@@ -163,6 +170,7 @@ export default function LeitorasAdmin() {
     try {
       const res = await fetch('/api/colaboradores/approve', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: u.id }),
       });
@@ -183,6 +191,7 @@ export default function LeitorasAdmin() {
     try {
       const res = await fetch('/api/colaboradores', {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: editing.id, name: editing.name, role: editing.role, active: editing.active }),
       });

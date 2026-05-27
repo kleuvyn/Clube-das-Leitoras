@@ -12,6 +12,8 @@ type Solicitacao = {
   nome: string;
   email: string;
   telefone?: string;
+  whatsapp?: string;
+  fotoUrl?: string;
   instagram?: string;
   site?: string;
   mensagem?: string;
@@ -24,6 +26,7 @@ type Solicitacao = {
 export default function SolicitacoesAdmin() {
   const [solicitacoes, setSolicitacoes] = useState<Solicitacao[]>([]);
   const [filtro, setFiltro] = useState('todas');
+  type SolicitacaoType = 'todas' | 'leitora' | 'escritora' | 'empreendedora' | 'parceria' | 'carteirinha';
   const [statusFiltro, setStatusFiltro] = useState('pendente');
   const [showAllPendentes, setShowAllPendentes] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,7 +80,7 @@ export default function SolicitacoesAdmin() {
           toast.warning('Aprovada, mas houve problema no envio de notificação. Verifique os logs.', { id: loadingToast });
           console.warn('Resposta de emailStatus:', data?.emailStatus);
         }
-      } else {
+      } else if (status === 'rejeitada') {
         toast.success('Solicitação rejeitada.', { id: loadingToast });
       }
       await load(page);
@@ -86,28 +89,66 @@ export default function SolicitacoesAdmin() {
     }
   };
 
-  const updateLeitoraStatus = async (email: string, status: 'ativa'|'bloqueada'|'excluida') => {
+  const excluirSolicitacao = async (id: string) => {
+    if (!confirm('Excluir esta solicitação permanentemente?')) return;
+    const loadingToast = toast.loading('Excluindo solicitação...');
+    try {
+      const res = await fetch(`/api/solicitacoes?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir');
+      toast.success('Solicitação excluída.', { id: loadingToast });
+      await load(page);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao excluir solicitação.', { id: loadingToast });
+    }
+  };
+
+  const updateLeitoraStatus = async (email: string, status: string) => {
+    if (!confirm(`Alterar status da leitora com e-mail ${email} para ${status}?`)) return;
     const loadingToast = toast.loading('Atualizando status da leitora...');
     try {
-      const resList = await fetch('/api/colaboradores', { credentials: 'include' });
-      if (!resList.ok) throw new Error('Erro ao buscar colaboradoras');
-      const colaboradorasData = await resList.json();
-      const leitora = colaboradorasData.find((u:any) => u.email?.toLowerCase() === email?.toLowerCase());
-      if (!leitora) throw new Error('Leitora não encontrada no cadastro de colaboradoras');
-
+      const searchRes = await fetch(`/api/colaboradores?email=${encodeURIComponent(email)}`, {
+        credentials: 'include',
+      });
+      const searchData = await searchRes.json();
+      if (!searchRes.ok || !Array.isArray(searchData.data) || searchData.data.length === 0) {
+        throw new Error('Leitora não encontrada para o e-mail informado.');
+      }
+      const user = searchData.data[0];
       const res = await fetch('/api/colaboradores', {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: leitora.id, status }),
+        body: JSON.stringify({ id: user.id, status }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar leitora');
-
-      toast.success(`Leitora ${status === 'ativa' ? 'ativada' : status === 'bloqueada' ? 'bloqueada' : 'excluída'} com sucesso.`, { id: loadingToast });
+      if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar status da leitora');
+      toast.success('Status da leitora atualizado.', { id: loadingToast });
       await load(page);
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao atualizar leitora.', { id: loadingToast });
+      toast.error(err.message || 'Erro ao atualizar status da leitora.', { id: loadingToast });
+    }
+  };
+
+  const handleDownloadPhoto = async (url: string, name: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const fileExtension = blob.type.split('/')[1] || 'jpg';
+      const fileName = `${name.replace(/\s+/g, '_') || 'foto'}.${fileExtension}`;
+      const objectUrl = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = objectUrl;
+      anchor.download = fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (error) {
+      window.open(url, '_blank');
     }
   };
 
@@ -131,7 +172,7 @@ export default function SolicitacoesAdmin() {
 
       {/* Barra de Filtros Estilizada */}
       <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-xl w-fit">
-        {['todas', 'leitora', 'escritora', 'empreendedora', 'parceria'].map(f => (
+        {['todas', 'leitora', 'escritora', 'empreendedora', 'parceria', 'carteirinha'].map(f => (
           <button
             key={f}
             onClick={() => setFiltro(f)}
@@ -222,12 +263,29 @@ export default function SolicitacoesAdmin() {
                   </div>
                   <div className="space-y-2 text-sm text-slate-500">
                     <div className="flex items-center gap-2"><Mail size={14} className="opacity-40" /> {item.email}</div>
+                    {item.whatsapp && <div className="flex items-center gap-2"><Phone size={14} className="opacity-40" /> {item.whatsapp}</div>}
                     {item.telefone && <div className="flex items-center gap-2"><Phone size={14} className="opacity-40" /> {item.telefone}</div>}
                     {item.instagram && <div className="flex items-center gap-2"><Instagram size={14} className="opacity-40" /> <a href={item.instagram.startsWith('http') ? item.instagram : `https://instagram.com/${item.instagram.replace('@','')}`} target="_blank" className="text-blue-600 underline">{item.instagram}</a></div>}
                     {item.site && <div className="flex items-center gap-2"><MapPin size={14} className="opacity-40" /> <a href={item.site.startsWith('http') ? item.site : `https://${item.site}`} target="_blank" className="text-blue-600 underline">{item.site}</a></div>}
                     <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> Enviado em {normalizeDateValue(item.createdAt).toLocaleDateString('pt-BR')}</div>
                     {item.approvedAt && <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> Aceito em {normalizeDateValue(item.approvedAt).toLocaleDateString('pt-BR')}</div>}
                   </div>
+                  {item.fotoUrl && (
+                    <div className="mt-4 rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                      <img src={item.fotoUrl} alt={`Foto de ${item.nome}`} className="w-full h-auto object-cover" />
+                    </div>
+                  )}
+                  {item.fotoUrl && (
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        onClick={() => handleDownloadPhoto(item.fotoUrl!, item.nome)}
+                        className="w-full justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-700"
+                      >
+                        Baixar foto
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Coluna 2: Conteúdo/Mensagem */}
@@ -266,12 +324,21 @@ export default function SolicitacoesAdmin() {
                   ) : (
                     <div className="text-center p-4 border border-dashed border-slate-200 rounded-2xl text-xs">
                       <p className="font-semibold text-slate-700">Status: {item.status}</p>
-                      {item.tipo === 'leitora' && (
+                      {item.status === 'rejeitada' && (
+                        <div className="mt-3 space-y-2">
+                          <Button onClick={() => atualizarStatus(item.id, 'aprovada')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-10 text-xs">Aceitar agora</Button>
+                          <Button onClick={() => excluirSolicitacao(item.id)} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs">Excluir solicitação</Button>
+                        </div>
+                      )}
+                      {item.status === 'aprovada' && item.tipo === 'leitora' && (
                         <div className="mt-3 space-y-2">
                           <Button onClick={() => updateLeitoraStatus(item.email, 'bloqueada')} className="w-full bg-orange-500 hover:bg-orange-600 rounded-2xl h-10 text-xs" >Bloquear</Button>
                           <Button onClick={() => updateLeitoraStatus(item.email, 'ativa')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-10 text-xs" >Reativar</Button>
                           <Button onClick={() => updateLeitoraStatus(item.email, 'excluida')} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs" >Excluir</Button>
                         </div>
+                      )}
+                      {item.status !== 'pendente' && item.status !== 'rejeitada' && item.status !== 'aprovada' && (
+                        <Button onClick={() => excluirSolicitacao(item.id)} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs">Excluir solicitação</Button>
                       )}
                     </div>
                   )}

@@ -37,9 +37,16 @@ async function ensureTableExists() {
         id integer PRIMARY KEY AUTOINCREMENT NOT NULL,
         mes_base text NOT NULL,
         urna_aberta integer NOT NULL DEFAULT 1,
+        foto_url text,
         updated_at integer DEFAULT (cast(strftime('%s', 'now') as int)) NOT NULL
       )
     `);
+
+    const configColumns = await client.execute("PRAGMA table_info('sorteios_config')");
+    const hasFotoUrl = configColumns.rows.some((row: any) => row?.name === 'foto_url' || row?.[0] === 'foto_url');
+    if (!hasFotoUrl) {
+      await client.execute('ALTER TABLE sorteios_config ADD COLUMN foto_url text');
+    }
   } catch (err) {
     console.error('Erro ao verificar/criar tabelas de sorteios:', err);
   }
@@ -92,7 +99,15 @@ export async function GET() {
       .where(eq(sorteiosPremios.mesBase, mesAtualRef))
       .orderBy(sorteiosPremios.createdAt);
     const urnaAberta = configRow ? configRow.urnaAberta === 1 : true;
-    return NextResponse.json({ participantes, historico, premios, urnaAberta, roda: { status: urnaAberta ? 'ativa' : 'pausada' }, activeMesBase: mesAtualRef });
+    return NextResponse.json({
+      participantes,
+      historico,
+      premios,
+      urnaAberta,
+      roda: { status: urnaAberta ? 'ativa' : 'pausada' },
+      activeMesBase: mesAtualRef,
+      sorteioFotoUrl: configRow?.fotoUrl || null,
+    });
   } catch (error: any) {
     console.error("Erro interno GET sorteios:", error);
     return NextResponse.json({ error: 'Erro ao carregar dados', details: error?.message }, { status: 500 });
@@ -104,7 +119,7 @@ export async function POST(req: Request) {
     await ensureTableExists();
     const { action, payload } = await req.json();
 
-    if (['salvarHistorico', 'addPremio', 'setUrnaStatus', 'removePremio'].includes(action)) {
+    if (['salvarHistorico', 'addPremio', 'setUrnaStatus', 'removePremio', 'setSorteioFoto'].includes(action)) {
       await requireAdmin();
     }
 
@@ -188,10 +203,32 @@ export async function POST(req: Request) {
         await dbWrite.insert(sorteiosConfig).values({
           mesBase: activeMesBase,
           urnaAberta: payload.urnaAberta ? 1 : 0,
+          updatedAt: new Date(),
         });
       }
 
       return NextResponse.json({ success: true, urnaAberta: payload.urnaAberta });
+    }
+
+    if (action === 'setSorteioFoto') {
+      const updated = await dbWrite.update(sorteiosConfig)
+        .set({
+          fotoUrl: payload.fotoUrl,
+          updatedAt: new Date(),
+        })
+        .where(eq(sorteiosConfig.mesBase, activeMesBase))
+        .returning();
+
+      if (!updated.length) {
+        await dbWrite.insert(sorteiosConfig).values({
+          mesBase: activeMesBase,
+          urnaAberta: 1,
+          fotoUrl: payload.fotoUrl,
+          updatedAt: new Date(),
+        });
+      }
+
+      return NextResponse.json({ success: true, fotoUrl: payload.fotoUrl });
     }
 
     if (action === 'removePremio') {

@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   Instagram, BookOpen, ShoppingCart, Globe, Quote, Feather, 
   Star, ArrowLeft, X, CheckCircle2, PencilLine, Heart 
 } from "lucide-react";
+import { uploadFile } from '@/lib/upload-client';
 
 // Definições de Estilo Editorial do Clube
 const rosaPrincipal = "#C47E8A";
@@ -42,6 +43,9 @@ export default function EscritorasPage() {
   const [solEmail, setSolEmail] = useState('');
   const [solTelefone, setSolTelefone] = useState('');
   const [solTitulo, setSolTitulo] = useState('');
+  const [solCapaUrl, setSolCapaUrl] = useState('');
+  const [solUploadingCapa, setSolUploadingCapa] = useState(false);
+  const solCapaInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (modalOpen) {
@@ -108,6 +112,7 @@ export default function EscritorasPage() {
           site: solSite,
           sinopse: solSinopse,
           bio: solBio,
+          capaUrl: solCapaUrl || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -120,7 +125,7 @@ export default function EscritorasPage() {
       
       // Limpar campos após sucesso
       setSolNome(''); setSolEmail(''); setSolTelefone(''); setSolTitulo(''); setSolGenero(''); setSolSinopse(''); 
-      setSolInstagram(''); setSolLinkCompra(''); setSolSite(''); setSolBio('');
+      setSolInstagram(''); setSolLinkCompra(''); setSolSite(''); setSolBio(''); setSolCapaUrl('');
       
       setTimeout(() => { setSolEnviado(false); setModalOpen(false); }, 3000);
     } catch (err) {
@@ -344,8 +349,8 @@ export default function EscritorasPage() {
 
       {/* ─── MODAL DE CADASTRO REFINADO ─── */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[999999] flex items-start md:items-center justify-center p-4 pt-10 overflow-y-auto">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
+        <div className="fixed inset-0 z-[1000000] flex items-start md:items-center justify-center p-4 pt-32 md:pt-20 overflow-y-auto">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setModalOpen(false)} />
           
           <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[95vh]">
             <button onClick={() => setModalOpen(false)} className="absolute right-8 top-8 p-2 hover:bg-black/5 rounded-full transition-colors z-10">
@@ -364,7 +369,7 @@ export default function EscritorasPage() {
                 <div className="text-[8px] uppercase tracking-widest opacity-30 italic font-bold">Curadoria Literária</div>
               </div>
 
-              <div className="md:col-span-3 p-8 md:p-10 flex flex-col min-h-0">
+              <div className="md:col-span-3 p-8 md:p-10 flex flex-col min-h-0 relative">
                 {/* Cabeçalho sticky para manter título visível */}
                 <div className="sticky top-0 left-0 right-0 z-20 bg-[#FDFCFB] pt-3 pb-4 md:pt-0 md:pb-0 border-b border-black/5">
                   <div className="flex items-center justify-between">
@@ -429,6 +434,46 @@ export default function EscritorasPage() {
                     </div>
 
                     <div className="space-y-1">
+                      <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Capa do Livro</label>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => solCapaInputRef.current?.click()}
+                          disabled={solUploadingCapa}
+                          className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-3 text-xs font-semibold transition-all hover:border-[#C47E8A] disabled:cursor-wait disabled:opacity-50"
+                        >
+                          {solUploadingCapa ? 'Carregando...' : 'Enviar capa'}
+                        </button>
+                        {solCapaUrl && (
+                          <span className="text-[10px] text-slate-500 line-clamp-1">Capa pronta</span>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        ref={solCapaInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setSolUploadingCapa(true);
+                          try {
+                            const url = await uploadFile(file);
+                            setSolCapaUrl(url);
+                          } catch (err: any) {
+                            alert(err?.message || 'Erro ao enviar capa.');
+                          } finally {
+                            setSolUploadingCapa(false);
+                            if (solCapaInputRef.current) solCapaInputRef.current.value = '';
+                          }
+                        }}
+                      />
+                      {solCapaUrl && (
+                        <img src={solCapaUrl} alt="Capa do livro" className="mt-2 h-24 w-auto rounded-xl object-cover border border-black/10" />
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
                       <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Sinopse do Livro</label>
                       <textarea value={solSinopse} onChange={e => setSolSinopse(e.target.value)} className="w-full bg-black/5 rounded-xl p-4 text-sm focus:ring-1 focus:ring-[#C47E8A] outline-none" rows={3} />
                     </div>
@@ -439,7 +484,7 @@ export default function EscritorasPage() {
                       </div>
                     </div>
 
-                    <div className="sticky bottom-0 left-0 right-0 z-30 border-t border-black/10 p-4 bg-[#FDFCFB] backdrop-blur-sm">
+                    <div className="absolute bottom-0 left-0 right-0 z-30 border-t border-black/10 p-4 bg-[#FDFCFB] backdrop-blur-sm">
                       <button
                         onClick={enviarSolicitacaoEscritora}
                         disabled={solEnviando}

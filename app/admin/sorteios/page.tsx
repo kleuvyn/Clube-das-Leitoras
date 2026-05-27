@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { 
   Gift, Loader2, Plus, Trash2, Search, ShieldCheck, 
@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { normalizeDateValue, getCurrentMonthReference } from '@/lib/utils';
-
+import { uploadFile } from '@/lib/upload-client';
 type Participante = { id?: string; nome: string };
 type SorteioHistorico = { id?: string; nome: string; premio: string; dataSorteio?: string };
 type SorteioPremio = { id: string; premio: string; mesBase: string };
@@ -22,6 +22,8 @@ export default function AdminSorteiosPage() {
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [historico, setHistorico] = useState<SorteioHistorico[]>([]);
   const [urnaAberta, setUrnaAberta] = useState(true);
+  const [sorteioFotoUrl, setSorteioFotoUrl] = useState<string>('');
+  const [uploadingFoto, setUploadingFoto] = useState(false);
 
   // States - Interação UI
   const [busca, setBusca] = useState('');
@@ -47,6 +49,7 @@ export default function AdminSorteiosPage() {
       setParticipantes(data.participantes || []);
       setHistorico(data.historico || []);
       setUrnaAberta(data.urnaAberta ?? true);
+      setSorteioFotoUrl(data.sorteioFotoUrl || '');
     } catch (err) {
       console.error(err);
       toast.error('Erro ao carregar dados do Sorteio da base.');
@@ -142,6 +145,32 @@ export default function AdminSorteiosPage() {
     } catch (error) {
       console.error('Erro ao alterar o estado da urna:', error);
       toast.error('Erro ao alterar o estado da urna.');
+    }
+  };
+
+  const handleUploadSorteioFoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingFoto(true);
+    try {
+      const url = await uploadFile(file);
+      const res = await fetch('/api/sorteios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'setSorteioFoto', payload: { fotoUrl: url } }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.error || 'Erro ao salvar a foto do sorteio.');
+      }
+      setSorteioFotoUrl(url);
+      toast.success('Foto do sorteio atualizada com sucesso!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao enviar a foto do sorteio.');
+    } finally {
+      setUploadingFoto(false);
     }
   };
 
@@ -345,6 +374,31 @@ export default function AdminSorteiosPage() {
             <h3 className="text-2xl font-light italic mb-6 text-center mt-2 border-b pb-4" style={{ borderColor: corDestaque + '30', color: corDestaque }}>
               {mesAtualRef}
             </h3>
+
+            <div className="mb-6">
+              <label className="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-bold">Foto do Sorteio</label>
+              <div className="mt-3 rounded-3xl bg-[#FAFAF5] border border-[#EDEBE6] p-4">
+                {sorteioFotoUrl ? (
+                  <div className="space-y-3">
+                    <div className="overflow-hidden rounded-3xl border border-[#D8D2C5]">
+                      <img src={sorteioFotoUrl} alt="Foto do sorteio" className="w-full h-auto object-cover" />
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <label className="cursor-pointer rounded-full bg-[#B06543] px-4 py-2 text-xs uppercase tracking-[0.2em] text-white">
+                        <input type="file" accept="image/*" onChange={handleUploadSorteioFoto} className="hidden" />
+                        {uploadingFoto ? 'Enviando...' : 'Substituir foto'}
+                      </label>
+                      <span className="text-[10px] text-slate-500">Tamanho máximo 2MB.</span>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center rounded-3xl border border-dashed border-[#D8D2C5] h-40 cursor-pointer text-slate-500 bg-white">
+                    <input type="file" accept="image/*" onChange={handleUploadSorteioFoto} className="hidden" />
+                    {uploadingFoto ? 'Enviando foto...' : 'Clique para enviar a foto do sorteio'}
+                  </label>
+                )}
+              </div>
+            </div>
 
             {/* Resultado do Sorteio */}
             <div className="bg-[#FAFAF5] border border-[#EDEBE6] rounded-xl min-h-48 flex flex-col items-center justify-center p-6 text-center shadow-inner mb-6 relative">

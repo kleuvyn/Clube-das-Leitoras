@@ -1,8 +1,10 @@
 "use client";
 
+import Image from 'next/image';
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { uploadFile } from '@/lib/upload-client';
 import { 
   Plus, Trash2, Instagram, Image as ImageIcon, 
   Loader2, Save, Star, Heart, Info, UploadCloud, X, Pencil
@@ -21,6 +23,8 @@ export default function AdminParcerias() {
   const limit = 10;
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
+  const [logoPreviewUrl, setLogoPreviewUrl] = useState('');
   
   const [novaParceria, setNovaParceria] = useState({
     nome: '',
@@ -28,6 +32,14 @@ export default function AdminParcerias() {
     link: '',
     img: '' 
   });
+
+  useEffect(() => {
+    return () => {
+      if (logoPreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(logoPreviewUrl);
+      }
+    };
+  }, [logoPreviewUrl]);
 
   const loadParcerias = async (pageNum = page) => {
     setLoading(true);
@@ -51,13 +63,12 @@ export default function AdminParcerias() {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNovaParceria({ ...novaParceria, img: reader.result as string });
-        setIsUploading(false);
-        toast.success("Logo carregada!");
-      };
-      reader.readAsDataURL(file);
+      const preview = URL.createObjectURL(file);
+      setLogoPreviewUrl(preview);
+      setSelectedLogoFile(file);
+      setNovaParceria(prev => ({ ...prev, img: preview }));
+      setIsUploading(false);
+      toast.success("Logo carregada!");
     }
   };
 
@@ -66,35 +77,45 @@ export default function AdminParcerias() {
       return toast.error("Nome e Logo são obrigatórios!");
     }
 
+    setIsUploading(true);
     try {
+      const payload = { ...novaParceria };
+      if (selectedLogoFile) {
+        payload.img = await uploadFile(selectedLogoFile);
+      }
+
       if (editandoId) {
-        
         const res = await fetch(`/api/parcerias?id=${editandoId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(novaParceria),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           toast.success("Parceira atualizada!");
           setEditandoId(null);
+          setSelectedLogoFile(null);
+          setLogoPreviewUrl('');
           setNovaParceria({ nome: '', info: '', link: '', img: '' });
           loadParcerias(page);
         }
       } else {
-        
         const res = await fetch('/api/parcerias', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(novaParceria),
+          body: JSON.stringify(payload),
         });
         if (res.ok) {
           toast.success("Parceira adicionada!");
+          setSelectedLogoFile(null);
+          setLogoPreviewUrl('');
           setNovaParceria({ nome: '', info: '', link: '', img: '' });
           loadParcerias(page);
         }
       }
     } catch (e) {
       toast.error("Erro ao salvar parceria.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -245,7 +266,7 @@ export default function AdminParcerias() {
                 <div className="flex gap-4 items-start">
                   <div className="w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center p-2">
                     {parceiro.imagem ? (
-                      <img src={parceiro.imagem} alt="Logo" className="w-full h-full object-contain" />
+                      <Image src={parceiro.imagem} alt="Logo" width={64} height={64} className="w-full h-full object-contain" />
                     ) : (
                       <ImageIcon className="text-slate-200" size={20} />
                     )}

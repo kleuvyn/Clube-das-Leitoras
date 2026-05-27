@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { db, dbWrite } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { and, eq, desc, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
@@ -10,46 +10,79 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const emailSearch = searchParams.get('email')?.toLowerCase().trim() || '';
+    const statusSearch = searchParams.get('status')?.toLowerCase().trim() || '';
+    const search = searchParams.get('search')?.trim().toLowerCase() || '';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const offset = (page - 1) * limit;
 
+    let leitorasQuery = db
+      .select({
+        id: colaboradoras.id,
+        email: colaboradoras.email,
+        name: colaboradoras.name,
+        avatarUrl: colaboradoras.avatarUrl,
+        role: colaboradoras.role,
+        active: colaboradoras.active,
+        status: colaboradoras.status,
+        phone: colaboradoras.phone,
+        birthdate: colaboradoras.birthdate,
+        tempoClube: colaboradoras.tempoClube,
+        enderecoCompleto: colaboradoras.enderecoCompleto,
+        cartaMimo: colaboradoras.cartaMimo,
+        enviosRealizados: colaboradoras.enviosRealizados,
+        ultimaInteracao: colaboradoras.ultimaInteracao,
+        gdprConsentido: colaboradoras.gdprConsentido,
+        gdprConsentidoEm: colaboradoras.gdprConsentidoEm,
+        gdprConsentimentoVersao: colaboradoras.gdprConsentimentoVersao,
+        gdprConsentimentoFinalidade: colaboradoras.gdprConsentimentoFinalidade,
+        createdAt: colaboradoras.createdAt,
+      })
+      .from(colaboradoras)
+      .orderBy(desc(colaboradoras.createdAt));
+
+    if (emailSearch) {
+      leitorasQuery = leitorasQuery.where(sql`LOWER(${colaboradoras.email}) = ${emailSearch}`);
+    }
+
+    if (statusSearch && statusSearch !== 'todas') {
+      leitorasQuery = leitorasQuery.where(sql`LOWER(${colaboradoras.status}) = ${statusSearch}`);
+    }
+
+    if (search) {
+      const likePattern = `%${search}%`;
+      leitorasQuery = leitorasQuery.where(sql`(lower(${colaboradoras.name}) LIKE ${likePattern} OR lower(${colaboradoras.email}) LIKE ${likePattern})`);
+    }
+
+    if (!emailSearch) {
+      leitorasQuery = leitorasQuery.limit(limit).offset(offset);
+    }
+
+    const countFilters: any[] = [];
+    if (emailSearch) countFilters.push(sql`LOWER(${colaboradoras.email}) = ${emailSearch}`);
+    if (statusSearch && statusSearch !== 'todas') countFilters.push(sql`LOWER(${colaboradoras.status}) = ${statusSearch}`);
+    if (search) {
+      const likePattern = `%${search}%`;
+      countFilters.push(sql`(lower(${colaboradoras.name}) LIKE ${likePattern} OR lower(${colaboradoras.email}) LIKE ${likePattern})`);
+    }
+
+    const countQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(colaboradoras);
+    if (countFilters.length) {
+      countQuery.where(and(...countFilters));
+    }
+
     const [allLeitoras, countResult] = await Promise.all([
-      db
-        .select({
-          id: colaboradoras.id,
-          email: colaboradoras.email,
-          name: colaboradoras.name,
-          avatarUrl: colaboradoras.avatarUrl,
-          role: colaboradoras.role,
-          active: colaboradoras.active,
-          status: colaboradoras.status,
-          phone: colaboradoras.phone,
-          birthdate: colaboradoras.birthdate,
-          tempoClube: colaboradoras.tempoClube,
-          enderecoCompleto: colaboradoras.enderecoCompleto,
-          cartaMimo: colaboradoras.cartaMimo,
-          enviosRealizados: colaboradoras.enviosRealizados,
-          ultimaInteracao: colaboradoras.ultimaInteracao,
-          gdprConsentido: colaboradoras.gdprConsentido,
-          gdprConsentidoEm: colaboradoras.gdprConsentidoEm,
-          gdprConsentimentoVersao: colaboradoras.gdprConsentimentoVersao,
-          gdprConsentimentoFinalidade: colaboradoras.gdprConsentimentoFinalidade,
-          createdAt: colaboradoras.createdAt,
-        })
-        .from(colaboradoras)
-        .orderBy(desc(colaboradoras.createdAt))
-        .limit(limit)
-        .offset(offset),
-      db.select({ count: sql<number>`cast(count(*) as integer)` }).from(colaboradoras),
+      leitorasQuery,
+      countQuery,
     ]);
     
     const total = countResult[0]?.count || 0;
-    const pages = Math.ceil(total / limit);
+    const pages = emailSearch ? 1 : Math.ceil(total / limit);
 
     return NextResponse.json({
       data: allLeitoras,
-      pagination: { page, limit, total, pages, hasMore: page < pages }
+      pagination: { page, limit, total, pages, hasMore: emailSearch ? false : page < pages }
     }, { status: 200 });
   } catch (error) {
     console.error('Erro ao buscar leitoras:', error);

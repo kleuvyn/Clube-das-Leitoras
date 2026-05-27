@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Instagram,
   ShoppingBag,
@@ -13,6 +13,8 @@ import {
   Sparkles,
   Heart,
 } from "lucide-react";
+import { toast } from 'sonner';
+import { uploadFile } from '@/lib/upload-client';
 
 // Paleta de Cores e Estilos (Consistente com DNA Club)
 const lavandaPrincipal = "#967BB6";
@@ -77,9 +79,18 @@ export default function VitrineEmpreendedoras() {
   const [solInstagram, setSolInstagram] = useState("");
   const [solCategoria, setSolCategoria] = useState("");
   const [solFrase, setSolFrase] = useState("");
-  const [solMensagem, setSolMensagem] = useState("");
+  const [solLogoUrl, setSolLogoUrl] = useState("");
+  const [solUploadingLogo, setSolUploadingLogo] = useState(false);
   const [solEnviando, setSolEnviando] = useState(false);
   const [solEnviado, setSolEnviado] = useState(false);
+  const solLogoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    document.body.style.overflow = modalOpen ? 'hidden' : 'auto';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [modalOpen]);
 
   useEffect(() => {
     async function carregarVitrine() {
@@ -114,7 +125,7 @@ export default function VitrineEmpreendedoras() {
     const instagramVal = solInstagram.trim();
     const categoriaVal = solCategoria.trim();
     const fraseVal = solFrase.trim();
-    const detalhesVal = solMensagem.trim();
+    const logoUrlVal = solLogoUrl.trim();
 
     if (
       !empreendedoraVal ||
@@ -123,11 +134,10 @@ export default function VitrineEmpreendedoras() {
       !telefoneVal ||
       !instagramVal ||
       !categoriaVal ||
-      !fraseVal ||
-      !detalhesVal
+      !fraseVal
     ) {
       alert(
-        "Por favor preencha todos os campos: Empreendedora, Nome do Negócio, E-mail, Telefone, Instagram, Categoria, A Essência e O que você cria.",
+        "Por favor preencha todos os campos: Empreendedora, Nome do Negócio, E-mail, Telefone, Instagram, Categoria e A Essência.",
       );
       return;
     }
@@ -146,7 +156,8 @@ export default function VitrineEmpreendedoras() {
           instagram: instagramVal,
           categoria: categoriaVal,
           frase: fraseVal,
-          mensagem: detalhesVal,
+          mensagem: fraseVal,
+          logoUrl: logoUrlVal || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -160,7 +171,6 @@ export default function VitrineEmpreendedoras() {
       setSolEmpreendedora("");
       setSolEmail("");
       setSolInstagram("");
-      setSolMensagem("");
       setSolCategoria("");
       setSolFrase("");
       setTimeout(() => {
@@ -421,9 +431,9 @@ export default function VitrineEmpreendedoras() {
 
       {/* MODAL REFINADO DNA CLUB */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[999999] flex items-start md:items-center justify-center p-2 pt-20 overflow-y-auto">
+        <div className="fixed inset-0 z-[1000000] flex items-start md:items-center justify-center p-2 pt-24 md:pt-20 overflow-y-auto">
           <div
-            className="absolute inset-0 bg-[#2C3E50]/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setModalOpen(false)}
           />
           <div className="relative w-full max-w-3xl bg-[#FDFCFB] rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh]">
@@ -558,6 +568,45 @@ export default function VitrineEmpreendedoras() {
                       </div>
                       <div className="group space-y-1">
                         <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">
+                          Logo da Marca
+                        </label>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => solLogoInputRef.current?.click()}
+                            disabled={solUploadingLogo}
+                            className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold transition-all hover:border-[#967BB6] disabled:cursor-wait disabled:opacity-50"
+                          >
+                            {solUploadingLogo ? "Carregando..." : "Escolher arquivo"}
+                          </button>
+                          {solLogoUrl && (
+                            <span className="text-[10px] text-slate-500 line-clamp-1">Logo carregado</span>
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          ref={solLogoInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setSolUploadingLogo(true);
+                            try {
+                              const url = await uploadFile(file);
+                              setSolLogoUrl(url);
+                              toast.success('Logo carregado!');
+                            } catch (err: any) {
+                              alert(err?.message || 'Erro ao enviar o logo.');
+                            } finally {
+                              setSolUploadingLogo(false);
+                              if (solLogoInputRef.current) solLogoInputRef.current.value = '';
+                            }
+                          }}
+                        />
+                      </div>
+                      <div className="group space-y-1">
+                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40 group-focus-within:text-[#967BB6] transition-colors">
                           Categoria
                         </label>
                         <select
@@ -587,16 +636,6 @@ export default function VitrineEmpreendedoras() {
                         <p className="text-[10px] text-slate-400">
                           Máx 180 caracteres
                         </p>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">
-                          O que você cria? (Detalhes)
-                        </label>
-                        <textarea
-                          value={solMensagem}
-                          onChange={(e) => setSolMensagem(e.target.value)}
-                          className="w-full bg-black/[0.03] rounded-2xl p-4 text-sm focus:ring-1 focus:ring-[#967BB6] outline-none transition-all min-h-[100px]"
-                        />
                       </div>
                     </div>
                   )}

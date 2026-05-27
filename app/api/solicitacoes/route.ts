@@ -135,10 +135,12 @@ export async function GET(request: Request) {
           nome: solicitacoes.nome,
           email: solicitacoes.email,
           telefone: solicitacoes.telefone,
+          whatsapp: solicitacoes.whatsapp,
           site: solicitacoes.site,
           instagram: solicitacoes.instagram,
           mensagem: solicitacoes.mensagem,
           enderecoCompleto: solicitacoes.enderecoCompleto,
+          fotoUrl: solicitacoes.fotoUrl,
           status: solicitacoes.status,
           createdAt: solicitacoes.createdAt,
           approvedAt: solicitacoes.approvedAt,
@@ -149,10 +151,12 @@ export async function GET(request: Request) {
           nome: solicitacoes.nome,
           email: solicitacoes.email,
           telefone: solicitacoes.telefone,
+          whatsapp: solicitacoes.whatsapp,
           site: solicitacoes.site,
           instagram: solicitacoes.instagram,
           mensagem: solicitacoes.mensagem,
           enderecoCompleto: solicitacoes.enderecoCompleto,
+          fotoUrl: solicitacoes.fotoUrl,
           status: solicitacoes.status,
           createdAt: solicitacoes.createdAt,
           approvedAt: sql<null>`null`.as('approvedAt'),
@@ -210,6 +214,8 @@ export async function POST(request: Request) {
     const editora = (body.editora || '').toString().trim();
     const descricao = (body.descricao || '').toString().trim();
     const linkInstagram = (body.linkInstagram || body.instagram || '').toString().trim();
+    const whatsapp = (body.whatsapp || '').toString().trim();
+    const fotoUrl = (body.fotoUrl || body.foto_url || body.foto || '').toString().trim();
 
     const birthdate = (body.birthdate || '').toString().trim();
     const tempoClube = (body.tempoClube || '').toString().trim();
@@ -275,6 +281,12 @@ export async function POST(request: Request) {
       }
     }
 
+    if (tipo === 'carteirinha') {
+      if (!nome || !whatsapp || !fotoUrl) {
+        return NextResponse.json({ error: 'Nome completo, WhatsApp e foto são obrigatórios para a carteirinha.' }, { status: 400 });
+      }
+    }
+
     if (normalizedEmail && isLeitora) {
       const [existingColaboradora] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedEmail})`);
       if (existingColaboradora) {
@@ -291,23 +303,29 @@ export async function POST(request: Request) {
       const [existingSolicitacao] = await db
         .select({ id: solicitacoes.id })
         .from(solicitacoes)
-        .where(and(eq(solicitacoes.tipo, tipo), or(...duplicateConditions)));
+        .where(and(
+          eq(solicitacoes.tipo, tipo),
+          sql`${solicitacoes.status} != 'rejeitada'`,
+          or(...duplicateConditions),
+        ));
       if (existingSolicitacao) {
         return NextResponse.json({ error: 'Já existe uma solicitação com este e-mail, telefone ou nome. Aguarde a análise antes de enviar novamente.' }, { status: 409 });
       }
     }
 
     // 1. Salva no Banco de Dados
-    const [created] = await dbWrite.insert(solicitacoes).values({
+    await dbWrite.insert(solicitacoes).values({
       tipo,
       nome,
       email: paraBancoEmail,
-      telefone,
-      status: 'pendente',
-      mensagem: mensagemExtra,
-      instagram: body.instagram || null,
-      site: body.site || null,
-    }).returning();
+      telefone: telefone || null,
+      whatsapp: whatsapp || null,
+      site: site || null,
+      instagram: instagram || null,
+      mensagem: mensagemExtra || null,
+      enderecoCompleto: body.enderecoCompleto || null,
+      fotoUrl: fotoUrl || null,
+    });
 
     // 2. Envio de e-mail (Admin + Usuário)
     const emailStatus: { admin: boolean; user: boolean; hasKey: boolean; errors: string[] } = {
@@ -327,8 +345,7 @@ export async function POST(request: Request) {
 
         const instagramHtml = body.instagram ? `<p><strong>Instagram:</strong> ${body.instagram}</p>` : '';
         const siteHtml = body.site ? `<p><strong>Site / Blog:</strong> ${body.site}</p>` : '';
-        const capaHtml = body.capaUrl ? `<p><strong>Capa:</strong> ${body.capaUrl}</p>` : '';
-
+        const capaHtml = body.capaUrl ? `<p><strong>Capa:</strong> ${body.capaUrl}</p>` : '';        const logoHtml = body.logoUrl ? `<p><strong>Logo:</strong> ${body.logoUrl}</p>` : '';
         const parceriaFields = `
               <p><strong>Nome:</strong> ${nome || 'Não informado'}</p>
               <p><strong>Telefone:</strong> ${telefone || 'Não informado'}</p>
@@ -383,7 +400,9 @@ export async function POST(request: Request) {
               ${isEmpreendedora ? empreendedoraFields : ''}
               ${isEscritora ? escritoraFields : ''}
               ${capaHtml}
+              ${logoHtml}
               ${body.capaUrl ? `<div style="margin-top:12px"><p><strong>Visualização da capa:</strong></p><img src="${body.capaUrl}" alt="Capa do livro" style="max-width:360px;max-height:480px;display:block;border:1px solid #ddd;border-radius:8px;" /></div>` : ''}
+              ${body.logoUrl ? `<div style="margin-top:12px"><p><strong>Visualização do logo:</strong></p><img src="${body.logoUrl}" alt="Logo" style="max-width:360px;max-height:360px;display:block;border:1px solid #ddd;border-radius:8px;" /></div>` : ''}
               <p><strong>Observações:</strong> ${mensagemExtra || 'Sem mensagem'}</p>
             `;
         await sendEmail({
@@ -429,7 +448,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, data: created, emailStatus }, { status: 201 });
+    return NextResponse.json({ success: true, emailStatus }, { status: 201 });
   } catch (error) {
     console.error('❌ Erro geral no POST:', error);
     return NextResponse.json({ error: 'Erro ao salvar solicitação' }, { status: 500 });
@@ -454,6 +473,8 @@ export async function PATCH(request: Request) {
           nome: solicitacoes.nome,
           email: solicitacoes.email,
           telefone: solicitacoes.telefone,
+          whatsapp: solicitacoes.whatsapp,
+          fotoUrl: solicitacoes.fotoUrl,
           site: solicitacoes.site,
           instagram: solicitacoes.instagram,
           mensagem: solicitacoes.mensagem,
@@ -468,6 +489,8 @@ export async function PATCH(request: Request) {
           nome: solicitacoes.nome,
           email: solicitacoes.email,
           telefone: solicitacoes.telefone,
+          whatsapp: solicitacoes.whatsapp,
+          fotoUrl: solicitacoes.fotoUrl,
           site: solicitacoes.site,
           instagram: solicitacoes.instagram,
           mensagem: solicitacoes.mensagem,
@@ -597,5 +620,37 @@ export async function PATCH(request: Request) {
     console.error('Erro ao processar aprovação:', e, details);
     const status = details === 'Não autorizado' ? 401 : details === 'Permissão insuficiente' ? 403 : 500;
     return NextResponse.json({ error: status >= 500 ? 'Erro ao processar' : details, detalhes: details }, { status });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    await requireSolicitacoesAdmin(request);
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) {
+      return NextResponse.json({ error: 'ID da solicitação é obrigatório' }, { status: 400 });
+    }
+
+    const [solicitacao] = await db.select().from(solicitacoes).where(eq(solicitacoes.id, id));
+    if (!solicitacao) {
+      return NextResponse.json({ error: 'Solicitação não encontrada' }, { status: 404 });
+    }
+
+    try {
+      await dbWrite.delete(solicitacoes).where(eq(solicitacoes.id, id));
+    } catch (err) {
+      if (isWriteBlockedError(err)) {
+        return NextResponse.json({ error: 'Não é possível excluir solicitações: banco em modo somente leitura' }, { status: 503 });
+      }
+      throw err;
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (error: any) {
+    console.error('Erro ao excluir solicitação:', error);
+    const message = error instanceof Error ? error.message : 'Erro ao excluir solicitação';
+    const statusCode = message === 'Não autorizado' ? 401 : message === 'Permissão insuficiente' ? 403 : 500;
+    return NextResponse.json({ error: statusCode >= 500 ? 'Erro ao excluir solicitação' : message }, { status: statusCode });
   }
 }

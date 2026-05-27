@@ -77,6 +77,7 @@ export async function POST(request: Request) {
       const blob = await put(safeName, file, {
         access: 'public',
         contentType: file.type,
+        store: process.env.BLOB_STORE_ID,
       });
       return NextResponse.json({ url: blob.url }, { status: 201 });
     }

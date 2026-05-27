@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Instagram, Star, Heart, Coffee, Quote, X } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
@@ -38,19 +38,18 @@ export default function PaginaParceriasDNA() {
   const [parceriaEditora, setParceriaEditora] = useState('');
   const [parceriaDescricao, setParceriaDescricao] = useState('');
   const [parceriaLink, setParceriaLink] = useState(''); // Link / Instagram
-  const [parceriaEnviando, setParceriaEnviando] = useState(false);
-  const [parceriaEnviado, setParceriaEnviado] = useState(false);
+  const [parceriaLogoUrl, setParceriaLogoUrl] = useState('');
+  const [parceriaUploadingLogo, setParceriaUploadingLogo] = useState(false);
+  const parceriaLogoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (parceriaModalOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
+    document.body.style.overflow = parceriaModalOpen ? 'hidden' : 'auto';
     return () => {
       document.body.style.overflow = 'auto';
     };
   }, [parceriaModalOpen]);
+  const [parceriaEnviando, setParceriaEnviando] = useState(false);
+  const [parceriaEnviado, setParceriaEnviado] = useState(false);
 
   useEffect(() => {
     async function carregarParceiras() {
@@ -190,8 +189,8 @@ export default function PaginaParceriasDNA() {
 
         {/* ─── MODAL REFINADO ─── */}
         {parceriaModalOpen && (
-          <div className="fixed inset-0 z-[9999] flex items-start md:items-center justify-center p-4 pt-20 md:pt-0 overflow-y-auto">
-            <div className="absolute inset-0 bg-[#2C3E50]/40 backdrop-blur-sm" onClick={() => setParceriaModalOpen(false)} />
+          <div className="fixed inset-0 z-[1000000] flex items-start md:items-center justify-center p-4 pt-24 md:pt-20 overflow-y-auto">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setParceriaModalOpen(false)} />
             
             <div className="relative w-full max-w-4xl bg-[#FDFCFB] rounded-[3rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 max-h-[95vh] mt-20 md:mt-0">
               <button onClick={() => setParceriaModalOpen(false)} className="absolute right-4 top-4 p-2 hover:bg-black/5 rounded-full transition-colors z-10">
@@ -274,6 +273,43 @@ export default function PaginaParceriasDNA() {
                           <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Link / Instagram</label>
                           <input value={parceriaLink} onChange={e => setParceriaLink(e.target.value)} placeholder="https://..." className="w-full bg-transparent border-b border-black/10 py-2 focus:border-[#B04D4A] outline-none transition-colors text-sm" />
                         </div>
+
+                        <div className="group space-y-1">
+                          <label className="text-[9px] uppercase tracking-widest font-bold opacity-40">Logo / Identidade Visual</label>
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => parceriaLogoInputRef.current?.click()}
+                              disabled={parceriaUploadingLogo}
+                              className="inline-flex items-center justify-center rounded-2xl border border-black/10 bg-white px-4 py-3 text-xs font-semibold transition-all hover:border-[#B04D4A] disabled:cursor-wait disabled:opacity-50"
+                            >
+                              {parceriaUploadingLogo ? 'Carregando...' : 'Enviar arquivo'}
+                            </button>
+                            {parceriaLogoUrl && (
+                              <span className="text-[10px] text-slate-500 line-clamp-1">Logo anexado</span>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            ref={parceriaLogoInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              setParceriaUploadingLogo(true);
+                              try {
+                                const url = await uploadFile(file);
+                                setParceriaLogoUrl(url);
+                              } catch (err: any) {
+                                alert(err?.message || 'Erro ao enviar logo.');
+                              } finally {
+                                setParceriaUploadingLogo(false);
+                                if (parceriaLogoInputRef.current) parceriaLogoInputRef.current.value = '';
+                              }
+                            }}
+                          />
+                        </div>
                       </div>
                       </div>
 
@@ -297,6 +333,7 @@ export default function PaginaParceriasDNA() {
                                 editora: parceriaEditora,
                                 descricao: parceriaDescricao,
                                 linkInstagram: parceriaLink,
+                                logoUrl: parceriaLogoUrl || null,
                                 mensagem: `${parceriaDescricao}`,
                               }),
                             });
@@ -315,6 +352,7 @@ export default function PaginaParceriasDNA() {
                             setParceriaEditora('');
                             setParceriaDescricao('');
                             setParceriaLink('');
+                            setParceriaLogoUrl('');
                           } catch (error) {
                             console.error('[parcerias] erro ao enviar cadastro de parceria:', error);
                             toast.error('Erro ao enviar cadastro de parceria.');

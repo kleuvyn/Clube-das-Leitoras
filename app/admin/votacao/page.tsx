@@ -1,25 +1,17 @@
 "use client";
 
+import Image from 'next/image';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAdmin } from '@/lib/admin-context';
+import { uploadFile } from '@/lib/upload-client';
 import { 
   Loader2, Plus, Upload, Trash2, Book, X, 
   ToggleLeft, ToggleRight, BarChart3, Pencil, History
 } from 'lucide-react';
 
 const rosaGabi = "#B04D4A";
-
-// Função para conversão em Base64 - Crucial para o armazenamento das capas no banco
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function VotacoesAdmin() {
   const { isAdmin } = useAdmin();
@@ -43,6 +35,16 @@ export default function VotacoesAdmin() {
     capaUrl: '', 
     linkCompra: '' 
   });
+  const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState('');
+
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
+    };
+  }, [coverPreviewUrl]);
 
   const loadDados = useCallback(async (pageNum = page) => {
     try {
@@ -68,12 +70,10 @@ export default function VotacoesAdmin() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      try {
-        const base64 = await fileToBase64(file);
-        setFormLivro(prev => ({ ...prev, capaUrl: base64 }));
-      } catch {
-        toast.error("Erro ao processar imagem.");
-      }
+      const preview = URL.createObjectURL(file);
+      setCoverPreviewUrl(preview);
+      setSelectedCoverFile(file);
+      setFormLivro(prev => ({ ...prev, capaUrl: preview }));
     }
   };
 
@@ -112,6 +112,12 @@ export default function VotacoesAdmin() {
     }
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedCoverFile(null);
+    setCoverPreviewUrl('');
+  };
+
   const handleOpenEdit = (livro: any) => {
     setEditandoId(livro.id);
     setFormLivro({
@@ -120,12 +126,16 @@ export default function VotacoesAdmin() {
       capaUrl: livro.capaUrl || '',
       linkCompra: livro.linkCompra || ''
     });
+    setSelectedCoverFile(null);
+    setCoverPreviewUrl('');
     setShowModal(true);
   };
 
   const handleOpenAdd = () => {
     setEditandoId(null);
     setFormLivro({ titulo: '', autor: '', capaUrl: '', linkCompra: '' });
+    setSelectedCoverFile(null);
+    setCoverPreviewUrl('');
     setShowModal(true);
   };
 
@@ -133,15 +143,22 @@ export default function VotacoesAdmin() {
     if (!formLivro.titulo || !formLivro.autor) return toast.error('Título e Autor são obrigatórios.');
     setProcessando(true);
     try {
+      const payload = { ...formLivro, isVotacao: true };
+      if (selectedCoverFile) {
+        payload.capaUrl = await uploadFile(selectedCoverFile);
+      }
+
       const url = editandoId ? `/api/livros?id=${editandoId}` : '/api/livros';
       const res = await fetch(url, {
         method: editandoId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formLivro, isVotacao: true }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
       toast.success(editandoId ? 'Dados atualizados.' : 'Obra adicionada à urna.');
       setShowModal(false);
+      setSelectedCoverFile(null);
+      setCoverPreviewUrl('');
       loadDados(page);
     } catch { 
       toast.error('Erro ao salvar informações da obra.'); 
@@ -257,7 +274,7 @@ export default function VotacoesAdmin() {
               <div key={livro.id} className="bg-white p-5 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 group hover:shadow-md transition-shadow">
                 <div className="w-16 h-24 bg-slate-50 rounded-xl overflow-hidden shrink-0 border border-slate-100 shadow-sm">
                   {livro.capaUrl ? (
-                    <img src={livro.capaUrl} className="w-full h-full object-cover" alt={livro.titulo} />
+                    <Image src={livro.capaUrl} alt={livro.titulo} width={160} height={240} className="w-full h-full object-cover" />
                   ) : (
                     <div className="flex items-center justify-center h-full opacity-10"><Book size={20} /></div>
                   )}
@@ -342,7 +359,7 @@ export default function VotacoesAdmin() {
             <div className="flex-1 p-12 space-y-8 overflow-y-auto bg-white">
               <div className="flex justify-between items-center">
                 <h2 className="font-serif text-2xl italic text-[#1A1A1A]">{editandoId ? 'Editar Escolha' : 'Nova Obra para Urna'}</h2>
-                <button onClick={() => setShowModal(false)} className="text-slate-300 hover:text-black transition-colors"><X size={24}/></button>
+                <button onClick={closeModal} className="text-slate-300 hover:text-black transition-colors"><X size={24}/></button>
               </div>
 
               <div className="space-y-4">

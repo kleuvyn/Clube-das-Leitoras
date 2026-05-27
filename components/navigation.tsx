@@ -77,7 +77,8 @@ export function Navigation() {
         { label: 'Sorteios do Clube', href: '/sorteios' },
         // { label: 'Podcast', href: '/podcast' },
         { label: 'Cronograma Mensal', href: '/cronograma' },
-        { label: 'Galeria de Encontros', href: '/eventos' }
+        { label: 'Galeria de Encontros', href: '/eventos' },
+        { label: 'Carteirinha', href: '/carteirinha' }
       ]
     }
   ];

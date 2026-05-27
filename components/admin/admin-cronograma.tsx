@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { uploadFile } from '@/lib/upload-client';
 import { 
   Plus, Trash2, Edit3, 
   UploadCloud, Loader2, Save, 
@@ -23,6 +24,8 @@ export default function AdminCronograma() {
   const [agenda, setAgenda] = useState<any[]>([]);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
 
   const [configGeral, setConfigGeral] = useState({
     calendarioImagem: '',
@@ -69,18 +72,24 @@ export default function AdminCronograma() {
 
   useEffect(() => { loadDados(); }, []);
 
-  
+  useEffect(() => {
+    return () => {
+      if (imagePreviewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
+
   const handleUploadCalendario = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setConfigGeral(prev => ({ ...prev, calendarioImagem: reader.result as string }));
-        setIsUploading(false);
-        toast.success("Preview da imagem atualizado!");
-      };
-      reader.readAsDataURL(file);
+      const preview = URL.createObjectURL(file);
+      setImagePreviewUrl(preview);
+      setSelectedImageFile(file);
+      setConfigGeral(prev => ({ ...prev, calendarioImagem: preview }));
+      setIsUploading(false);
+      toast.success("Preview da imagem atualizado!");
     }
   };
 
@@ -103,8 +112,8 @@ export default function AdminCronograma() {
   
   const handleSalvarTudoNoBanco = async () => {
     setIsSaving(true);
-    
-    
+    setIsUploading(true);
+
     const payload = {
       title: configGeral.livroDoMes,
       imageUrl: configGeral.calendarioImagem,
@@ -113,8 +122,10 @@ export default function AdminCronograma() {
     };
 
     try {
-      
-      
+      if (selectedImageFile) {
+        payload.imageUrl = await uploadFile(selectedImageFile);
+      }
+
       const res = await fetch('/api/cronograma', {
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' },
@@ -122,12 +133,15 @@ export default function AdminCronograma() {
       });
 
       if (!res.ok) throw new Error();
-      
+
+      setSelectedImageFile(null);
+      setImagePreviewUrl('');
       toast.success("O site das leitoras foi atualizado!");
     } catch (e) {
       toast.error("Erro ao salvar. Verifique a conexão com o banco.");
     } finally {
       setIsSaving(false);
+      setIsUploading(false);
     }
   };
 

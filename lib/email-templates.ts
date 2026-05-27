@@ -27,8 +27,12 @@ const LOGO_FILENAME = 'logo-clube-leitoras.png';
 function getLogoSrc(siteUrl: string) {
   // Use a URL pública em vez de base64 embutido para evitar que emails ultrapassem o tamanho limite do Gmail
   // e apareçam como “[Mensagem cortada]” em vez do conteúdo completo.
-  const finalSiteUrl = (siteUrl || 'https://clubedasleitoras.com.br').replace(/\/+/g, '');
-  return `${finalSiteUrl}/${LOGO_FILENAME}`;
+  const normalizedUrl = (siteUrl || 'https://clubedasleitoras.com.br').trim().replace(/\/+$/, '');
+  try {
+    return new URL(LOGO_FILENAME, normalizedUrl).toString();
+  } catch {
+    return `https://clubedasleitoras.com.br/${LOGO_FILENAME}`;
+  }
 }
 
 /**

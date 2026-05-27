@@ -128,6 +128,8 @@ export const solicitacoes = sqliteTable('solicitacoes', {
   nome: text('nome').notNull(),
   email: text('email').notNull(),
   telefone: text('telefone'),
+  whatsapp: text('whatsapp'),
+  fotoUrl: text('foto_url'),
   site: text('site'),
   instagram: text('instagram'),
   mensagem: text('mensagem'),
@@ -218,6 +220,7 @@ export const sorteiosConfig = sqliteTable('sorteios_config', {
   id: integer('id').primaryKey(),
   mesBase: text('mes_base').notNull(),
   urnaAberta: integer('urna_aberta').default(1).notNull(),
+  fotoUrl: text('foto_url'),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow(),
 });
 

@@ -36,6 +36,7 @@ export default function SorteiosPage() {
   const [loading, setLoading] = useState(true);
   const [rodaStatus, setRodaStatus] = useState('ativa');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [sorteioFotoUrl, setSorteioFotoUrl] = useState('');
 
   const carregarDados = async () => {
     try {
@@ -49,6 +50,7 @@ export default function SorteiosPage() {
       if (data.premios) {
         setPremios(data.premios.map((item: any) => item.premio));
       }
+      if (data.sorteioFotoUrl) setSorteioFotoUrl(data.sorteioFotoUrl);
     } catch (err) {
       console.error(err);
       toast.error("Erro ao carregar dados dos sorteios.");
@@ -250,6 +252,11 @@ export default function SorteiosPage() {
             Nome na urna, sorteio transparente e novo ciclo a cada mês.
           </p>
         </div>
+        {sorteioFotoUrl && (
+          <div className="max-w-4xl mx-auto mt-8 rounded-[2rem] overflow-hidden border border-black/5 shadow-sm">
+            <img src={sorteioFotoUrl} alt="Foto do sorteio" className="w-full h-auto object-cover" />
+          </div>
+        )}
       </header>
 
       <main className="max-w-6xl mx-auto px-6 md:px-12 grid lg:grid-cols-12 gap-12 items-start relative z-10">
