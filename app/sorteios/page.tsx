@@ -10,6 +10,8 @@ type SorteioHistorico = {
   nome: string;
   premio: string;
   dataSorteio?: string;
+  fotoUrl?: string | null;
+  foto_url?: string | null;
 };
 
 type Participante = {
@@ -217,22 +219,22 @@ export default function SorteiosPage() {
 
   return (
     <div
-      className="min-h-screen font-alice pb-32 pt-28 lg:pt-36 relative overflow-hidden"
+      className="min-h-screen font-alice pb-28 pt-28 lg:pt-32 relative overflow-hidden"
       style={{
-        background: `${corFundo} url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')`,
+        background: `#F4EEE6 url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')`,
         color: corTexto,
       }}
     >
-      <header className="max-w-6xl mx-auto px-6 md:px-12 pb-20 relative z-10 text-center border-b border-black/5">
-        <div className="flex items-center justify-center gap-4 mb-8 opacity-50">
-          <div className="h-px w-10 bg-black/30" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.6em]" style={{ color: corDestaque }}>
+      <header className="max-w-5xl mx-auto px-6 md:px-12 pb-20 relative z-10 text-center border-b border-[#7e6d60]/10">
+        <div className="flex items-center justify-center gap-4 mb-8 opacity-60">
+          <div className="h-px w-12 bg-[#7e6d60]/30" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.6em]" style={{ color: corDestaque }}>
             Mimo Mensal
           </span>
-          <div className="h-px w-10 bg-black/30" />
+          <div className="h-px w-12 bg-[#7e6d60]/30" />
         </div>
 
-        <h1 className="text-5xl md:text-[88px] tracking-tighter leading-[0.82] mb-10">
+        <h1 className="text-4xl md:text-[64px] tracking-[-0.02em] leading-[0.92] mb-8">
           <span className="italic font-light" style={{ color: corTexto }}>
             Sorteios do
           </span>{' '}
@@ -241,20 +243,53 @@ export default function SorteiosPage() {
           </span>
         </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto pt-8 border-t border-black/10">
+        <div className="grid grid-cols-1 md:grid-cols-[0.95fr_0.7fr] gap-8 text-left max-w-4xl mx-auto pt-8 border-t border-[#7e6d60]/15">
           <div className="relative pl-8">
             <Quote size={20} className="absolute left-0 top-0 opacity-30" style={{ color: corDestaque }} />
-            <p className="italic text-sm md:text-base leading-relaxed opacity-80">
+            <p className="italic text-sm md:text-base leading-relaxed opacity-85 text-[#4A443F]">
               Todo mês sorteamos um presente para quem compartilha essa travessia literária com a gente.
             </p>
           </div>
-          <p className="text-[10px] uppercase tracking-[0.28em] font-bold opacity-70 self-end" style={{ color: verdeMusgo }}>
+          <p className="text-[10px] uppercase tracking-[0.4em] font-semibold opacity-70 self-end" style={{ color: verdeMusgo }}>
             Nome na urna, sorteio transparente e novo ciclo a cada mês.
           </p>
         </div>
         {sorteioFotoUrl && (
-          <div className="max-w-4xl mx-auto mt-8 rounded-[2rem] overflow-hidden border border-black/5 shadow-sm">
-            <img src={sorteioFotoUrl} alt="Foto do sorteio" className="w-full h-auto object-cover" />
+          <div className="mx-auto mt-10 grid gap-6 max-w-5xl md:grid-cols-[minmax(16rem,22rem)_1fr] items-center">
+            <a
+              href={sorteioFotoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-[1.75rem] overflow-hidden border border-[#c8b7aa]/30 bg-[#f7f1e7] shadow-[0_18px_45px_rgba(0,0,0,0.08)] transition-transform hover:-translate-y-1"
+              title="Clique para ver a imagem em tamanho real"
+            >
+              <img
+                src={sorteioFotoUrl}
+                alt="Foto do sorteio"
+                className="w-full h-[18rem] object-cover"
+                style={{ display: 'block' }}
+              />
+            </a>
+
+            <div className="rounded-[1.75rem] border border-[#c8b7aa]/30 bg-white/95 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)]">
+              <span className="text-[10px] uppercase tracking-[0.35em] text-[#8c7b6e] mb-4 block">
+                Prêmio em destaque
+              </span>
+              <h2 className="text-3xl font-serif italic leading-tight" style={{ color: corTexto }}>
+                O que vai ser sorteado
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed opacity-80 text-[#4A443F]">
+                Essa imagem mostra o presente em destaque. Clique nela para ver em tamanho real.
+              </p>
+              <div className="mt-6 rounded-[1.25rem] bg-[#f8f3ea] border border-[#c8b7aa]/20 p-5">
+                <p className="text-[10px] uppercase tracking-[0.35em] text-[#7e6d60] mb-2">
+                  Sorteio
+                </p>
+                <p className="text-lg font-alice" style={{ color: corDestaque }}>
+                  {premioAtual ?? premioPreview}
+                </p>
+              </div>
+            </div>
           </div>
         )}
       </header>
@@ -262,8 +297,8 @@ export default function SorteiosPage() {
       <main className="max-w-6xl mx-auto px-6 md:px-12 grid lg:grid-cols-12 gap-12 items-start relative z-10">
         <section className="lg:col-span-7 space-y-10">
           <div className="relative group">
-            <div className="bg-white border rounded-sm p-8 md:p-10 shadow-sm relative z-10" style={{ borderColor: `${corDestaque}30` }}>
-              <h2 className="text-[10px] font-bold uppercase tracking-[0.35em] mb-7" style={{ color: corDestaque }}>
+            <div className="bg-white/95 border rounded-[1.5rem] p-8 md:p-10 shadow-[0_10px_25px_rgba(0,0,0,0.06)] relative z-10" style={{ borderColor: `${corDestaque}30` }}>
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.35em] mb-7" style={{ color: corDestaque }}>
                 A Urna
               </h2>
 
@@ -272,15 +307,15 @@ export default function SorteiosPage() {
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder={urnaAberta ? "Nome completo..." : "Urna fechada para novos nomes"}
-                  className="flex-1 rounded-sm border px-5 py-3.5 bg-[#FAFAF5] text-lg outline-none focus:ring-1 transition-all"
-                  style={{ borderColor: `${corDestaque}30`, '--tw-ring-color': corDestaque } as any}
+                  className="flex-1 rounded-[0.95rem] border px-5 py-3.5 bg-[#f5eee5] text-lg outline-none focus:ring-1 transition-all"
+                  style={{ borderColor: `${corDestaque}20`, '--tw-ring-color': corDestaque } as any}
                   aria-label="Digite seu nome"
                   disabled={!urnaAberta}
                 />
                 <button
                   type="submit"
                   disabled={!urnaAberta}
-                  className="rounded-sm px-8 py-3.5 text-white font-bold uppercase tracking-widest text-[10px] transition-all hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-[0.95rem] px-8 py-3.5 text-white font-semibold uppercase tracking-[0.28em] text-[10px] transition-all hover:bg-opacity-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ backgroundColor: corDestaque }}
                 >
                   Depositar Nome
@@ -357,9 +392,9 @@ export default function SorteiosPage() {
 
         <aside className="lg:col-span-5 space-y-10">
           <div className="relative group">
-            <div className="bg-white border rounded-sm p-8 md:p-10 shadow-sm flex flex-col justify-center items-center text-center relative z-10" style={{ borderColor: `${corDestaque}30` }}>
-              <div className="rounded-sm border p-6 w-full min-h-40 flex flex-col items-center justify-center text-center relative" style={{ borderColor: `${corDestaque}20`, backgroundColor: '#FAFAF5' }}>
-                <p className="text-[14px] italic opacity-50 font-serif">
+            <div className="bg-white/95 border rounded-[1.5rem] p-8 md:p-10 shadow-[0_10px_25px_rgba(0,0,0,0.06)] flex flex-col justify-center items-center text-center relative z-10" style={{ borderColor: `${corDestaque}30` }}>
+              <div className="rounded-[1.2rem] border p-6 w-full min-h-40 flex flex-col items-center justify-center text-center relative" style={{ borderColor: `${corDestaque}15`, backgroundColor: '#f7f1e7' }}>
+                <p className="text-[14px] italic opacity-75 font-serif leading-relaxed">
                   O momento aguarda revelação.
                 </p>
               </div>
@@ -372,23 +407,23 @@ export default function SorteiosPage() {
           </div>
 
           <div className="relative group">
-            <div className="bg-white border rounded-sm p-8 md:p-10 shadow-sm relative z-10" style={{ borderColor: `${corDestaque}30` }}>
+            <div className="bg-white/95 border rounded-[1.5rem] p-8 md:p-10 shadow-[0_10px_25px_rgba(0,0,0,0.06)] relative z-10" style={{ borderColor: `${corDestaque}30` }}>
               {premios.length > 0 && (
                 <div className="mb-7 text-left">
-                  <h2 className="text-[10px] font-bold uppercase tracking-[0.35em]" style={{ color: corDestaque }}>
-                    Prêmios do Mês
-                  </h2>
-                  <ul className="mt-4 space-y-2 text-sm opacity-80 italic">
-                    {premios.map((premio, index) => (
-                      <li key={`${premio}-${index}`} className="flex items-center gap-2">
-                        <Gift size={14} style={{ color: corDestaque }} />
-                        <span>{premio}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="mt-3 text-xs opacity-60">Destaque atual: {premioPreview}</p>
-                </div>
-              )}
+                      <h2 className="text-[10px] font-semibold uppercase tracking-[0.35em] mb-4" style={{ color: corDestaque }}>
+                        Prêmios do Mês
+                      </h2>
+                      <ul className="space-y-3 text-sm opacity-85">
+                        {premios.map((premio, index) => (
+                          <li key={`${premio}-${index}`} className="flex items-start gap-3">
+                            <span className="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-[#c8b7aa]" />
+                            <span>{premio}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-4 text-xs opacity-60">Destaque atual: {premioPreview}</p>
+                    </div>
+                  )}
 
               <div className="mb-6 border-b pb-4" style={{ borderColor: `${corDestaque}20` }}>
                 <h2 className="text-[10px] font-bold uppercase tracking-[0.35em]" style={{ color: corDestaque }}>
@@ -404,8 +439,19 @@ export default function SorteiosPage() {
                 <ul className="space-y-4 max-h-52 overflow-y-auto pr-3">
                   {historico.map((item, idx) => (
                     <li key={`${item.id}-${idx}`} className="flex flex-col gap-1.5 pb-4 border-b last:border-b-0" style={{ borderColor: `${corDestaque}15` }}>
-                      <p className="font-alice text-[18px] opacity-90 truncate flex items-center justify-between">
-                        {item.nome}
+                      <p className="font-alice text-[18px] opacity-90 truncate flex items-center justify-between gap-3">
+                        <span className="inline-flex items-center gap-3 min-w-0">
+                          {(item.fotoUrl || item.foto_url) ? (
+                            <img
+                              src={item.fotoUrl || item.foto_url || ''}
+                              alt={`Foto do sorteio de ${item.nome}`}
+                              className="h-8 w-8 rounded-full object-cover border border-[#c8b7aa]/30"
+                            />
+                          ) : (
+                            <span className="inline-block h-8 w-8 rounded-full bg-[#e6d8c8] border border-[#c8b7aa]/30" />
+                          )}
+                          <span className="truncate">{item.nome}</span>
+                        </span>
                         <Trophy size={14} style={{ color: corDestaque }} className="opacity-70" />
                       </p>
                       <div className="flex justify-between items-baseline">
