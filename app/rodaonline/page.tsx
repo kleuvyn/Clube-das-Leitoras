@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { Globe, Calendar, Laptop, ArrowRight, Info, Video, Download, Archive, ChevronDown, ChevronUp, Loader2, Youtube, FileText, Send, MessageCircle } from 'lucide-react';
+import { Globe, Calendar, Laptop, ArrowRight, Info, Video, Download, Archive, ChevronDown, ChevronUp, Loader2, Youtube, FileText, Send, MessageCircle, Heart, Book, Edit3, X } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
@@ -9,7 +9,8 @@ import { normalizeDateValue } from '@/lib/utils';
 
 const papelEditorial = "#FDFCFB";
 const azulPetroleo = "#2C3E50";
-const verdeMusgo = "#4F5E46"; 
+const verdeMusgo = "#4F5E46";
+const instagramHeartColor = '#E1306C';
 
 interface Encontro {
   id: string;
@@ -39,8 +40,11 @@ interface RodaOnlineData {
 interface ReflexaoRoda {
   id: string;
   autoraNome: string;
+  autoraEmail?: string | null;
   texto: string;
-  createdAt: string;
+  likes?: number;
+  replyToId?: string | null;
+  createdAt: string | number | Date;
 }
 
 function SecaoReflexoesRoda({ rodaId, temaNome }: { rodaId: string; temaNome: string }) {
@@ -49,6 +53,15 @@ function SecaoReflexoesRoda({ rodaId, temaNome }: { rodaId: string; temaNome: st
   const [enviando, setEnviando] = useState(false);
   const [nome, setNome] = useState('');
   const [texto, setTexto] = useState('');
+  const [replyToReflectionId, setReplyToReflectionId] = useState<string | null>(null);
+  const [replyTexto, setReplyTexto] = useState('');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [editingReflectionId, setEditingReflectionId] = useState<string | null>(null);
+  const [editingReflectionText, setEditingReflectionText] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [savingLike, setSavingLike] = useState<string | null>(null);
+  const [likedReflectionIds, setLikedReflectionIds] = useState<Set<string>>(new Set());
 
   const carregar = async () => {
     setLoadingR(true);
@@ -56,11 +69,139 @@ function SecaoReflexoesRoda({ rodaId, temaNome }: { rodaId: string; temaNome: st
       const res = await fetch(`/api/rodaonline/reflexoes?rodaId=${rodaId}`);
       const data = await res.json();
       setReflexoes(Array.isArray(data) ? data : []);
-    } catch {}
-    finally { setLoadingR(false); }
+    } catch (err) {
+      console.error(err);
+      setReflexoes([]);
+    } finally { setLoadingR(false); }
   };
 
   useEffect(() => { carregar(); }, [rodaId]);
+
+  useEffect(() => {
+    const getCookie = (name: string) => {
+      const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+      return match ? decodeURIComponent(match[1]) : null;
+    };
+    setUserEmail(getCookie('clube-user-email'));
+    setUserName(getCookie('clube-user-name'));
+
+    try {
+      const stored = window.localStorage.getItem('likedReflexoes');
+      if (stored) {
+        const ids = JSON.parse(stored) as string[];
+        setLikedReflectionIds(new Set(Array.isArray(ids) ? ids : []));
+      }
+    } catch {
+      setLikedReflectionIds(new Set());
+    }
+  }, []);
+
+  const canEditReflection = (reflexao: ReflexaoRoda) => {
+    const emailMatch = reflexao.autoraEmail && userEmail && reflexao.autoraEmail.trim().toLowerCase() === userEmail.trim().toLowerCase();
+    const nameMatch = !reflexao.autoraEmail && userName && reflexao.autoraNome.trim().toLowerCase() === userName.trim().toLowerCase();
+    return Boolean(emailMatch || nameMatch);
+  };
+
+  const startEditingReflection = (reflexao: ReflexaoRoda) => {
+    setEditingReflectionId(reflexao.id);
+    setEditingReflectionText(reflexao.texto);
+  };
+
+  const cancelEditingReflection = () => {
+    setEditingReflectionId(null);
+    setEditingReflectionText('');
+  };
+
+  const saveReflectionEdit = async (reflexaoId: string) => {
+    if (!editingReflectionText.trim()) return toast.error('O comentário não pode ficar vazio.');
+    setSavingEdit(true);
+    try {
+      const res = await fetch('/api/rodaonline/reflexoes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: reflexaoId, texto: editingReflectionText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao atualizar reflexão.');
+      } else {
+        toast.success('Reflexão atualizada!');
+        setReflexoes(prev => prev.map(r => r.id === reflexaoId ? { ...r, texto: editingReflectionText.trim() } : r));
+        cancelEditingReflection();
+      }
+    } catch (err) {
+      toast.error('Erro de conexão.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const persistLikedReflexoes = (ids: Set<string>) => {
+    try {
+      window.localStorage.setItem('likedReflexoes', JSON.stringify(Array.from(ids)));
+    } catch {
+      // ignore
+    }
+  };
+
+  const likeReflection = async (reflexaoId: string) => {
+    setSavingLike(reflexaoId);
+    try {
+      const res = await fetch('/api/rodaonline/reflexoes', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: reflexaoId, action: 'like' }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao curtir reflexão.');
+      } else {
+        setReflexoes(prev => prev.map(r => r.id === reflexaoId ? { ...r, likes: data.likes ?? (r.likes || 0) + 1 } : r));
+        setLikedReflectionIds(prev => {
+          const next = new Set(prev);
+          next.add(reflexaoId);
+          persistLikedReflexoes(next);
+          return next;
+        });
+      }
+    } catch (err) {
+      toast.error('Erro de conexão.');
+    } finally {
+      setSavingLike(null);
+    }
+  };
+
+  const startReplying = (reflexaoId: string) => {
+    setReplyToReflectionId(reflexaoId);
+    setReplyTexto('');
+  };
+
+  const cancelReplying = () => {
+    setReplyToReflectionId(null);
+    setReplyTexto('');
+  };
+
+  const sendReply = async (reflexaoId: string) => {
+    if (!nome.trim() || !replyTexto.trim()) return toast.error('Preencha seu nome e sua resposta.');
+    setEnviando(true);
+    try {
+      const res = await fetch('/api/rodaonline/reflexoes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rodaId, autoraNome: nome.trim(), texto: replyTexto.trim(), replyToId: reflexaoId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || 'Erro ao enviar resposta.');
+      } else {
+        toast.success('Resposta publicada!');
+        setReplyTexto('');
+        setReplyToReflectionId(null);
+        carregar();
+      }
+    } catch { toast.error('Erro de conexão.'); }
+    finally { setEnviando(false); }
+  };
 
   const enviar = async () => {
     if (!nome.trim() || !texto.trim()) return toast.error('Preencha seu nome e sua reflexão.');
@@ -92,12 +233,106 @@ function SecaoReflexoesRoda({ rodaId, temaNome }: { rodaId: string; temaNome: st
       ) : (
         <div className="space-y-4 max-h-64 overflow-y-auto pr-1">
           {reflexoes.map(r => (
-            <div key={r.id} className="bg-white/60 rounded-2xl p-5 space-y-2 border border-black/5">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: verdeMusgo }}>{r.autoraNome}</span>
-                <span className="text-[9px] opacity-30">{normalizeDateValue(r.createdAt).toLocaleDateString('pt-BR')}</span>
+            <div key={r.id} className="bg-white/60 rounded-2xl p-5 space-y-3 border border-black/5">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Book size={14} style={{ color: verdeMusgo }} />
+                    <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: verdeMusgo }}>{r.autoraNome}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[9px] opacity-30">{normalizeDateValue(r.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <button
+                      type="button"
+                      onClick={() => likeReflection(r.id)}
+                      disabled={savingLike === r.id}
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest hover:opacity-80 disabled:opacity-40 ${likedReflectionIds.has(r.id) ? 'text-[#E1306C]' : 'text-[#2C3E50]'}`}
+                    >
+                      <Heart
+                        size={14}
+                        fill={likedReflectionIds.has(r.id) ? '#E1306C' : 'none'}
+                        style={{ color: likedReflectionIds.has(r.id) ? '#E1306C' : '#2C3E50' }}
+                      />
+                      {savingLike === r.id ? '...' : `${r.likes ?? 0}`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => startReplying(r.id)}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#2C3E50] opacity-70 hover:opacity-100"
+                    >
+                      Responder
+                    </button>
+                    {canEditReflection(r) && (
+                      <button
+                        type="button"
+                        onClick={() => startEditingReflection(r)}
+                        className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-[#2C3E50] opacity-70 hover:opacity-100"
+                      >
+                        <Edit3 size={12} /> Editar
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {editingReflectionId === r.id ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={editingReflectionText}
+                      onChange={(e) => setEditingReflectionText(e.target.value)}
+                      rows={4}
+                      className="w-full p-4 bg-white rounded-2xl border border-black/10 text-sm outline-none resize-none"
+                    />
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => saveReflectionEdit(r.id)}
+                        disabled={savingEdit}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2C3E50] text-white text-[10px] font-bold uppercase tracking-[0.2em] disabled:opacity-40"
+                      >
+                        {savingEdit ? 'Salvando...' : 'Salvar'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditingReflection}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-black/10 text-[10px] font-bold uppercase tracking-[0.2em]"
+                      >
+                        <X size={12} /> Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm italic leading-relaxed opacity-70" style={{ color: azulPetroleo }}>&quot;{r.texto}&quot;</p>
+                    {replyToReflectionId === r.id && (
+                      <div className="mt-4 space-y-3 bg-[#F7F7F5] rounded-3xl p-4 border border-black/5">
+                        <textarea
+                          value={replyTexto}
+                          onChange={(e) => setReplyTexto(e.target.value)}
+                          rows={3}
+                          className="w-full p-4 bg-white rounded-2xl border border-black/10 text-sm outline-none resize-none"
+                          placeholder="Responder a esta reflexão..."
+                        />
+                        <div className="flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => sendReply(r.id)}
+                            disabled={enviando}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#2C3E50] text-white text-[10px] font-bold uppercase tracking-[0.2em] disabled:opacity-40"
+                          >
+                            {enviando ? 'Enviando...' : 'Responder'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelReplying}
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-black/10 text-[10px] font-bold uppercase tracking-[0.2em]"
+                          >
+                            <X size={12} /> Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <p className="text-sm italic leading-relaxed opacity-70" style={{ color: azulPetroleo }}>"{r.texto}"</p>
             </div>
           ))}
         </div>

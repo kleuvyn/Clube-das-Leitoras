@@ -260,6 +260,8 @@ export const reflexoesRodaOnline = sqliteTable('reflexoes_roda_online', {
   autoraNome: text('autora_nome').notNull(),
   autoraEmail: text('autora_email'),
   texto: text('texto').notNull(),
+  likes: integer('likes').default(0).notNull(),
+  replyToId: text('reply_to_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
@@ -319,6 +321,8 @@ export const comentarios = sqliteTable('comentarios', {
   autoraNome: text('autora_nome').notNull(),
   autoraEmail: text('autora_email'),
   texto: text('texto').notNull(),
+  likes: integer('likes').default(0).notNull(),
+  replyToId: text('reply_to_id'),
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
