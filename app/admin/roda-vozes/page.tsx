@@ -81,11 +81,11 @@ export default function AdminRodaVozesPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap justify-end gap-3 w-full md:w-auto">
           <Button onClick={carregarRoda} variant="outline" className="flex items-center gap-2">
             <RefreshCw size={16} /> Atualizar
           </Button>
-          <Button onClick={handleToggleRodaStatus} className="flex items-center gap-2 bg-[#B04D4A] text-white hover:bg-[#8B3A37]">
+          <Button onClick={handleToggleRodaStatus} className="flex items-center gap-2 bg-rosa-gabi text-white hover:bg-[#8B3A37]">
             {status === 'ativa' ? 'Desativar Roda' : 'Ativar Roda'}
           </Button>
         </div>

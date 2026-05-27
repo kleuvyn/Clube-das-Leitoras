@@ -19,6 +19,7 @@
   body {
     background-color: #F9F7F2;
     color: #000000;
+    overflow-x: hidden;
     
     @apply font-(--font-geist) min-h-screen relative;
     
@@ -28,6 +29,14 @@
     background-repeat: repeat;
     background-position: top left;
     background-size: 220px;
+  }
+
+  img,
+  video,
+  iframe,
+  svg {
+    max-width: 100%;
+    height: auto;
   }
 
   h1, h2, h3, h4, .font-alice {

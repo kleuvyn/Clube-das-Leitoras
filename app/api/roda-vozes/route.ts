@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, dbWrite, client } from '@/lib/db';
 import { rodaVozes, participantesRodaVozes } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -180,6 +181,8 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     await ensureRodaVozesSchema();
+    await requireAdmin(request);
+
     const body = await request.json();
     const { id, status } = body;
 
@@ -213,8 +216,14 @@ export async function PATCH(request: Request) {
     }
 
     return NextResponse.json({ success: true, roda: updated[0] });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erro ao atualizar status da roda:', error);
+    if (error?.status && error?.message) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.status }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Erro ao atualizar status da roda' },
       { status: 500 }
