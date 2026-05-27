@@ -60,6 +60,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       items: [
         { href: '/admin/colaboradores', label: 'Leitoras / Acessos', icon: Users },
         { href: '/admin/solicitacoes', label: 'Solicitações de Curadoria', icon: Sparkles },
+        { href: '/admin/carteirinha', label: 'Carteirinhas', icon: ImageIcon },
       ]
     }
   ];

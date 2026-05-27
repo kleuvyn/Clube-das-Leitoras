@@ -201,7 +201,7 @@ export default function SorteiosPage() {
 
   return (
     <div
-      className="min-h-screen font-alice pb-28 pt-28 lg:pt-32 relative overflow-hidden"
+      className="min-h-screen font-alice pb-28 pt-28 lg:pt-32 relative overflow-hidden overflow-x-hidden"
       style={{
         background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')`,
         color: corTexto,
@@ -222,20 +222,20 @@ export default function SorteiosPage() {
         </h1>
 
         <div className="grid grid-cols-1 md:grid-cols-[0.95fr_0.7fr] gap-8 text-left max-w-4xl mx-auto pt-8 border-t border-[#7e6d60]/15">
-          <div className="relative pl-8">
+          <div className="relative pl-8 min-w-0">
             <Quote size={20} className="absolute left-0 top-0 opacity-30" style={{ color: corDestaque }} />
-            <p className="italic text-sm md:text-base leading-relaxed opacity-85 text-[#4A443F]">
+            <p className="italic text-sm md:text-base leading-relaxed opacity-85 text-[#4A443F] break-words">
               Todo mês sorteamos um presente para quem compartilha essa travessia literária com a gente.
             </p>
           </div>
-          <p className="text-[10px] uppercase tracking-[0.4em] font-semibold opacity-70 self-end" style={{ color: verdeMusgo }}>
+          <p className="text-[10px] uppercase tracking-[0.4em] font-semibold opacity-70 self-end break-words" style={{ color: verdeMusgo }}>
             Nome na urna, sorteio transparente e novo ciclo a cada mês.
           </p>
         </div>
         {sorteioFotoUrl && (
           <>
             <div
-              className="mx-auto mt-10 grid gap-6 max-w-5xl md:grid-cols-[minmax(16rem,22rem)_1fr] items-center"
+              className="mx-auto mt-10 grid gap-6 max-w-5xl min-w-0 md:grid-cols-[minmax(16rem,22rem)_1fr] items-center"
             >
               <div className="relative mx-auto w-full max-w-[24rem] cursor-zoom-in group rotate-[-2deg] transition-transform hover:rotate-0 hover:scale-105 duration-500" title="Clique para ampliar a imagem" onClick={() => setSorteioZoomAberto(true)}>
                 <div className="rounded-xl bg-white p-4 pb-16 shadow-[2px_12px_36px_rgba(0,0,0,0.15)] border border-[#e5d6c5]/90 relative">
@@ -252,14 +252,14 @@ export default function SorteiosPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.75rem] border border-[#c8b7aa]/30 bg-white/95 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)]">
+              <div className="rounded-[1.75rem] border border-[#c8b7aa]/30 bg-white/95 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)] w-full max-w-full min-w-0">
               <span className="text-[10px] uppercase tracking-[0.35em] text-[#8c7b6e] mb-4 block">
                 Prêmio em destaque
               </span>
-              <h2 className="text-3xl font-serif italic leading-tight" style={{ color: corTexto }}>
+              <h2 className="text-3xl font-serif italic leading-tight break-words" style={{ color: corTexto }}>
                 O que vai ser sorteado
               </h2>
-              <p className="mt-4 text-sm leading-relaxed opacity-80 text-[#4A443F]">
+              <p className="mt-4 text-sm leading-relaxed opacity-80 text-[#4A443F] break-words">
                 Essa imagem mostra o presente em destaque. Clique nela para ver em tamanho real.
               </p>
               <div className="mt-6 rounded-[1.25rem] bg-[#f8f3ea] border border-[#c8b7aa]/20 p-5">
@@ -304,22 +304,24 @@ export default function SorteiosPage() {
         )}
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 md:px-12 grid lg:grid-cols-12 gap-12 items-start relative z-10">
-        <section className="lg:col-span-7 space-y-10">
+      <main className="max-w-6xl mx-auto px-6 md:px-12 grid lg:grid-cols-12 gap-12 items-start relative z-10 min-w-0">
+        <section className="lg:col-span-7 space-y-10 min-w-0">
           <div className="relative group">
             <div className="bg-white/95 border rounded-[1.5rem] p-8 md:p-10 shadow-[0_10px_25px_rgba(0,0,0,0.06)] relative z-10" style={{ borderColor: `${corDestaque}30` }}>
               <h2 className="text-[10px] font-semibold uppercase tracking-[0.35em] mb-6" style={{ color: corDestaque }}>
                 A Urna
               </h2>
 
-              <ul className="mb-8 space-y-2.5 text-[0.9rem] opacity-85 leading-relaxed" style={{ color: corTexto }}>
-                <li className="flex items-start gap-2.5">
-                  <span className="h-[4px] w-[4px] min-w-[4px] rounded-full mt-2" style={{ backgroundColor: corDestaque }}></span>
-                  <span>Coloque <strong className="text-[16px] font-bold italic uppercase tracking-[0.35em]" style={{ color: corDestaque }}>NOME E SOBRENOME</strong> na urna de participação.</span>
+              <ul className="mb-8 space-y-2.5 text-[0.9rem] opacity-85 leading-relaxed max-w-full break-words" style={{ color: corTexto }}>
+                <li className="flex items-start gap-2.5 min-w-0">
+                  <span className="h-1 w-1 min-w-1 rounded-full mt-2" style={{ backgroundColor: corDestaque }}></span>
+                  <span className="min-w-0 break-words whitespace-normal">
+                    Coloque <strong className="text-[16px] font-bold italic uppercase tracking-[0.35em]" style={{ color: corDestaque }}>NOME E SOBRENOME</strong> na urna de participação.
+                  </span>
                 </li>
-                <li className="flex items-start gap-2.5">
-                  <span className="h-[4px] w-[4px] min-w-[4px] rounded-full mt-2" style={{ backgroundColor: corDestaque }}></span>
-                  Será permitido apenas um nome por cadastro.
+                <li className="flex items-start gap-2.5 min-w-0">
+                  <span className="h-1 w-1 min-w-1 rounded-full mt-2" style={{ backgroundColor: corDestaque }}></span>
+                  <span className="min-w-0 break-words whitespace-normal">Será permitido apenas um nome por cadastro.</span>
                 </li>
               </ul>
 
@@ -371,10 +373,10 @@ export default function SorteiosPage() {
                     {participantes.map((p, index) => (
                       <li
                         key={p.id ?? `${p.nome}-${index}`}
-                        className="flex justify-between items-center py-3 pl-4 pr-3 border rounded-sm hover:-translate-y-[1px] transition-all bg-[#FAFAF5]/80"
+                        className="flex justify-between items-center min-w-0 py-3 pl-4 pr-3 border rounded-sm hover:-translate-y-[1px] transition-all bg-[#FAFAF5]/80"
                         style={{ borderColor: `${corDestaque}15` }}
                       >
-                        <span className="font-alice text-[17px] truncate opacity-90">{p.nome}</span>
+                        <span className="font-alice text-[17px] truncate opacity-90 min-w-0">{p.nome}</span>
                         <button
                           type="button"
                           onClick={() => removerParticipante(p.id, p.nome)}
@@ -392,13 +394,13 @@ export default function SorteiosPage() {
             </div>
             
             <div
-              className="absolute top-2 left-2 right-[-8px] bottom-[-8px] border rounded-sm -z-0 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"
+              className="absolute top-2 left-2 right-0 bottom-0 md:right-[-8px] md:bottom-[-8px] border rounded-sm -z-0 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"
               style={{ borderColor: `${corDestaque}20`, backgroundColor: `${corDestaque}05` }}
             />
           </div>
         </section>
 
-        <aside className="lg:col-span-5 space-y-10">
+        <aside className="lg:col-span-5 space-y-10 min-w-0">
           <div className="relative group">
             <div className="bg-white/95 border rounded-[1.5rem] p-8 md:p-10 shadow-[0_10px_25px_rgba(0,0,0,0.06)] flex flex-col justify-center items-center text-center relative z-10" style={{ borderColor: `${corDestaque}30` }}>
               <div className="rounded-[1.2rem] border p-6 w-full min-h-40 flex flex-col items-center justify-center text-center relative" style={{ borderColor: `${corDestaque}15`, backgroundColor: '#f7f1e7' }}>
@@ -409,7 +411,7 @@ export default function SorteiosPage() {
             </div>
 
             <div
-              className="absolute top-2 left-2 right-[-8px] bottom-[-8px] border rounded-sm -z-0 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"
+              className="absolute top-2 left-2 right-0 bottom-0 md:right-[-8px] md:bottom-[-8px] border rounded-sm -z-0 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"
               style={{ borderColor: `${corDestaque}20`, backgroundColor: `${corDestaque}05` }}
             />
           </div>
@@ -446,16 +448,16 @@ export default function SorteiosPage() {
                 <ul className="space-y-4 max-h-52 overflow-y-auto pr-3">
                   {historico.map((item, idx) => (
                     <li key={`${item.id}-${idx}`} className="flex flex-col gap-1.5 pb-4 border-b last:border-b-0" style={{ borderColor: `${corDestaque}15` }}>
-                      <p className="font-alice text-[18px] opacity-90 truncate flex items-center justify-between gap-3">
+                      <p className="font-alice text-[18px] opacity-90 truncate flex items-center justify-between gap-3 min-w-0">
                         <span className="inline-flex items-center gap-3 min-w-0">
                           <span className="inline-block h-4 w-4 rounded-full bg-[#B06543]" />
                           <span className="truncate">{item.nome}</span>
                         </span>
                         <Trophy size={14} style={{ color: corDestaque }} className="opacity-70" />
                       </p>
-                      <div className="flex justify-between items-baseline">
-                        <span className="font-serif italic text-[14px] opacity-75">{item.premio}</span>
-                        <span className="opacity-50 text-[9px] uppercase tracking-wider font-bold">
+                      <div className="flex justify-between items-baseline min-w-0 gap-3">
+                        <span className="font-serif italic text-[14px] opacity-75 truncate min-w-0">{item.premio}</span>
+                        <span className="opacity-50 text-[9px] uppercase tracking-wider font-bold"> 
                           {item.dataSorteio
                             ? normalizeDateValue(item.dataSorteio).toLocaleDateString("pt-BR", {
                                 month: "short",
@@ -471,7 +473,7 @@ export default function SorteiosPage() {
             </div>
 
             <div
-              className="absolute top-2 left-2 right-[-8px] bottom-[-8px] border rounded-sm -z-0 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"
+              className="absolute top-2 left-2 right-0 bottom-0 md:right-[-8px] md:bottom-[-8px] border rounded-sm -z-0 transition-transform group-hover:translate-x-1 group-hover:translate-y-1"
               style={{ borderColor: `${corDestaque}20`, backgroundColor: `${corDestaque}05` }}
             />
           </div>

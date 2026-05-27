@@ -73,7 +73,10 @@ export default function EscritorasPage() {
       try {
         const res = await fetch(`/api/escritoras?page=${page}&limit=${limit}`);
         const data = await res.json();
-        setEscritoras(Array.isArray(data.data) ? data.data : []);
+        const sorted = Array.isArray(data.data)
+          ? [...data.data].sort((a, b) => (a.livroTitulo || '').localeCompare(b.livroTitulo || '', 'pt', { sensitivity: 'base' }))
+          : [];
+        setEscritoras(sorted);
         setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
       } catch (err) {
         console.error("Erro ao carregar escritoras:", err);
@@ -151,9 +154,9 @@ export default function EscritorasPage() {
         </header>
 
         <main className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="grid lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+          <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
-            <aside className="hidden lg:block lg:col-span-3 sticky top-10 space-y-2 border-l border-black/5 pl-6">
+            <aside className="hidden lg:block lg:col-span-2 sticky top-10 space-y-2 border-l border-black/5 pl-6">
               <p className="text-[9px] font-bold uppercase tracking-[0.3em] opacity-30 mb-8">Outras Obras</p>
               {escritoras.map(e => (
                 <button
@@ -169,70 +172,71 @@ export default function EscritorasPage() {
               ))}
             </aside>
 
-            <article className="lg:col-span-6 space-y-12">
-              <div className="space-y-6">
+            <article className="lg:col-span-10 space-y-10">
+              <div className="space-y-4">
                 <div className="flex items-center gap-3">
                    <div className="h-[1px] w-8 bg-black/20" />
                    <span className="text-[10px] font-bold uppercase tracking-[0.4em] opacity-40">{ativa.genero || "Literatura"}</span>
                 </div>
-                <h2 className="text-5xl md:text-7xl text-[#2C3E50] font-light leading-tight">
+                <h2 className="text-4xl md:text-5xl lg:text-6xl text-[#2C3E50] font-light leading-tight">
                   {ativa.livroTitulo}
                 </h2>
               </div>
 
-              {ativa.capaUrl && (
-                <div className="relative inline-block">
-                  <div className="bg-white p-3 shadow-[20px_20px_60px_rgba(0,0,0,0.1)] border border-black/5 -rotate-1 transform transition-transform hover:rotate-0 duration-700">
-                    <img src={ativa.capaUrl} alt={ativa.livroTitulo} className="max-w-full h-auto w-[320px] rounded-sm object-cover" />
-                  </div>
-                </div>
-              )}
-
               <div className="prose prose-slate max-w-none">
-                {ativa.bio && (
-                  <div className="mb-10">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-30 mb-4">Sobre a Autora</h4>
-                    <p className="text-lg leading-relaxed text-slate-700 italic">{ativa.bio}</p>
+                {ativa.capaUrl && (
+                  <div className="float-left mr-8 mb-4 relative">
+                    <div className="bg-white p-3 shadow-[20px_20px_60px_rgba(0,0,0,0.1)] border border-black/5 -rotate-2 transform transition-transform hover:rotate-0 duration-700">
+                      <img src={ativa.capaUrl} alt={ativa.livroTitulo} className="max-w-full h-auto w-[180px] md:w-[240px] rounded-sm object-cover" />
+                    </div>
                   </div>
                 )}
 
                 {ativa.sinopse && (
-                  <div className="relative p-10 bg-black/[0.02] border-l-4 rounded-r-xl" style={{ borderColor: rosaPrincipal }}>
+                  <div className="mb-8 text-justify">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-30 pt-2 mb-4">Introdução ao Livro</h4>
+                    <p className="text-lg leading-relaxed text-slate-700 italic">{ativa.sinopse}</p>
+                  </div>
+                )}
+
+                <div className="clear-both"></div>
+
+                {ativa.bio && (
+                  <div className="relative p-10 bg-black/5 border-l-4 rounded-r-xl mt-12" style={{ borderColor: rosaPrincipal }}>
                     <Quote size={24} className="absolute -top-3 -left-3 opacity-20" style={{ color: rosaPrincipal }} />
-                    <p className="text-xl italic leading-relaxed text-slate-800">
-                      {ativa.sinopse}
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-30 mb-4">Sobre a Autora</h4>
+                    <p className="text-xl italic leading-relaxed text-slate-800 text-justify">
+                      {ativa.bio}
                     </p>
                   </div>
                 )}
-              </div>
-            </article>
 
-            <aside className="lg:col-span-3 space-y-6">
-              <div className="bg-white/50 backdrop-blur-sm p-8 border border-black/5 rounded-3xl shadow-sm">
-                 <div className="space-y-6">
-                    <div>
-                      <span className="text-[9px] font-bold uppercase tracking-widest opacity-40 block mb-2">Autoria</span>
-                      <p className="flex items-center gap-2 font-medium"><Feather size={14} style={{ color: rosaPrincipal }}/> {ativa.nome}</p>
-                    </div>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 mt-16 p-8 bg-white/50 backdrop-blur-sm border border-black/5 rounded-3xl shadow-sm">
+                  <div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest opacity-40 block mb-2">Autoria</span>
+                    <p className="flex items-center gap-2 font-medium text-xl"><Feather size={18} style={{ color: rosaPrincipal }}/> {ativa.nome}</p>
                     {ativa.instagram && (
-                      <a href={`https://instagram.com/${ativa.instagram.replace('@', '')}`} target="_blank" className="flex items-center gap-3 text-sm opacity-60 hover:opacity-100 transition-opacity">
-                        <Instagram size={16} /> @{ativa.instagram.replace('@', '')}
+                      <a href={`https://instagram.com/${ativa.instagram.replace('@', '')}`} target="_blank" className="flex items-center gap-2 text-sm opacity-60 hover:opacity-100 transition-opacity mt-2">
+                        <Instagram size={14} /> @{ativa.instagram.replace('@', '')}
                       </a>
                     )}
-                 </div>
-
-                 {ativa.linkCompra && (
+                  </div>
+                  
+                  {ativa.linkCompra && (
                     <a
                       href={ativa.linkCompra}
                       target="_blank"
-                      className="mt-8 flex items-center justify-center gap-3 w-full py-4 rounded-2xl text-white text-[10px] font-bold uppercase tracking-[0.2em] transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-rose-900/10"
+                      className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-white text-[11px] font-bold uppercase tracking-[0.2em] transition-transform hover:scale-[1.02] active:scale-95 shadow-lg shadow-rose-900/10"
                       style={{ backgroundColor: rosaPrincipal }}
                     >
-                      <ShoppingCart size={14} /> Adquirir Obra
+                      <ShoppingCart size={16} /> Adquirir Obra
                     </a>
                   )}
+                </div>
+
               </div>
-            </aside>
+            </article>
+
           </div>
         </main>
       </div>

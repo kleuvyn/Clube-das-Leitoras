@@ -3,7 +3,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { uploadFile } from '@/lib/upload-client';
 import { Button } from '@/components/ui/button';
-import { Camera, Phone, User, Loader2, CheckCircle2 } from 'lucide-react';
+import { Camera, Phone, User, Loader2, CheckCircle2, X } from 'lucide-react';
+
+type User = {
+  email: string;
+  name?: string | null;
+  carteirinhaUrl?: string | null;
+};
 
 export default function CarteirinhaPage() {
   const [nome, setNome] = useState('');
@@ -14,7 +20,9 @@ export default function CarteirinhaPage() {
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [user, setUser] = useState<User | null>(null);
   const [isLogged, setIsLogged] = useState(false);
+  const [showCard, setShowCard] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -26,6 +34,21 @@ export default function CarteirinhaPage() {
     setIsLogged(!!loggedEmail);
     if (loggedEmail) {
       setEmail(loggedEmail);
+    }
+
+    const loadUser = async () => {
+      try {
+        const res = await fetch('/api/usuario', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setUser(data.user ?? null);
+      } catch {
+        setUser(null);
+      }
+    };
+
+    if (loggedEmail) {
+      loadUser();
     }
   }, []);
 
@@ -119,7 +142,7 @@ export default function CarteirinhaPage() {
           </div>
           <h1 className="text-7xl md:text-[100px] text-[#2C3E50] tracking-tighter leading-[0.8] mb-10 drop-shadow-sm">
             Carteirinha<br />
-            <span className="italic text-[#B04D4A] font-light">Clube das Leitoras</span>
+            <span className="italic text-rosa-gabi font-light">Clube das Leitoras</span>
           </h1>
           <div className="max-w-3xl mx-auto text-left border-t border-black/10 pt-10">
             <div className="grid gap-8 md:grid-cols-2">
@@ -135,167 +158,216 @@ export default function CarteirinhaPage() {
 
         <div className="grid gap-10 lg:grid-cols-[1.6fr_0.9fr] items-start">
           <section className="space-y-8">
-            <div className="rounded-[3rem] border border-black/5 bg-white p-10 shadow-sm">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="rounded-3xl bg-[#F7E8E6] p-4 shadow-sm">
-                  <Camera size={24} className="text-[#B04D4A]" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-semibold text-slate-900">O que precisamos receber</h2>
-                  <p className="mt-3 text-sm italic opacity-60 text-slate-600 leading-relaxed">
-                    Para produzir a sua carteirinha com cuidado, precisamos de algumas informações simples.
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-6 md:grid-cols-2">
-                <ul className="space-y-3 text-sm text-slate-600">
-                  <li>• Foto para identificação na carteirinha</li>
-                  <li>• Nome completo</li>
-                </ul>
-                <ul className="space-y-3 text-sm text-slate-600">
-                  <li>• E-mail para contato e confirmação</li>
-                  <li>• WhatsApp — o mesmo número que consta no grupo</li>
-                </ul>
-              </div>
-              <div className="mt-8 border-t border-black/5 pt-6">
-                <h3 className="text-base font-semibold text-slate-900 uppercase tracking-[0.3em]">Dados solicitados</h3>
-                <ul className="mt-4 space-y-2 text-sm text-slate-600">
-                  <li>• Nome completo</li>
-                  <li>• E-mail</li>
-                  <li>• WhatsApp</li>
-                  <li>• Foto</li>
-                </ul>
-              </div>
-            </div>
-
-            {!isLogged ? (
+            {user?.carteirinhaUrl ? (
               <div className="rounded-[3rem] border border-amber-200 bg-amber-50 p-10 shadow-sm">
-                <h2 className="text-2xl font-semibold text-slate-900">Acesso reservado</h2>
-                <p className="mt-4 text-sm leading-7 text-slate-700">
-                  Este pedido só pode ser feito por quem já tem cadastro no Clube das Leitoras.
-                </p>
-                <a
-                  href="/login"
-                  className="mt-8 inline-flex items-center justify-center rounded-full bg-[#B04D4A] px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-[#8C3A3F] transition-all"
-                >
-                  Entrar no Clube
-                </a>
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="rounded-3xl bg-[#F7E8E6] p-4 shadow-sm">
+                    <CheckCircle2 size={24} className="text-rosa-gabi" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-semibold text-slate-900">Sua carteirinha está disponível</h2>
+                    <p className="mt-3 text-sm italic opacity-60 text-slate-600 leading-relaxed">
+                      Apresente esse cartão ao segurança sempre que precisar entrar na sala.
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-4xl border border-slate-200 bg-white p-6">
+                  {user.carteirinhaUrl.endsWith('.pdf') ? (
+                    <div className="space-y-5 text-sm text-slate-700">
+                      <p className="font-semibold">Carteirinha pronta em PDF</p>
+                      <a
+                        href={user.carteirinhaUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 rounded-full bg-rosa-gabi px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-[#8C3A3F]"
+                      >
+                        Abrir carteirinha
+                      </a>
+                      <p className="text-xs text-slate-500">Abre em nova aba para apresentar ao segurança.</p>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setShowCard(true)}
+                      className="group w-full rounded-4xl border border-slate-200 overflow-hidden"
+                    >
+                      <img
+                        src={user.carteirinhaUrl}
+                        alt="Carteirinha da leitora"
+                        className="w-full rounded-4xl border border-slate-200 object-cover transition-transform duration-300 group-hover:scale-[1.01]"
+                      />
+                      <div className="pointer-events-none mt-4 text-sm text-slate-500 text-center uppercase tracking-[0.2em]">
+                        Toque para apresentar em tela cheia
+                      </div>
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6 rounded-[3rem] border border-black/5 bg-white p-10 shadow-sm">
-                <div className="space-y-2">
-                  <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Nome completo</label>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <User size={18} className="text-slate-400" />
-                      <input
-                        value={nome}
-                        onChange={(event) => setNome(event.target.value)}
-                        placeholder="Seu nome completo"
-                        className="w-full bg-transparent text-sm outline-none"
-                      />
+              <>
+                <div className="rounded-[3rem] border border-black/5 bg-white p-10 shadow-sm">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="rounded-3xl bg-[#F7E8E6] p-4 shadow-sm">
+                      <Camera size={24} className="text-rosa-gabi" />
                     </div>
+                    <div>
+                      <h2 className="text-3xl font-semibold text-slate-900">O que precisamos receber</h2>
+                      <p className="mt-3 text-sm italic opacity-60 text-slate-600 leading-relaxed">
+                        Para produzir a sua carteirinha com cuidado, precisamos de algumas informações simples.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <ul className="space-y-3 text-sm text-slate-600">
+                      <li>• Foto para identificação na carteirinha</li>
+                      <li>• Nome completo</li>
+                    </ul>
+                    <ul className="space-y-3 text-sm text-slate-600">
+                      <li>• E-mail para contato e confirmação</li>
+                      <li>• WhatsApp — o mesmo número que consta no grupo</li>
+                    </ul>
+                  </div>
+                  <div className="mt-8 border-t border-black/5 pt-6">
+                    <h3 className="text-base font-semibold text-slate-900 uppercase tracking-[0.3em]">Dados solicitados</h3>
+                    <ul className="mt-4 space-y-2 text-sm text-slate-600">
+                      <li>• Nome completo</li>
+                      <li>• E-mail</li>
+                      <li>• WhatsApp</li>
+                      <li>• Foto</li>
+                    </ul>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">E-mail</label>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <User size={18} className="text-slate-400" />
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(event) => setEmail(event.target.value)}
-                        placeholder="seu@email.com"
-                        className="w-full bg-transparent text-sm outline-none"
-                      />
-                    </div>
+                {!isLogged ? (
+                  <div className="rounded-[3rem] border border-amber-200 bg-amber-50 p-10 shadow-sm">
+                    <h2 className="text-2xl font-semibold text-slate-900">Acesso reservado</h2>
+                    <p className="mt-4 text-sm leading-7 text-slate-700">
+                      Este pedido só pode ser feito por quem já tem cadastro no Clube das Leitoras.
+                    </p>
+                    <a
+                      href="/login"
+                      className="mt-8 inline-flex items-center justify-center rounded-full bg-rosa-gabi px-8 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-[#8C3A3F] transition-all"
+                    >
+                      Entrar no Clube
+                    </a>
                   </div>
-                </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-6 rounded-[3rem] border border-black/5 bg-white p-10 shadow-sm">
+                    <div className="space-y-2">
+                      <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Nome completo</label>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <User size={18} className="text-slate-400" />
+                          <input
+                            value={nome}
+                            onChange={(event) => setNome(event.target.value)}
+                            placeholder="Seu nome completo"
+                            className="w-full bg-transparent text-sm outline-none"
+                          />
+                        </div>
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">WhatsApp</label>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Phone size={18} className="text-slate-400" />
-                      <input
-                        value={whatsapp}
-                        onChange={(event) => setWhatsapp(event.target.value)}
-                        placeholder="(61) 9 9999-9999"
-                        className="w-full bg-transparent text-sm outline-none"
-                      />
+                    <div className="space-y-2">
+                      <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">E-mail</label>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <User size={18} className="text-slate-400" />
+                          <input
+                            type="email"
+                            value={email}
+                            onChange={(event) => setEmail(event.target.value)}
+                            placeholder="seu@email.com"
+                            className="w-full bg-transparent text-sm outline-none"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Foto</label>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <Camera size={18} className="text-slate-400" />
-                      <input
-                        ref={inputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFotoChange}
-                        className="w-full text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-[#F7E8E6] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#8C4C4A]"
-                      />
+                    <div className="space-y-2">
+                      <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">WhatsApp</label>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <Phone size={18} className="text-slate-400" />
+                          <input
+                            value={whatsapp}
+                            onChange={(event) => setWhatsapp(event.target.value)}
+                            placeholder="(61) 9 9999-9999"
+                            className="w-full bg-transparent text-sm outline-none"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  {uploading && (
-                    <div className="text-sm text-slate-500 flex items-center gap-2">
-                      <Loader2 className="animate-spin" size={16} /> Enviando foto...
-                    </div>
-                  )}
-                  {fotoUrl && (
-                    <div className="rounded-3xl overflow-hidden border border-slate-200">
-                      <img src={fotoUrl} alt="Prévia da foto" className="w-full h-auto object-cover" />
-                    </div>
-                  )}
-                  {fotoUrl && (
-                    <div className="mt-3">
-                      <Button
-                        type="button"
-                        onClick={handleDownloadPhoto}
-                        className="w-full justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-700"
-                      >
-                        Baixar foto da carteirinha
-                      </Button>
-                    </div>
-                  )}
-                </div>
 
-                {error && (
-                  <div className="rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                    {error}
-                  </div>
+                    <div className="space-y-2">
+                      <label className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Foto</label>
+                      <div className="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <Camera size={18} className="text-slate-400" />
+                          <input
+                            ref={inputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFotoChange}
+                            className="w-full text-sm text-slate-700 file:mr-4 file:rounded-full file:border-0 file:bg-[#F7E8E6] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-[#8C4C4A]"
+                          />
+                        </div>
+                      </div>
+                      {uploading && (
+                        <div className="text-sm text-slate-500 flex items-center gap-2">
+                          <Loader2 className="animate-spin" size={16} /> Enviando foto...
+                        </div>
+                      )}
+                      {fotoUrl && (
+                        <div className="rounded-3xl overflow-hidden border border-slate-200">
+                          <img src={fotoUrl} alt="Prévia da foto" className="w-full h-auto object-cover" />
+                        </div>
+                      )}
+                      {fotoUrl && (
+                        <div className="mt-3">
+                          <Button
+                            type="button"
+                            onClick={handleDownloadPhoto}
+                            className="w-full justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-700"
+                          >
+                            Baixar foto da carteirinha
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {error && (
+                      <div className="rounded-3xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {error}
+                      </div>
+                    )}
+                    {success && (
+                      <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {success}
+                      </div>
+                    )}
+
+                    <Button
+                      type="submit"
+                      disabled={sending || uploading}
+                      className="w-full justify-center rounded-full bg-rosa-gabi px-6 py-4 text-sm font-bold uppercase tracking-[0.25em] text-white hover:bg-[#8C3A3F] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {sending ? 'Enviando...' : 'Enviar solicitação'}
+                    </Button>
+                  </form>
                 )}
-                {success && (
-                  <div className="rounded-3xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                    {success}
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  disabled={sending || uploading}
-                  className="w-full justify-center rounded-full bg-[#B04D4A] px-6 py-4 text-sm font-bold uppercase tracking-[0.25em] text-white hover:bg-[#8C3A3F] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {sending ? 'Enviando...' : 'Enviar solicitação'}
-                </Button>
-              </form>
+              </>
             )}
           </section>
 
           <aside className="space-y-6 rounded-[3rem] border border-black/5 bg-white p-10 shadow-sm">
             <div>
-              <div className="flex items-center gap-3 text-[#B04D4A]">
+              <div className="flex items-center gap-3 text-rosa-gabi">
                 <CheckCircle2 size={24} />
                 <h2 className="text-xl font-semibold">Por que solicitamos essas informações?</h2>
               </div>
               <p className="mt-4 text-sm italic opacity-60 leading-7 text-slate-600">
-                Essas informações ajudam a curadoria a produzir, confirmar e entregar sua carteirinha com mais cuidado.
+                Essas informações ajudam a curadoria a produzir, confirmar e entregar sua carteirinha com mais cuidado. Após aprovação, ela ficará disponível no seu perfil para apresentação.
               </p>
             </div>
             <ul className="space-y-3 text-sm text-slate-600">
@@ -307,6 +379,34 @@ export default function CarteirinhaPage() {
           </aside>
         </div>
       </main>
+
+      {showCard && user?.carteirinhaUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6">
+          <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] bg-white shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setShowCard(false)}
+              className="absolute right-5 top-5 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm text-slate-700 hover:bg-slate-100"
+            >
+              <X size={18} />
+            </button>
+            <div className="p-6">
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Apresente ao segurança</p>
+                  <h2 className="text-2xl font-semibold text-slate-900">Carteirinha</h2>
+                </div>
+                <Button onClick={() => setShowCard(false)} className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-800">
+                  Fechar
+                </Button>
+              </div>
+              <div className="rounded-[2.5rem] overflow-hidden border border-slate-200 bg-slate-100">
+                <img src={user.carteirinhaUrl} alt="Carteirinha da leitora" className="w-full h-auto object-cover" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

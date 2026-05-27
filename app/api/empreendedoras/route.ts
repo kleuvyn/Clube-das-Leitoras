@@ -28,8 +28,8 @@ export async function GET(request: Request) {
 
     const formattedRows = trimmedRows.map(row => ({
       id: row.id,
-      negocio: row.name,         
-      nome: row.feitoPor,        
+      negocio: row.name,
+      nome: row.feitoPor,
       frase: row.frase,
       instagram: row.instagram,
       fotoUrl: row.logoUrl,
@@ -39,17 +39,21 @@ export async function GET(request: Request) {
     if (!hasPagination) {
       return NextResponse.json(formattedRows, {
         headers: {
-          'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+          'Cache-Control': 'no-store',
         },
       });
     }
 
+    const countResult = await db.select({ count: sql<number>`cast(count(*) as integer)` }).from(empreendedoras);
+    const total = countResult[0]?.count || 0;
+    const pages = Math.max(1, Math.ceil(total / limit));
+
     return NextResponse.json({
       data: formattedRows,
-      pagination: { page, limit, hasMore }
+      pagination: { page, limit, total, pages, hasMore }
     }, {
       headers: {
-        'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'no-store',
       },
     });
   } catch (err: any) {

@@ -3,24 +3,10 @@
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
 const MAX_IMAGE_SIZE = 2 * 1024 * 1024; // 2 MB
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 /**
- * Faz upload de uma imagem:
- * - Produção com Vercel Blob (NEXT_PUBLIC_USE_BLOB_CLIENT=true): usa client-side upload
- * - Qualquer outro ambiente: converte para base64 no navegador (sem depender de API ou filesystem)
- *
- * Para áudio: use uploadAudio() separado.
+ * Faz upload de arquivo para o servidor ou Vercel Blob.
  */
 export async function uploadFile(file: File): Promise<string> {
-  // Vercel Blob client-side upload (produção com blob configurado)
   if (process.env.NEXT_PUBLIC_USE_BLOB_CLIENT === 'true') {
     const { upload } = await import('@vercel/blob/client');
     const blob = await upload(file.name, file, {
@@ -30,15 +16,31 @@ export async function uploadFile(file: File): Promise<string> {
     return blob.url;
   }
 
-  // Para imagens: converte para base64 no navegador — funciona em qualquer ambiente
-  if (ALLOWED_IMAGE_TYPES.includes(file.type)) {
-    if (file.size > MAX_IMAGE_SIZE) {
-      throw new Error('Imagem muito grande. Use uma imagem com menos de 2 MB.');
-    }
-    return fileToBase64(file);
+  const isImage = ALLOWED_IMAGE_TYPES.includes(file.type);
+
+  if (!isImage) {
+    throw new Error('Tipo de arquivo não suportado. Use JPG, PNG, WebP ou GIF.');
   }
 
-  throw new Error('Tipo de arquivo não suportado. Use JPG, PNG ou WebP.');
+  if (file.size > MAX_IMAGE_SIZE) {
+    throw new Error('Imagem muito grande. Use uma imagem com menos de 2 MB.');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const res = await fetch('/api/upload', {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data?.error || 'Erro ao enviar arquivo.');
+  }
+
+  return data.url;
 }
 
 /**

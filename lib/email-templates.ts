@@ -268,6 +268,36 @@ export function cartaAprovacaoSimples(params: { nome: string; tipo: string; site
 </html>`;
 }
 
+export function cartaCarteirinhaDisponivel(params: { nome: string; cartaUrl: string; siteUrl?: string }) {
+  const { nome, cartaUrl, siteUrl = 'https://clubedasleitoras.com.br' } = params;
+  return `<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>${baseStyles}</style>
+</head>
+<body>
+  <div class="card">
+    <div class="mast">
+      ${renderLacre(siteUrl)}
+      <h1>Sua carteirinha chegou</h1>
+      <div class="tagline">Apresente com carinho</div>
+      <div class="divider"></div>
+    </div>
+    <div class="body">
+      <p>Olá, <strong>${escapeHtml(nome)}</strong>.</p>
+      <p>Sua carteirinha já está disponível no Clube das Leitoras. Ela ficou guardada para você apresentar sempre que precisar.</p>
+      <p style="margin-top: 20px;"><strong>Link da carteirinha:</strong></p>
+      <p><a class="cta-button" href="${cartaUrl}" target="_blank" rel="noopener noreferrer">Ver minha carteirinha</a></p>
+      <p style="margin-top: 18px;">Também poderá acessar sua carteirinha diretamente pelo seu perfil no site.</p>
+      <a class="cta-button" href="${siteUrl}/usuario">Ir para meu perfil</a>
+    </div>
+    <div class="footer">Brasília • Curadoria de Afeto</div>
+  </div>
+</body>
+</html>`;
+}
+
 /**
  * 4. CARTA: NOTIFICAÇÃO ADMIN
  */

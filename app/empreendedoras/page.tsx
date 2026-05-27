@@ -12,6 +12,7 @@ import {
   Coffee,
   Sparkles,
   Heart,
+  Quote,
 } from "lucide-react";
 import { toast } from 'sonner';
 import { uploadFile } from '@/lib/upload-client';
@@ -66,9 +67,6 @@ export default function VitrineEmpreendedoras() {
   const [categoriaSelecionada, setCategoriaSelecionada] =
     useState<string>("Todas");
   const [showFiltro, setShowFiltro] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
-  const limit = 12;
 
   // Estados do Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -96,12 +94,11 @@ export default function VitrineEmpreendedoras() {
     async function carregarVitrine() {
       setLoading(true);
       try {
-        const res = await fetch(`/api/empreendedoras?page=${page}&limit=${limit}`, {
-          cache: 'force-cache',
+        const res = await fetch(`/api/empreendedoras?limit=1000`, {
+          cache: 'no-store',
         });
         const data = await res.json();
-        setEmpreendedoras(Array.isArray(data.data) ? data.data : []);
-        setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
+        setEmpreendedoras(Array.isArray(data) ? data : (Array.isArray(data.data) ? data.data : []));
       } catch (err) {
         console.error("Erro ao carregar vitrine:", err);
       } finally {
@@ -109,7 +106,7 @@ export default function VitrineEmpreendedoras() {
       }
     }
     carregarVitrine();
-  }, [page]);
+  }, []);
 
   const filtradas = empreendedoras.filter(
     (item) =>
@@ -156,7 +153,6 @@ export default function VitrineEmpreendedoras() {
           instagram: instagramVal,
           categoria: categoriaVal,
           frase: fraseVal,
-          mensagem: fraseVal,
           logoUrl: logoUrlVal || null,
         }),
       });
@@ -310,88 +306,92 @@ export default function VitrineEmpreendedoras() {
             Sintonizando afetos...
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-12 gap-y-24 mb-48">
-            {filtradas.map((item, idx) => (
-              <div
-                key={item.id || idx}
-                className="group space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700"
-              >
-                <div className="relative w-20 h-20">
-                  <div className="absolute inset-0 border border-black/5 rounded-full rotate-6 group-hover:rotate-12 transition-all duration-700" />
-                  <div className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center bg-white border border-black/5 shadow-sm">
-                    {item.fotoUrl ? (
-                      <img
-                        src={item.fotoUrl}
-                        alt={item.negocio}
-                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                      />
-                    ) : (
-                      <span
-                        className="text-xl italic opacity-40"
-                        style={{ color: lavandaPrincipal }}
-                      >
-                        {item.negocio?.charAt(0)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <span
-                    className="text-[9px] font-bold uppercase tracking-[0.3em]"
-                    style={{ color: lavandaPrincipal }}
-                  >
-                    {item.categoria}
-                  </span>
-                  <h3 className="text-3xl text-[#2C3E50] tracking-tighter leading-none group-hover:italic transition-all duration-500">
-                    {item.negocio}
-                  </h3>
-                  <p className="text-[10px] uppercase tracking-widest opacity-40 italic">
-                    por {item.nome}
-                  </p>
-                </div>
-                <div className="relative pl-6 border-l border-black/5">
-                  <p className="text-sm italic leading-relaxed opacity-60 text-black break-words overflow-hidden line-clamp-3">
-                    "{item.frase}"
-                  </p>
-                </div>
-                {item.instagram && (
-                  <a
-                    href={`https://instagram.com/${item.instagram.replace("@", "")}`}
-                    target="_blank"
-                    className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#2C3E50] hover:text-[#967BB6] transition-colors pt-2"
-                  >
-                    <Instagram
-                      size={14}
-                      style={{ color: lavandaPrincipal }}
-                      strokeWidth={2.5}
-                    />{" "}
-                    {item.instagram}
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+          <div className="space-y-32 mb-48">
+            {[...CATEGORIAS, ...Array.from(new Set(filtradas.map(i => i.categoria || "Outros"))).filter(c => !CATEGORIAS.includes(c))].map(categoria => {
+              const itemsDaCategoria = filtradas.filter(i => (i.categoria || "Outros") === categoria);
+              if (itemsDaCategoria.length === 0) return null;
 
-        {!loading && (pagination.hasMore || page > 1) && (
-          <div className="flex items-center justify-center gap-6 my-12">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ backgroundColor: page === 1 ? '#ddd' : lavandaPrincipal, color: 'white' }}
-            >
-              ← Anterior
-            </button>
-            <span className="text-sm text-slate-500 italic">Página {page}</span>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={!pagination.hasMore}
-              className="px-6 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ backgroundColor: !pagination.hasMore ? '#ddd' : lavandaPrincipal, color: 'white' }}
-            >
-              Próxima →
-            </button>
+              return (
+                <section key={categoria} className="space-y-16">
+                  <div className="flex flex-col items-center justify-center text-center space-y-4 pt-8">
+                    <div className="flex items-center justify-center w-full max-w-lg mx-auto gap-4 opacity-20">
+                       <div className="h-[1px] flex-1 bg-black" />
+                       <Star size={10} />
+                       <div className="h-[1px] flex-1 bg-black" />
+                    </div>
+                    <h2 className="text-5xl md:text-6xl text-[#2C3E50] tracking-tighter italic font-serif font-light px-8">{categoria}</h2>
+                    <div className="h-[1px] w-32 mx-auto bg-black/10 mt-4" />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-12 gap-y-16">
+                    {itemsDaCategoria.map((item, idx) => (
+                      <article
+                        key={item.id || idx}
+                        className="group relative flex flex-col space-y-6 pt-10 pb-12 px-8 bg-transparent border-t border-b border-black/5 hover:border-black/20 hover:bg-white/40 transition-all duration-700"
+                      >
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[#FDFCFB] group-hover:bg-[#FDFCFB]/0 transition-colors px-3">
+                           <span className="text-[8px] uppercase tracking-[0.4em] opacity-40 font-bold" style={{ color: lavandaPrincipal }}>Em Destaque</span>
+                        </div>
+
+                        <div className="relative w-[140px] aspect-square mx-auto">
+                          <div className="absolute inset-0 border border-black/10 rotate-3 group-hover:rotate-6 transition-all duration-700 bg-white" />
+                          <div className="absolute inset-0 border border-black/5 bg-[#FAFAF5] p-2 rotate-[-2deg] group-hover:rotate-0 transition-all duration-700 shadow-[0_5px_15px_rgba(0,0,0,0.05)] text-center">
+                            {item.fotoUrl ? (
+                              <img
+                                src={item.fotoUrl}
+                                alt={item.negocio}
+                                className="w-full h-full object-cover grayscale-[20%] sepia-[15%] group-hover:grayscale-0 group-hover:sepia-0 transition-all duration-700"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center border border-dashed border-black/10">
+                                <span
+                                  className="text-4xl italic opacity-30 font-serif"
+                                  style={{ color: lavandaPrincipal }}
+                                >
+                                  {item.negocio?.charAt(0)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="text-center space-y-3 pt-4">
+                          <h3 className="text-3xl md:text-4xl font-serif text-[#2C3E50] leading-[1.1] mb-1 group-hover:italic transition-all duration-500">
+                            {item.negocio}
+                          </h3>
+                          <p className="text-[9px] uppercase tracking-widest opacity-50">
+                            por <span className="font-bold">{item.nome}</span>
+                          </p>
+                        </div>
+
+                        <div className="relative pt-6 flex-1 flex flex-col justify-start">
+                           <Quote size={16} className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10 bg-transparent px-1" />
+                           <p className="text-[13px] italic leading-relaxed opacity-70 text-black text-center line-clamp-4">
+                             "{item.frase}"
+                           </p>
+                        </div>
+
+                        {item.instagram && (
+                          <div className="pt-8 flex justify-center mt-auto">
+                            <a
+                              href={`https://instagram.com/${item.instagram.replace("@", "")}`}
+                              target="_blank"
+                              className="inline-flex items-center justify-center gap-2 text-[9px] font-bold uppercase tracking-[0.2em] text-[#2C3E50] hover:text-[#967BB6] transition-colors border border-black/10 hover:border-[#967BB6]/30 rounded-full px-5 py-2 bg-white/60 shadow-sm"
+                            >
+                              <Instagram
+                                size={12}
+                                style={{ color: lavandaPrincipal }}
+                              />{" "}
+                              {item.instagram.replace("@", "")}
+                            </a>
+                          </div>
+                        )}
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
 

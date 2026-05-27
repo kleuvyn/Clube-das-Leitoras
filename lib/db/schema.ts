@@ -61,6 +61,7 @@ export const colaboradoras = sqliteTable('colaboradoras', {
   password: text('password').notNull(),
   name: text('name'),
   avatarUrl: text('avatar_url'),
+  carteirinhaUrl: text('carteirinha_url'),
   role: text('role').default('colaboradora'),
   mustChangePassword: integer('must_change_password', { mode: 'boolean' }).default(true),
   active: integer('active', { mode: 'boolean' }).default(true),
@@ -130,12 +131,21 @@ export const solicitacoes = sqliteTable('solicitacoes', {
   telefone: text('telefone'),
   whatsapp: text('whatsapp'),
   fotoUrl: text('foto_url'),
+  carteirinhaUrl: text('carteirinha_url'),
   site: text('site'),
   instagram: text('instagram'),
   mensagem: text('mensagem'),
   enderecoCompleto: text('endereco_completo'),
   status: text('status').default('pendente'),
   approvedAt: integer('approved_at', { mode: 'timestamp' }),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const carteirinhas = sqliteTable('carteirinhas', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  solicitacaoId: text('solicitacao_id').references(() => solicitacoes.id, { onDelete: 'cascade' }),
+  colaboradoraId: text('colaboradora_id').references(() => colaboradoras.id, { onDelete: 'set null' }),
+  url: text('url').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminOrColaboradora, requireAdmin, requireMember } from '@/lib/auth';
 import { db, dbWrite } from '@/lib/db';
 import { escritoras } from '@/lib/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, asc, desc, sql } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     const offset = hasPagination ? (page - 1) * limit : 0;
 
     const [rows, countResult] = await Promise.all([
-      db.select().from(escritoras).orderBy(desc(escritoras.createdAt)).limit(limit).offset(offset),
+      db.select().from(escritoras).orderBy(asc(escritoras.livroTitulo), asc(escritoras.nome)).limit(limit).offset(offset),
       db.select({ count: sql<number>`cast(count(*) as integer)` }).from(escritoras),
     ]);
 
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requireAdminOrColaboradora();
+    await requireAdminOrColaboradora(request);
     const body = await request.json();
 
     if (!body.nome || !body.livroTitulo) {
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdmin(request);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const body = await request.json();
@@ -106,7 +106,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdmin(request);
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
