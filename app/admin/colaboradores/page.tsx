@@ -90,7 +90,6 @@ export default function LeitorasAdmin() {
       setLoading(false);
     }
   };
-
   const handleBlock = async (u: any) => {
     if (!confirm(`Bloquear leitora "${u.name}"?`)) return;
     setLoading(true);
