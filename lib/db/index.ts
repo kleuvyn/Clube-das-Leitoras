@@ -7,9 +7,31 @@ const globalForDb = globalThis as unknown as {
   writeClient: ReturnType<typeof createClient> | undefined;
 };
 
-const readUrl = process.env.DATABASE_URL!;
-const readAuthToken = process.env.DATABASE_AUTH_TOKEN!;
-const writeUrl = process.env.DATABASE_WRITE_URL ?? process.env.DATABASE_URL!;
+function sanitizeUrl(rawUrl?: string): string {
+  if (!rawUrl) return 'file:dummy.db';
+  try {
+    const url = new URL(rawUrl);
+    url.searchParams.delete('channel_binding');
+    url.searchParams.delete('sslmode');
+    url.searchParams.delete('pgbouncer');
+    url.searchParams.delete('connect_timeout');
+    
+    if (url.protocol === 'postgres:' || url.protocol === 'postgresql:') {
+      // Return a dummy url to prevent build crashes if Vercel injects Postgres URL by mistake
+      if (typeof process !== 'undefined' && process.env.NEXT_PHASE === 'phase-production-build') {
+        return 'file:dummy.db';
+      }
+    }
+    return url.toString();
+  } catch {
+    return rawUrl || 'file:dummy.db';
+  }
+}
+
+const readUrl = sanitizeUrl(process.env.DATABASE_URL!);
+const readAuthToken = process.env.DATABASE_AUTH_TOKEN ?? '';
+const writeUrl = sanitizeUrl(process.env.DATABASE_WRITE_URL ?? process.env.DATABASE_URL!);
+
 const explicitWriteAuthToken = process.env.DATABASE_WRITE_AUTH_TOKEN;
 const writeAuthToken = explicitWriteAuthToken ?? process.env.DATABASE_AUTH_TOKEN!;
 
