@@ -24,6 +24,7 @@ export default function AdminSorteiosPage() {
   const [urnaAberta, setUrnaAberta] = useState(true);
   const [sorteioFotoUrl, setSorteioFotoUrl] = useState<string>('');
   const [uploadingFoto, setUploadingFoto] = useState(false);
+  const [resetandoUrna, setResetandoUrna] = useState(false);
 
   // States - Interação UI
   const [busca, setBusca] = useState('');
@@ -145,6 +146,30 @@ export default function AdminSorteiosPage() {
     } catch (error) {
       console.error('Erro ao alterar o estado da urna:', error);
       toast.error('Erro ao alterar o estado da urna.');
+    }
+  };
+
+  const handleNovaUrna = async () => {
+    if (!confirm('Deseja iniciar uma nova urna e limpar os nomes atuais?')) return;
+
+    setResetandoUrna(true);
+    try {
+      const res = await fetch('/api/sorteios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resetUrna' }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body?.error || 'Erro ao reiniciar a urna.');
+      }
+      await carregarDados();
+      toast.success('Nova urna iniciada com sucesso.');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao iniciar nova urna.');
+    } finally {
+      setResetandoUrna(false);
     }
   };
 
@@ -380,10 +405,10 @@ export default function AdminSorteiosPage() {
               <div className="mt-3 rounded-3xl bg-[#FAFAF5] border border-[#EDEBE6] p-4">
                 {sorteioFotoUrl ? (
                   <div className="space-y-3">
-                    <div className="overflow-hidden rounded-3xl border border-[#D8D2C5]">
-                      <img src={sorteioFotoUrl} alt="Foto do sorteio" className="w-full h-auto object-cover" />
+                    <div className="overflow-hidden rounded-3xl border border-[#D8D2C5] max-w-[24rem] mx-auto">
+                      <img src={sorteioFotoUrl} alt="Foto do sorteio" className="w-full h-40 object-cover" />
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                       <label className="cursor-pointer rounded-full bg-[#B06543] px-4 py-2 text-xs uppercase tracking-[0.2em] text-white">
                         <input type="file" accept="image/*" onChange={handleUploadSorteioFoto} className="hidden" />
                         {uploadingFoto ? 'Enviando...' : 'Substituir foto'}
@@ -452,13 +477,23 @@ export default function AdminSorteiosPage() {
                       : `Máximo ${maxDrawCount || 1} pessoa(s) com prêmios surpresa.`}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleSetUrnaStatus(!urnaAberta)}
-                  className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] transition ${urnaAberta ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'}`}
-                >
-                  {urnaAberta ? 'Fechar Urna' : 'Abrir Urna'}
-                </button>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={handleNovaUrna}
+                    disabled={resetandoUrna}
+                    className="rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] bg-slate-100 text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
+                  >
+                    {resetandoUrna ? 'Reiniciando...' : 'Nova Urna'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetUrnaStatus(!urnaAberta)}
+                    className={`rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] transition ${urnaAberta ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-700'}`}
+                  >
+                    {urnaAberta ? 'Fechar Urna' : 'Abrir Urna'}
+                  </button>
+                </div>
               </div>
               <input
                 type="number"

@@ -72,7 +72,7 @@ async function getActiveSorteioMonthRef() {
     .orderBy(desc(sorteiosConfig.updatedAt))
     .limit(1);
 
-  if (currentConfigRows.length > 0 && currentConfigRows[0].urnaAberta === 1) {
+  if (currentConfigRows.length > 0) {
     return { mesBase: currentMonthRef, configRow: currentConfigRows[0] };
   }
 
@@ -87,7 +87,7 @@ async function getActiveSorteioMonthRef() {
     return { mesBase: openConfigRows[0].mesBase, configRow: openConfigRows[0] };
   }
 
-  return { mesBase: currentMonthRef, configRow: currentConfigRows[0] ?? null };
+  return { mesBase: currentMonthRef, configRow: null };
 }
 
 export async function GET() {
@@ -126,7 +126,7 @@ export async function POST(req: Request) {
     await ensureTableExists();
     const { action, payload } = await req.json();
 
-    if (['salvarHistorico', 'addPremio', 'setUrnaStatus', 'removePremio', 'setSorteioFoto'].includes(action)) {
+    if (['salvarHistorico', 'addPremio', 'setUrnaStatus', 'removePremio', 'setSorteioFoto', 'resetUrna'].includes(action)) {
       await requireAdmin();
     }
 
@@ -216,6 +216,32 @@ export async function POST(req: Request) {
       }
 
       return NextResponse.json({ success: true, urnaAberta: payload.urnaAberta });
+    }
+
+    if (action === 'resetUrna') {
+      const currentMonthRef = getCurrentMonthReference();
+      const configRows = await db
+        .select()
+        .from(sorteiosConfig)
+        .where(eq(sorteiosConfig.mesBase, currentMonthRef))
+        .orderBy(desc(sorteiosConfig.updatedAt))
+        .limit(1);
+
+      if (configRows.length === 0) {
+        await dbWrite.insert(sorteiosConfig).values({
+          mesBase: currentMonthRef,
+          urnaAberta: 1,
+          updatedAt: new Date(),
+        });
+      } else {
+        await dbWrite.update(sorteiosConfig)
+          .set({ urnaAberta: 1, updatedAt: new Date() })
+          .where(eq(sorteiosConfig.mesBase, currentMonthRef));
+      }
+
+      await dbWrite.delete(sorteiosParticipantes).where(eq(sorteiosParticipantes.mesBase, currentMonthRef));
+
+      return NextResponse.json({ success: true, activeMesBase: currentMonthRef });
     }
 
     if (action === 'setSorteioFoto') {
