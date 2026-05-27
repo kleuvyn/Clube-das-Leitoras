@@ -23,7 +23,18 @@ export default function CarteirinhaPage() {
   const [user, setUser] = useState<User | null>(null);
   const [isLogged, setIsLogged] = useState(false);
   const [showCard, setShowCard] = useState(false);
+  const [cardExpanded, setCardExpanded] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const openCard = () => {
+    setShowCard(true);
+    window.requestAnimationFrame(() => setCardExpanded(true));
+  };
+
+  const closeCard = () => {
+    setCardExpanded(false);
+    window.setTimeout(() => setShowCard(false), 350);
+  };
 
   useEffect(() => {
     const getCookie = (name: string) => {
@@ -51,6 +62,13 @@ export default function CarteirinhaPage() {
       loadUser();
     }
   }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = showCard ? 'hidden' : 'auto';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [showCard]);
 
   const handleFotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -188,7 +206,7 @@ export default function CarteirinhaPage() {
                   ) : (
                     <button
                       type="button"
-                      onClick={() => setShowCard(true)}
+                      onClick={openCard}
                       className="group w-full rounded-4xl border border-slate-200 overflow-hidden"
                     >
                       <img
@@ -382,10 +400,15 @@ export default function CarteirinhaPage() {
 
       {showCard && user?.carteirinhaUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6">
-          <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] bg-white shadow-2xl">
+          <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] bg-white shadow-2xl transition-transform duration-700 ease-out"
+            style={{
+              transform: cardExpanded ? 'perspective(1400px) rotateY(0deg) scale(1)' : 'perspective(1400px) rotateY(-20deg) scale(0.93)',
+              opacity: cardExpanded ? 1 : 0.88,
+            }}
+          >
             <button
               type="button"
-              onClick={() => setShowCard(false)}
+              onClick={closeCard}
               className="absolute right-5 top-5 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm text-slate-700 hover:bg-slate-100"
             >
               <X size={18} />
@@ -396,7 +419,7 @@ export default function CarteirinhaPage() {
                   <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Apresente ao segurança</p>
                   <h2 className="text-2xl font-semibold text-slate-900">Carteirinha</h2>
                 </div>
-                <Button onClick={() => setShowCard(false)} className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-800">
+                <Button onClick={closeCard} className="rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-800">
                   Fechar
                 </Button>
               </div>
