@@ -318,15 +318,25 @@ export default function AdminSorteiosPage() {
                 </h2>
                 <p className="text-xs text-slate-500 italic mt-1">Total na urna: {participantes.length} nomes - 1 entrada por participante</p>
               </div>
-              <div className="relative">
-                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar participante..."
-                  className="pl-9 pr-4 py-2 border rounded-full text-sm bg-slate-50 w-full md:w-64 outline-none focus:ring-1 focus:ring-[#B06543]/30"
-                  value={busca}
-                  onChange={(e) => setBusca(e.target.value)}
-                />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="relative w-full sm:w-64">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar participante..."
+                    className="pl-9 pr-4 py-2 border rounded-full text-sm bg-slate-50 w-full outline-none focus:ring-1 focus:ring-[#B06543]/30"
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNovaUrna}
+                  disabled={resetandoUrna}
+                  className="rounded-full bg-[#B06543] px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] text-white transition hover:bg-[#8c5039] disabled:opacity-50"
+                >
+                  {resetandoUrna ? 'Limpando...' : 'Limpar Urna'}
+                </button>
               </div>
             </div>
 
@@ -484,7 +494,7 @@ export default function AdminSorteiosPage() {
                     disabled={resetandoUrna}
                     className="rounded-full px-4 py-2 text-[10px] font-bold uppercase tracking-[0.3em] bg-slate-100 text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
                   >
-                    {resetandoUrna ? 'Reiniciando...' : 'Nova Urna'}
+                    {resetandoUrna ? 'Reiniciando...' : 'Limpar Urna'}
                   </button>
                   <button
                     type="button"

@@ -37,7 +37,6 @@ export default function SorteiosPage() {
   const [premioAtual, setPremioAtual] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [rodaStatus, setRodaStatus] = useState('ativa');
-  const [isAdmin, setIsAdmin] = useState(false);
   const [sorteioFotoUrl, setSorteioFotoUrl] = useState('');
   const [sorteioZoomAberto, setSorteioZoomAberto] = useState(false);
 
@@ -62,21 +61,8 @@ export default function SorteiosPage() {
     }
   };
 
-  const carregarUsuario = async () => {
-    try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const data = await res.json();
-        setIsAdmin(data.user?.role === 'admin');
-      }
-    } catch (err) {
-      console.error('Erro ao carregar usuário:', err);
-    }
-  };
-
   useEffect(() => {
     carregarDados();
-    carregarUsuario();
   }, []);
 
   const totalParticipantes = useMemo(() => participantes.length, [participantes]);
@@ -157,11 +143,6 @@ export default function SorteiosPage() {
   }
 
   async function iniciarSorteio() {
-    if (!isAdmin) {
-      toast.error('Somente admin pode sortear.');
-      return;
-    }
-
     if (participantes.length === 0 || sorteando) {
       toast.error('A urna está vazia. Adicione participantes primeiro.');
       return;
@@ -260,17 +241,19 @@ export default function SorteiosPage() {
             <div
               className="mx-auto mt-10 grid gap-6 max-w-5xl md:grid-cols-[minmax(16rem,22rem)_1fr] items-center"
             >
-              <div
-                className="block rounded-[1.75rem] overflow-hidden border border-[#c8b7aa]/30 bg-[#f7f1e7] shadow-[0_18px_45px_rgba(0,0,0,0.08)] transition-transform hover:-translate-y-1 cursor-zoom-in"
-                title="Clique para ampliar a imagem"
-                onClick={() => setSorteioZoomAberto(true)}
-              >
-                <img
-                  src={sorteioFotoUrl}
-                  alt="Foto do sorteio"
-                  className="w-full h-[18rem] object-cover"
-                  style={{ display: 'block' }}
-                />
+              <div className="relative mx-auto w-full max-w-[24rem] cursor-zoom-in group rotate-[-2deg] transition-transform hover:rotate-0 hover:scale-105 duration-500" title="Clique para ampliar a imagem" onClick={() => setSorteioZoomAberto(true)}>
+                <div className="rounded-xl bg-white p-4 pb-16 shadow-[2px_12px_36px_rgba(0,0,0,0.15)] border border-[#e5d6c5]/90 relative">
+                  <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 w-24 h-6 bg-white/50 border border-white/60 shadow-sm backdrop-blur-sm transform rotate-1 opacity-80" style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}></div>
+                  <div className="overflow-hidden border border-[#d4c0af]/50 bg-[#f7f1e7] rounded-sm">
+                    <img
+                      src={sorteioFotoUrl}
+                      alt="Foto do sorteio"
+                      className="w-full h-[22rem] object-cover transition-transform duration-700 group-hover:scale-105"
+                      style={{ display: 'block' }}
+                    />
+                  </div>
+                  <p className="absolute bottom-5 left-0 w-full text-center font-alice text-xl opacity-75" style={{ color: corTexto }}>Mimo do Mês</p>
+                </div>
               </div>
 
               <div className="rounded-[1.75rem] border border-[#c8b7aa]/30 bg-white/95 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)]">
@@ -350,19 +333,6 @@ export default function SorteiosPage() {
                 </button>
               </form>
 
-              {isAdmin && (
-                <div className="mb-8">
-                  <button
-                    type="button"
-                    onClick={iniciarSorteio}
-                    disabled={sorteando || participantes.length === 0 || !!vencedora || loading}
-                    className="w-full rounded-sm px-8 py-3.5 text-white font-bold uppercase tracking-widest text-[10px] transition-all hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ backgroundColor: '#285944' }}
-                  >
-                    Sortear Agora como Admin
-                  </button>
-                </div>
-              )}
 
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b pb-3 mb-6" style={{ borderColor: `${corDestaque}20` }}>
                 <div>
@@ -449,7 +419,6 @@ export default function SorteiosPage() {
                           </li>
                         ))}
                       </ul>
-                      <p className="mt-4 text-xs opacity-60">Destaque atual: {premioPreview}</p>
                     </div>
                   )}
 
@@ -469,15 +438,7 @@ export default function SorteiosPage() {
                     <li key={`${item.id}-${idx}`} className="flex flex-col gap-1.5 pb-4 border-b last:border-b-0" style={{ borderColor: `${corDestaque}15` }}>
                       <p className="font-alice text-[18px] opacity-90 truncate flex items-center justify-between gap-3">
                         <span className="inline-flex items-center gap-3 min-w-0">
-                          {(item.fotoUrl || item.foto_url) ? (
-                            <img
-                              src={item.fotoUrl || item.foto_url || ''}
-                              alt={`Foto do sorteio de ${item.nome}`}
-                              className="h-8 w-8 rounded-full object-cover border border-[#c8b7aa]/30"
-                            />
-                          ) : (
-                            <span className="inline-block h-8 w-8 rounded-full bg-[#e6d8c8] border border-[#c8b7aa]/30" />
-                          )}
+                          <span className="inline-block h-4 w-4 rounded-full bg-[#B06543]" />
                           <span className="truncate">{item.nome}</span>
                         </span>
                         <Trophy size={14} style={{ color: corDestaque }} className="opacity-70" />
