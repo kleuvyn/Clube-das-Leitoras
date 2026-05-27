@@ -402,7 +402,7 @@ export default function CarteirinhaPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6">
           <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] bg-white shadow-2xl transition-transform duration-700 ease-out"
             style={{
-              transform: cardExpanded ? 'perspective(1400px) rotateY(0deg) scale(1)' : 'perspective(1400px) rotateY(-32deg) scale(0.92)',
+              transform: cardExpanded ? 'perspective(1400px) rotateY(0deg) scale(1)' : 'perspective(1400px) rotateY(90deg) scale(0.92)',
               opacity: cardExpanded ? 1 : 0.88,
               transformStyle: 'preserve-3d',
               backfaceVisibility: 'hidden',
