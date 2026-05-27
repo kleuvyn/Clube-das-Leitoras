@@ -39,6 +39,7 @@ export default function SorteiosPage() {
   const [rodaStatus, setRodaStatus] = useState('ativa');
   const [isAdmin, setIsAdmin] = useState(false);
   const [sorteioFotoUrl, setSorteioFotoUrl] = useState('');
+  const [sorteioZoomAberto, setSorteioZoomAberto] = useState(false);
 
   const carregarDados = async () => {
     try {
@@ -255,23 +256,24 @@ export default function SorteiosPage() {
           </p>
         </div>
         {sorteioFotoUrl && (
-          <div className="mx-auto mt-10 grid gap-6 max-w-5xl md:grid-cols-[minmax(16rem,22rem)_1fr] items-center">
-            <a
-              href={sorteioFotoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-[1.75rem] overflow-hidden border border-[#c8b7aa]/30 bg-[#f7f1e7] shadow-[0_18px_45px_rgba(0,0,0,0.08)] transition-transform hover:-translate-y-1"
-              title="Clique para ver a imagem em tamanho real"
+          <>
+            <div
+              className="mx-auto mt-10 grid gap-6 max-w-5xl md:grid-cols-[minmax(16rem,22rem)_1fr] items-center"
             >
-              <img
-                src={sorteioFotoUrl}
-                alt="Foto do sorteio"
-                className="w-full h-[18rem] object-cover"
-                style={{ display: 'block' }}
-              />
-            </a>
+              <div
+                className="block rounded-[1.75rem] overflow-hidden border border-[#c8b7aa]/30 bg-[#f7f1e7] shadow-[0_18px_45px_rgba(0,0,0,0.08)] transition-transform hover:-translate-y-1 cursor-zoom-in"
+                title="Clique para ampliar a imagem"
+                onClick={() => setSorteioZoomAberto(true)}
+              >
+                <img
+                  src={sorteioFotoUrl}
+                  alt="Foto do sorteio"
+                  className="w-full h-[18rem] object-cover"
+                  style={{ display: 'block' }}
+                />
+              </div>
 
-            <div className="rounded-[1.75rem] border border-[#c8b7aa]/30 bg-white/95 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)]">
+              <div className="rounded-[1.75rem] border border-[#c8b7aa]/30 bg-white/95 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)]">
               <span className="text-[10px] uppercase tracking-[0.35em] text-[#8c7b6e] mb-4 block">
                 Prêmio em destaque
               </span>
@@ -289,6 +291,32 @@ export default function SorteiosPage() {
                   {premioAtual ?? premioPreview}
                 </p>
               </div>
+            </div>
+          </div>
+        </>
+        )}
+
+        {sorteioZoomAberto && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
+            onClick={() => setSorteioZoomAberto(false)}
+          >
+            <div
+              className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-[2rem] bg-[#faf5f2] p-4"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setSorteioZoomAberto(false)}
+                className="absolute right-4 top-4 z-10 rounded-full border border-white/80 bg-black/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white transition hover:bg-black"
+              >
+                Fechar
+              </button>
+              <img
+                src={sorteioFotoUrl}
+                alt="Foto do sorteio ampliada"
+                className="max-h-[82vh] max-w-[86vw] object-contain"
+              />
             </div>
           </div>
         )}

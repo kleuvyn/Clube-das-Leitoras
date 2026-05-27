@@ -207,6 +207,7 @@ export const sorteiosHistorico = sqliteTable('sorteios_historico', {
   premio: text('premio').notNull(),
   mesBase: text('mes_base').notNull(),
   dataSorteio: integer('data_sorteio', { mode: 'timestamp' }).defaultNow(),
+  fotoUrl: text('foto_url'),
 });
 
 export const sorteiosPremios = sqliteTable('sorteios_premios', {

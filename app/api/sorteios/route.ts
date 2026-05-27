@@ -21,7 +21,8 @@ async function ensureTableExists() {
         nome text NOT NULL,
         premio text NOT NULL,
         mes_base text NOT NULL,
-        data_sorteio integer DEFAULT (cast(strftime('%s', 'now') as int)) NOT NULL
+        data_sorteio integer DEFAULT (cast(strftime('%s', 'now') as int)) NOT NULL,
+        foto_url text
       )
     `);
     await client.execute(`
@@ -46,6 +47,12 @@ async function ensureTableExists() {
     const hasFotoUrl = configColumns.rows.some((row: any) => row?.name === 'foto_url' || row?.[0] === 'foto_url');
     if (!hasFotoUrl) {
       await client.execute('ALTER TABLE sorteios_config ADD COLUMN foto_url text');
+    }
+
+    const historicoColumns = await client.execute("PRAGMA table_info('sorteios_historico')");
+    const hasHistoricoFotoUrl = historicoColumns.rows.some((row: any) => row?.name === 'foto_url' || row?.[0] === 'foto_url');
+    if (!hasHistoricoFotoUrl) {
+      await client.execute('ALTER TABLE sorteios_historico ADD COLUMN foto_url text');
     }
   } catch (err) {
     console.error('Erro ao verificar/criar tabelas de sorteios:', err);
@@ -170,6 +177,7 @@ export async function POST(req: Request) {
         nome: payload.nome,
         premio: payload.premio,
         mesBase: activeMesBase,
+        fotoUrl: configRow?.fotoUrl || null,
       }).returning();
 
       // Remove apenas o vencedor atual da urna, assim ele não pode ser sorteado novamente
