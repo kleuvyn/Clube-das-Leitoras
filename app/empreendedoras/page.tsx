@@ -184,7 +184,7 @@ export default function VitrineEmpreendedoras() {
   return (
     <div
       className="min-h-screen font-serif pb-40 relative overflow-hidden selection:bg-[#967BB6]/20"
-      style={bgStyle}
+      style={{ background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}
     >
       {/* HEADER EDITORIAL */}
       <header className="max-w-5xl mx-auto pt-32 pb-24 px-6 text-center border-b border-black/5">

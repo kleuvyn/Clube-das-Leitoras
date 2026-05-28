@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { uploadFile } from '@/lib/upload-client';
 import { 
-  Plus, Trash2, Instagram, Image as ImageIcon, 
+  Plus, Trash2, Instagram, Globe, Image as ImageIcon, 
   Loader2, Save, Star, Heart, Info, UploadCloud, X, Pencil
 } from 'lucide-react';
 
@@ -30,6 +30,8 @@ export default function AdminParcerias() {
     nome: '',
     info: '',
     link: '',
+    website: '',
+    coupon: '',
     img: '' 
   });
 
@@ -95,7 +97,7 @@ export default function AdminParcerias() {
           setEditandoId(null);
           setSelectedLogoFile(null);
           setLogoPreviewUrl('');
-          setNovaParceria({ nome: '', info: '', link: '', img: '' });
+          setNovaParceria({ nome: '', info: '', link: '', website: '', coupon: '', img: '' });
           loadParcerias(page);
         }
       } else {
@@ -108,7 +110,7 @@ export default function AdminParcerias() {
           toast.success("Parceira adicionada!");
           setSelectedLogoFile(null);
           setLogoPreviewUrl('');
-          setNovaParceria({ nome: '', info: '', link: '', img: '' });
+          setNovaParceria({ nome: '', info: '', link: '', website: '', coupon: '', img: '' });
           loadParcerias(page);
         }
       }
@@ -140,13 +142,13 @@ export default function AdminParcerias() {
           </h1>
           <p className="text-slate-500 mt-1 font-medium italic">Gerencie as editoras e parceiras do clube.</p>
         </div>
-        <div className="flex items-center gap-2 bg-[#8DA4BF] text-white px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-blue-900/10">
+        <div className="flex items-center gap-2 bg-[#8DA4BF] text-white px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">
             <Star size={12} className="animate-pulse" />
             Curadoria Ativa
         </div>
       </header>
 
-      <section className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
+      <section className="bg-white p-10 rounded-[3rem] border border-slate-100 space-y-6">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">
           <Plus size={14} style={{ color: azulSerenoLogo }} /> {editandoId ? 'Editar Parceira' : 'Nova Aliança'}
         </div>
@@ -155,7 +157,7 @@ export default function AdminParcerias() {
           <div className="space-y-1">
             <label className="text-[9px] font-bold text-slate-400 uppercase ml-2">Selo / Logo da Parceria</label>
             {novaParceria.img ? (
-              <div className="relative group w-full aspect-square bg-[#FDFBF9] rounded-4xl border border-slate-100 overflow-hidden flex items-center justify-center p-6">
+              <div className="relative group w-full max-w-[180px] aspect-square bg-[#FDFBF9] rounded-4xl border border-slate-100 overflow-hidden flex items-center justify-center p-3 mx-auto">
                 <img src={novaParceria.img} alt="Preview" className="w-full h-full object-contain" />
                 <button 
                   onClick={() => setNovaParceria({ ...novaParceria, img: '' })}
@@ -168,7 +170,7 @@ export default function AdminParcerias() {
             ) : (
               <div 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full aspect-square bg-[#FDFBF9] rounded-4xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 transition-all hover:border-[#8DA4BF]/50 group"
+                className="w-full max-w-[180px] aspect-square bg-[#FDFBF9] rounded-4xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-50 transition-all hover:border-[#8DA4BF]/50 group mx-auto"
               >
                 {isUploading ? (
                   <Loader2 className="animate-spin text-[#8DA4BF]" />
@@ -221,6 +223,26 @@ export default function AdminParcerias() {
             />
           </div>
 
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Site</label>
+            <input 
+              value={novaParceria.website}
+              onChange={e => setNovaParceria({...novaParceria, website: e.target.value})}
+              placeholder="https://..."
+              className={inputCls} 
+            />
+          </div>
+
+          <div className="space-y-1 md:col-span-2">
+            <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 italic">Cupom de desconto</label>
+            <input 
+              value={novaParceria.coupon}
+              onChange={e => setNovaParceria({...novaParceria, coupon: e.target.value})}
+              placeholder="EX: LEITORAS15"
+              className={inputCls} 
+            />
+          </div>
+
           <div className="md:col-span-2 flex justify-end">
             <Button 
               onClick={handleAddParceria}
@@ -235,7 +257,7 @@ export default function AdminParcerias() {
           {editandoId && (
             <div className="md:col-span-2 text-right">
               <button
-                onClick={() => { setEditandoId(null); setNovaParceria({ nome: '', info: '', link: '', img: '' }); }}
+                onClick={() => { setEditandoId(null); setNovaParceria({ nome: '', info: '', link: '', website: '', coupon: '', img: '' }); }}
                 className="text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors"
               >
                 Cancelar edição
@@ -262,7 +284,7 @@ export default function AdminParcerias() {
               </div>
             )}
             {parcerias.map((parceiro) => (
-              <div key={parceiro.id} className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+              <div key={parceiro.id} className="group bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-none transition-all flex flex-col justify-between">
                 <div className="flex gap-4 items-start">
                   <div className="w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden shrink-0 border border-slate-100 flex items-center justify-center p-2">
                     {parceiro.imagem ? (
@@ -274,6 +296,14 @@ export default function AdminParcerias() {
                   <div className="space-y-1">
                     <h4 className="font-bold text-slate-700 text-lg leading-tight italic font-serif">{parceiro.name}</h4>
                     <p className="text-[11px] text-slate-400 italic line-clamp-2">{parceiro.description}</p>
+                    {parceiro.coupon && (
+                      <p className="text-[11px] uppercase tracking-[0.2em] font-semibold text-slate-500">cupom: {parceiro.coupon}</p>
+                    )}
+                    {parceiro.website && (
+                      <a href={parceiro.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[11px] text-blue-500 hover:underline">
+                        <Globe size={12} /> visitar site
+                      </a>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-50">
@@ -288,7 +318,14 @@ export default function AdminParcerias() {
                     <button
                       onClick={() => {
                         setEditandoId(parceiro.id);
-                        setNovaParceria({ nome: parceiro.name || '', info: parceiro.description || '', link: parceiro.link || '', img: parceiro.imagem || '' });
+                        setNovaParceria({
+                          nome: parceiro.name || '',
+                          info: parceiro.description || '',
+                          link: parceiro.link || '',
+                          website: parceiro.website || '',
+                          coupon: parceiro.coupon || '',
+                          img: parceiro.imagem || ''
+                        });
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       className="flex items-center gap-1 text-[10px] font-bold text-blue-400 hover:text-blue-600 transition-colors uppercase tracking-widest"

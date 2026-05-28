@@ -86,6 +86,14 @@ export default function CarteirinhaPage() {
     }
   };
 
+  const handleClearFoto = () => {
+    setFotoUrl('');
+    setError('');
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
@@ -342,13 +350,21 @@ export default function CarteirinhaPage() {
                         </div>
                       )}
                       {fotoUrl && (
-                        <div className="mt-3">
+                        <div className="mt-3 grid gap-3">
                           <Button
                             type="button"
                             onClick={handleDownloadPhoto}
                             className="w-full justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white hover:bg-slate-700"
                           >
                             Baixar foto da carteirinha
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={handleClearFoto}
+                            className="w-full justify-center rounded-full bg-slate-100 text-slate-700 px-6 py-3 text-sm font-semibold uppercase tracking-[0.2em] hover:bg-slate-200"
+                          >
+                            Remover foto
                           </Button>
                         </div>
                       )}

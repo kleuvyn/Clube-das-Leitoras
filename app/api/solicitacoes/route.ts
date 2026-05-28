@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { client, db, dbWrite, isWriteBlockedError } from '@/lib/db';
 import { solicitacoes, colaboradoras, carteirinhas, empreendedoras, escritoras, parcerias } from '@/lib/db/schema';
-import { and, asc, eq, desc, or, sql } from 'drizzle-orm';
+import { and, asc, eq, desc, inArray, or, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
@@ -652,6 +652,7 @@ export async function PATCH(request: Request) {
     await requireSolicitacoesAdmin(request);
     const body = await request.json();
     const { id, status, carteirinhaUrl, resendEmail } = body;
+    const removeCarteirinha = body.removeCarteirinha === true;
     const isResend = resendEmail === true;
     const rawFotoUrl = typeof body.fotoUrl === 'string' ? body.fotoUrl : '';
     const normalizedFotoUrl = sanitizeAssetUrl(rawFotoUrl);
@@ -659,8 +660,8 @@ export async function PATCH(request: Request) {
     const effectiveFotoUrl = resolvedFotoUrl || normalizedFotoUrl;
     const isFotoUpload = effectiveFotoUrl.length > 0;
 
-    if (!id || (!status && !carteirinhaUrl && !isFotoUpload && !isResend)) {
-      return NextResponse.json({ error: 'ID e status, URL da carteirinha, URL da foto ou resendEmail são obrigatórios.' }, { status: 400 });
+    if (!id || (!status && !carteirinhaUrl && !isFotoUpload && !isResend && !removeCarteirinha)) {
+      return NextResponse.json({ error: 'ID e status, URL da carteirinha, URL da foto, removeCarteirinha ou resendEmail são obrigatórios.' }, { status: 400 });
     }
 
     if (status && !['aprovada', 'rejeitada'].includes(status)) {
@@ -735,6 +736,51 @@ export async function PATCH(request: Request) {
     try {
       if (Object.keys(updateValues).length > 0) {
         await dbWrite.update(solicitacoes).set(updateValues).where(eq(solicitacoes.id, id));
+      }
+
+      if (removeCarteirinha) {
+        await dbWrite.update(solicitacoes).set({ carteirinhaUrl: null }).where(eq(solicitacoes.id, id));
+        const cardRows = await db
+          .select({
+            url: carteirinhas.url,
+            colaboradoraId: carteirinhas.colaboradoraId,
+          })
+          .from(carteirinhas)
+          .where(eq(carteirinhas.solicitacaoId, id));
+
+        await dbWrite.delete(carteirinhas).where(eq(carteirinhas.solicitacaoId, id));
+
+        const collaboratorIds = Array.from(
+          new Set(cardRows.map((row) => row.colaboradoraId).filter((value): value is string => Boolean(value)))
+        );
+        if (collaboratorIds.length > 0) {
+          await dbWrite
+            .update(colaboradoras)
+            .set({ carteirinhaUrl: null })
+            .where(inArray(colaboradoras.id, collaboratorIds));
+        }
+
+        const urlsToClear = Array.from(
+          new Set(
+            [solicitacao.carteirinhaUrl, ...cardRows.map((row) => row.url)].filter(
+              (value): value is string => Boolean(value && value.trim().length > 0)
+            )
+          )
+        );
+        if (urlsToClear.length > 0) {
+          await dbWrite
+            .update(colaboradoras)
+            .set({ carteirinhaUrl: null })
+            .where(inArray(colaboradoras.carteirinhaUrl, urlsToClear));
+        }
+
+        const normalizedEmail = normalizeEmail(solicitacao.email);
+        if (normalizedEmail) {
+          await dbWrite
+            .update(colaboradoras)
+            .set({ carteirinhaUrl: null })
+            .where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedEmail})`);
+        }
       }
 
       const wasAlreadyApproved = solicitacao.status === 'aprovada';
@@ -1062,6 +1108,65 @@ export async function DELETE(request: Request) {
     }
 
     try {
+      if (solicitacao.tipo === 'carteirinha') {
+        const cardRows = await db
+          .select({
+            url: carteirinhas.url,
+            colaboradoraId: carteirinhas.colaboradoraId,
+          })
+          .from(carteirinhas)
+          .where(eq(carteirinhas.solicitacaoId, id));
+
+        await dbWrite.delete(carteirinhas).where(eq(carteirinhas.solicitacaoId, id));
+
+        const collaboratorIds = Array.from(
+          new Set(cardRows.map((row) => row.colaboradoraId).filter((value): value is string => Boolean(value)))
+        );
+        if (collaboratorIds.length > 0) {
+          await dbWrite
+            .update(colaboradoras)
+            .set({ carteirinhaUrl: null })
+            .where(inArray(colaboradoras.id, collaboratorIds));
+        }
+
+        const urlsToClear = Array.from(
+          new Set(
+            [solicitacao.carteirinhaUrl, ...cardRows.map((row) => row.url)].filter(
+              (value): value is string => Boolean(value && value.trim().length > 0)
+            )
+          )
+        );
+        if (urlsToClear.length > 0) {
+          await dbWrite
+            .update(colaboradoras)
+            .set({ carteirinhaUrl: null })
+            .where(inArray(colaboradoras.carteirinhaUrl, urlsToClear));
+        }
+
+        const normalizedEmail = normalizeEmail(solicitacao.email);
+        if (normalizedEmail) {
+          await dbWrite
+            .update(colaboradoras)
+            .set({ carteirinhaUrl: null })
+            .where(sql`LOWER(${colaboradoras.email}) = LOWER(${normalizedEmail})`);
+        }
+
+        const includeApprovedAt = await hasApprovedAtColumn();
+        if (includeApprovedAt) {
+          await dbWrite
+            .update(solicitacoes)
+            .set({ status: 'excluida', carteirinhaUrl: null, approvedAt: null })
+            .where(eq(solicitacoes.id, id));
+        } else {
+          await dbWrite
+            .update(solicitacoes)
+            .set({ status: 'excluida', carteirinhaUrl: null })
+            .where(eq(solicitacoes.id, id));
+        }
+
+        return NextResponse.json({ success: true, movedToExcluida: true }, { status: 200 });
+      }
+
       await dbWrite.delete(solicitacoes).where(eq(solicitacoes.id, id));
     } catch (err) {
       if (isWriteBlockedError(err)) {

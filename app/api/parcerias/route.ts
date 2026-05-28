@@ -10,10 +10,19 @@ type ParceriaRow = {
   id: string;
   name: string;
   link: string | null;
+  website?: string | null;
+  coupon?: string | null;
   description: string | null;
   imagem: string | null; 
   createdAt: string;
 };
+
+function isMissingColumnError(error: unknown) {
+  if (!error || typeof error !== 'object') return false;
+  const err = error as { message?: string; cause?: unknown };
+  const message = String(err.cause?.['message'] || err.message || '');
+  return /no such column: (website|coupon)/i.test(message);
+}
 
 export async function GET(request: Request) {
   try {
@@ -25,12 +34,35 @@ export async function GET(request: Request) {
       : 1000;
     const offset = hasPagination ? (page - 1) * limit : 0;
 
-    const rows = await db
-      .select()
-      .from(parcerias)
-      .orderBy(asc(parcerias.name))
-      .limit(limit + 1)
-      .offset(offset);
+    let rows: ParceriaRow[];
+
+    try {
+      rows = await db
+        .select()
+        .from(parcerias)
+        .orderBy(asc(parcerias.name))
+        .limit(limit + 1)
+        .offset(offset);
+    } catch (error: any) {
+      if (isMissingColumnError(error)) {
+        rows = await db
+          .select({
+            id: parcerias.id,
+            name: parcerias.name,
+            link: parcerias.link,
+            description: parcerias.description,
+            imagem: parcerias.imagem,
+            createdAt: parcerias.createdAt,
+          })
+          .from(parcerias)
+          .orderBy(asc(parcerias.name))
+          .limit(limit + 1)
+          .offset(offset);
+        rows = rows.map((row) => ({ ...row, website: null, coupon: null }));
+      } else {
+        throw error;
+      }
+    }
 
     const hasMore = rows.length > limit;
     const trimmedRows = rows.slice(0, limit);
@@ -64,12 +96,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'O nome da parceria é obrigatório' }, { status: 400 });
     }
 
-    const [inserted] = await dbWrite.insert(parcerias).values({
+    const values: any = {
       name,
       link: body.link ?? null,
+      website: body.website ?? null,
+      coupon: body.coupon ?? null,
       description: description ?? null,
       imagem: imagem ?? null,
-    }).returning();
+    };
+
+    let inserted;
+    try {
+      [inserted] = await dbWrite.insert(parcerias).values(values).returning();
+    } catch (error: any) {
+      if (isMissingColumnError(error)) {
+        delete values.website;
+        delete values.coupon;
+        [inserted] = await dbWrite.insert(parcerias).values(values).returning();
+      } else {
+        throw error;
+      }
+    }
 
     return NextResponse.json(inserted, { status: 201 });
   } catch (err: any) {
@@ -92,15 +139,33 @@ export async function PATCH(request: Request) {
     const description = body.description || body.info;
     const imagem = body.imagem || body.img;
 
-    const updated = await dbWrite.update(parcerias)
-      .set({
-        name,
-        link: body.link,
-        description,
-        imagem,
-      })
-      .where(eq(parcerias.id, id))
-      .returning();
+    const updateValues: any = {
+      name,
+      link: body.link,
+      website: body.website,
+      coupon: body.coupon,
+      description,
+      imagem,
+    };
+
+    let updated;
+    try {
+      updated = await dbWrite.update(parcerias)
+        .set(updateValues)
+        .where(eq(parcerias.id, id))
+        .returning();
+    } catch (error: any) {
+      if (isMissingColumnError(error)) {
+        delete updateValues.website;
+        delete updateValues.coupon;
+        updated = await dbWrite.update(parcerias)
+          .set(updateValues)
+          .where(eq(parcerias.id, id))
+          .returning();
+      } else {
+        throw error;
+      }
+    }
 
     if (!updated.length) return NextResponse.json({ error: 'Parceria não encontrada' }, { status: 404 });
 

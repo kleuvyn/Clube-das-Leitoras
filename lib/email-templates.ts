@@ -259,7 +259,7 @@ export function cartaAprovacaoSimples(params: { nome: string; tipo: string; site
     <div class="body">
       <p>Olá, <strong>${escapeHtml(nome)}</strong>.</p>
       <p>Temos o prazer de informar que sua solicitação de <strong>${escapeHtml(tipo)}</strong> foi deferida.</p>
-      <p>Tudo está pronto para sua próxima jornada.</p>
+      <p>Logo sua carteirinha chegará.</p>
       <a class="cta-button" href="${siteUrl}">Ir para o Clube</a>
     </div>
     <div class="footer">Brasília • Curadoria de Afeto</div>

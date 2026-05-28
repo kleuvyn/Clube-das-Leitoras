@@ -105,6 +105,8 @@ export const parcerias = sqliteTable('parcerias', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),
   link: text('link'),
+  website: text('website'),
+  coupon: text('coupon'),
   description: text('description'),
   imagem: text('imagem'),
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),

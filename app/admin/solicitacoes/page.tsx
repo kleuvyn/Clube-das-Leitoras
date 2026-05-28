@@ -292,7 +292,7 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
           />
           <Button
             onClick={() => load(1)}
-            className="rounded-full bg-rosa-gabi px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white hover:bg-[#8B3A37]"
+            className="rounded-2xl bg-[#8C7B6E] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-sm shadow-[#8C7B6E]/20 transition-colors hover:bg-[#7a6a5a]"
           >
             Procurar
           </Button>

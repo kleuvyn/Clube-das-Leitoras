@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { uploadFile } from '@/lib/upload-client';
 import { toast } from 'sonner';
-import { Loader2, RefreshCw, Mail, Phone, Calendar, MapPin, Instagram, ArrowUpRight } from 'lucide-react';
+import { Loader2, RefreshCw, Mail, Phone, Calendar, MapPin, Instagram, ArrowUpRight, Search } from 'lucide-react';
 import { normalizeDateValue } from '@/lib/utils';
 
 type Solicitacao = {
@@ -37,15 +37,23 @@ export default function AdminCarteirinhaPage() {
   const [cardUploadErrors, setCardUploadErrors] = useState<Record<string, string>>({});
   const [resendingIds, setResendingIds] = useState<Record<string, boolean>>({});
   const [deletingIds, setDeletingIds] = useState<Record<string, boolean>>({});
+  const [removingCardIds, setRemovingCardIds] = useState<Record<string, boolean>>({});
   const limit = 10;
 
-  const load = async (pageNum = 1) => {
+  const load = async (
+    pageNum = 1,
+    overrides?: { statusFiltro?: string; searchTerm?: string; showAllPendentes?: boolean }
+  ) => {
     setCarregando(true);
     try {
-      const effectiveLimit = statusFiltro === 'pendente' && showAllPendentes ? 100 : limit;
+      const currentStatus = overrides?.statusFiltro ?? statusFiltro;
+      const currentSearch = overrides?.searchTerm ?? searchTerm;
+      const currentShowAllPendentes = overrides?.showAllPendentes ?? showAllPendentes;
+
+      const effectiveLimit = currentStatus === 'pendente' && currentShowAllPendentes ? 100 : limit;
       const params = new URLSearchParams({ page: String(pageNum), limit: String(effectiveLimit), tipo: 'carteirinha' });
-      if (statusFiltro !== 'todos') params.append('status', statusFiltro);
-      if (searchTerm.trim()) params.append('search', searchTerm.trim());
+      if (currentStatus !== 'todos') params.append('status', currentStatus);
+      if (currentSearch.trim()) params.append('search', currentSearch.trim());
       const res = await fetch(`/api/solicitacoes?${params.toString()}`, { cache: 'no-store', credentials: 'include' });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Erro ao buscar');
@@ -126,10 +134,6 @@ export default function AdminCarteirinhaPage() {
     }
   };
 
-  const handleEditar = (email: string) => {
-    window.location.href = `/admin/solicitacoes?tipo=carteirinha&search=${encodeURIComponent(email)}`;
-  };
-
   const handleReenviarEmail = async (id: string) => {
     setResendingIds(prev => ({ ...prev, [id]: true }));
     const loadingToast = toast.loading('Reenviando e-mail...');
@@ -148,6 +152,26 @@ export default function AdminCarteirinhaPage() {
       toast.error(err.message || 'Erro ao reenviar e-mail.', { id: loadingToast });
     } finally {
       setResendingIds(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
+  const handleRemoverCarteirinha = async (id: string) => {
+    if (!confirm('Excluir esta carteirinha por completo? Isso remove a solicitação e o cartão do perfil.')) return;
+    setRemovingCardIds(prev => ({ ...prev, [id]: true }));
+    const loadingToast = toast.loading('Excluindo carteirinha...');
+    try {
+      const res = await fetch(`/api/solicitacoes?id=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Falha ao excluir carteirinha');
+      toast.success('Carteirinha excluída por completo.', { id: loadingToast });
+      await load(page);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao excluir carteirinha.', { id: loadingToast });
+    } finally {
+      setRemovingCardIds(prev => ({ ...prev, [id]: false }));
     }
   };
 
@@ -184,7 +208,7 @@ export default function AdminCarteirinhaPage() {
       </header>
 
       <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-xl w-fit">
-        {['todos', 'pendente', 'aprovada', 'rejeitada'].map(status => (
+        {['todos', 'pendente', 'aprovada', 'rejeitada', 'excluida'].map(status => (
           <button
             key={status}
             onClick={() => setStatusFiltro(status)}
@@ -192,7 +216,7 @@ export default function AdminCarteirinhaPage() {
               statusFiltro === status ? 'bg-white shadow-sm text-rosa-gabi' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            {status === 'todos' ? 'Todos' : status === 'pendente' ? 'Pendentes' : status === 'aprovada' ? 'Aprovadas' : 'Rejeitadas'}
+            {status === 'todos' ? 'Todos' : status === 'pendente' ? 'Pendentes' : status === 'aprovada' ? 'Aprovadas' : status === 'rejeitada' ? 'Rejeitadas' : 'Excluídas'}
           </button>
         ))}
       </div>
@@ -210,7 +234,7 @@ export default function AdminCarteirinhaPage() {
       )}
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-4 py-2">
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
           <input
             type="text"
             value={searchTerm}
@@ -219,7 +243,11 @@ export default function AdminCarteirinhaPage() {
             placeholder="Buscar por nome ou e-mail"
             className="bg-transparent outline-none text-sm text-slate-700 placeholder:text-slate-400"
           />
-          <Button onClick={() => load(1)} variant="outline" className="text-xs uppercase tracking-widest">
+          <Button
+            onClick={() => load(1)}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#8C7B6E] px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-md shadow-[#8C7B6E]/30 transition-all hover:bg-[#7a6a5a] hover:shadow-lg"
+          >
+            <Search size={14} />
             Buscar
           </Button>
         </div>
@@ -331,7 +359,7 @@ export default function AdminCarteirinhaPage() {
                         {item.status}
                       </div>
                       {item.carteirinhaUrl && (
-                        <div className="mt-4">
+                        <div className="mt-4 space-y-3">
                           <a href={item.carteirinhaUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-rosa-gabi hover:text-[#8C3A3F]">
                             Abrir carteirinha
                             <ArrowUpRight size={14} />
@@ -353,7 +381,7 @@ export default function AdminCarteirinhaPage() {
                                 handleUploadCarteirinha(item.id, file);
                                 event.currentTarget.value = '';
                               }}
-                              className="text-xs text-slate-600"
+                              className="w-full text-xs text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-[#8C7B6E] file:px-4 file:py-2 file:text-xs file:font-bold file:uppercase file:tracking-[0.2em] file:text-white file:shadow-sm file:shadow-[#8C7B6E]/30 hover:file:bg-[#7a6a5a] disabled:opacity-60"
                             />
                           </label>
                           {cardUploadErrors[item.id] && <p className="text-rose-600 text-[11px]">{cardUploadErrors[item.id]}</p>}
@@ -361,13 +389,6 @@ export default function AdminCarteirinhaPage() {
                         </div>
                       )}
                       <div className="mt-4 grid gap-2">
-                        <Button
-                          type="button"
-                          onClick={() => handleEditar(item.email)}
-                          className="w-full bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-2xl h-11 text-xs font-semibold uppercase tracking-[0.2em]"
-                        >
-                          Editar
-                        </Button>
                         <Button
                           type="button"
                           onClick={() => handleReenviarEmail(item.id)}
@@ -378,13 +399,24 @@ export default function AdminCarteirinhaPage() {
                         </Button>
                         <Button
                           type="button"
-                          onClick={() => handleExcluir(item.id)}
-                          disabled={deletingIds[item.id]}
-                          variant="destructive"
-                          className="w-full h-11 text-xs font-semibold uppercase tracking-[0.2em]"
+                          variant="outline"
+                          onClick={() => handleRemoverCarteirinha(item.id)}
+                          disabled={removingCardIds[item.id]}
+                          className="w-full rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 h-11 text-xs font-semibold uppercase tracking-[0.2em]"
                         >
-                          {deletingIds[item.id] ? 'Excluindo...' : 'Excluir'}
+                          {removingCardIds[item.id] ? 'Removendo...' : 'Excluir carteirinha'}
                         </Button>
+                        {item.status !== 'aprovada' && item.status !== 'excluida' && (
+                          <Button
+                            type="button"
+                            onClick={() => handleExcluir(item.id)}
+                            disabled={deletingIds[item.id]}
+                            variant="destructive"
+                            className="w-full h-11 text-xs font-semibold uppercase tracking-[0.2em]"
+                          >
+                            {deletingIds[item.id] ? 'Excluindo...' : 'Excluir solicitação'}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   )}
