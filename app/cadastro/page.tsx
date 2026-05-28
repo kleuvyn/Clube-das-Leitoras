@@ -29,6 +29,7 @@ export default function CadastroLeitoraPage() {
   const [enderecoCompleto, setEnderecoCompleto] = useState('');
   const [cartaMimo, setCartaMimo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +67,8 @@ export default function CadastroLeitoraPage() {
         toast.error('A API de e-mail não está configurada. Contate a equipe técnica.');
       }
 
-      router.push('/login');
+      setSubmitted(true);
+      setTimeout(() => router.push('/login'), 2500);
     } catch (err: any) {
       toast.error(err.message ?? 'Não foi possível enviar o cadastro.');
     } finally {
@@ -252,11 +254,17 @@ export default function CadastroLeitoraPage() {
           <div className="pt-6 space-y-4">
             <Button 
               type="submit" 
-              disabled={submitting} 
+              disabled={submitting || submitted} 
               className="w-full h-16 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] transition-all hover:scale-[1.01] shadow-xl"
-              style={{ backgroundColor: marromTerra }}
+              style={{ backgroundColor: submitted ? '#6B9E78' : marromTerra }}
             >
-              {submitting ? <Loader2 className="animate-spin" /> : <span className="flex items-center justify-center gap-2"><CheckCircle2 size={16} /> Enviar minha inscrição</span>}
+              {submitting ? (
+                <span className="flex items-center justify-center gap-2"><Loader2 className="animate-spin" size={16} /> Enviando...</span>
+              ) : submitted ? (
+                <span className="flex items-center justify-center gap-2"><CheckCircle2 size={16} /> Inscrição enviada!</span>
+              ) : (
+                <span className="flex items-center justify-center gap-2"><CheckCircle2 size={16} /> Enviar minha inscrição</span>
+              )}
             </Button>
 
             <button 
