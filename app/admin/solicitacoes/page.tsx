@@ -355,8 +355,11 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
                     {item.approvedAt && <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> Aceito em {normalizeDateValue(item.approvedAt).toLocaleDateString('pt-BR')}</div>}
                   </div>
                   {item.fotoUrl && (
-                    <div className="mt-4 rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-                      <img src={item.fotoUrl} alt={`Foto de ${item.nome}`} className="w-full h-auto object-cover" />
+                    <div className="mt-4 inline-flex flex-col items-start gap-2">
+                      <div className="h-28 w-28 rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                        <img src={item.fotoUrl} alt={`Foto de ${item.nome}`} className="h-full w-full object-cover object-center" />
+                      </div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-slate-500">Foto 4x4</span>
                     </div>
                   )}
                   {item.fotoUrl && (

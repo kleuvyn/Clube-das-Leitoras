@@ -296,8 +296,11 @@ export default function AdminCarteirinhaPage() {
                     {item.approvedAt && <div className="flex items-center gap-2"><Calendar size={14} className="opacity-40" /> Aceito em {normalizeDateValue(item.approvedAt).toLocaleDateString('pt-BR')}</div>}
                   </div>
                   {item.fotoUrl && (
-                    <div className="mt-4 rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-                      <img src={item.fotoUrl} alt={`Foto de ${item.nome}`} className="w-full h-auto object-cover" />
+                    <div className="mt-4 inline-flex flex-col items-start gap-2">
+                      <div className="h-28 w-28 rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                        <img src={item.fotoUrl} alt={`Foto de ${item.nome}`} className="h-full w-full object-cover object-center" />
+                      </div>
+                      <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Foto 4x4</span>
                     </div>
                   )}
                   {item.fotoUrl && (
@@ -359,15 +362,31 @@ export default function AdminCarteirinhaPage() {
                         {item.status}
                       </div>
                       {item.carteirinhaUrl && (
-                        <div className="mt-4 space-y-3">
+                        <div className="mt-4 space-y-3 text-left">
                           <a href={item.carteirinhaUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-rosa-gabi hover:text-[#8C3A3F]">
                             Abrir carteirinha
                             <ArrowUpRight size={14} />
                           </a>
-                          <p className="text-[11px] leading-relaxed">Já disponível no perfil da leitora.</p>
+                          <p className="text-[11px] leading-relaxed">Carteirinha enviada por email para a leitora.</p>
+
+                          <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white">
+                            {item.carteirinhaUrl.toLowerCase().endsWith('.pdf') ? (
+                              <iframe
+                                src={item.carteirinhaUrl}
+                                title={`Prévia da carteirinha de ${item.nome}`}
+                                className="h-64 w-full"
+                              />
+                            ) : (
+                              <img
+                                src={item.carteirinhaUrl}
+                                alt={`Carteirinha de ${item.nome}`}
+                                className="h-64 w-full object-contain bg-slate-50"
+                              />
+                            )}
+                          </div>
                         </div>
                       )}
-                      {!item.carteirinhaUrl && item.status === 'aprovada' && (
+                      {!item.carteirinhaUrl && item.status !== 'rejeitada' && (
                         <div className="space-y-3 text-left">
                           <label className="grid gap-2 text-slate-500">
                             <span className="text-[11px] uppercase tracking-[0.2em]">Upload da carteirinha</span>

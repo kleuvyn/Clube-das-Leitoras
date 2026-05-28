@@ -255,11 +255,28 @@ export async function GET(request: Request) {
         : and(...filters);
 
     const includeApprovedAt = await hasApprovedAtColumn();
-    const carteirinhaUrlField = sql<string | null>`(
+    const colaboradoraCarteirinhaUrlField = sql<string | null>`(
+      SELECT url FROM carteirinhas
+      WHERE colaboradora_id = (
+        SELECT id FROM colaboradoras
+        WHERE lower(email) = lower(${solicitacoes.email})
+        LIMIT 1
+      )
+      ORDER BY created_at DESC
+      LIMIT 1
+    )`;
+
+    const solicitacaoCarteirinhaUrlField = sql<string | null>`(
       SELECT url FROM carteirinhas
       WHERE solicitacao_id = ${solicitacoes.id}
       ORDER BY created_at DESC
       LIMIT 1
+    )`;
+
+    const carteirinhaUrlField = sql<string | null>`COALESCE(
+      ${solicitacoes.carteirinhaUrl},
+      (${solicitacaoCarteirinhaUrlField}),
+      (${colaboradoraCarteirinhaUrlField})
     )`;
 
     const selectFields = includeApprovedAt
@@ -874,6 +891,8 @@ export async function PATCH(request: Request) {
             await dbWrite.update(colaboradoras).set({ carteirinhaUrl: cardUrl }).where(eq(colaboradoras.id, colaboradoraId));
           }
         }
+
+        await dbWrite.update(solicitacoes).set({ carteirinhaUrl: cardUrl }).where(eq(solicitacoes.id, id));
 
         await dbWrite.insert(carteirinhas).values({
           solicitacaoId: id,
