@@ -36,6 +36,14 @@ export default function CarteirinhaPage() {
     window.setTimeout(() => setShowCard(false), 350);
   };
 
+  const toggleCard = () => {
+    if (showCard) {
+      closeCard();
+      return;
+    }
+    openCard();
+  };
+
   useEffect(() => {
     const getCookie = (name: string) => {
       const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
@@ -214,7 +222,7 @@ export default function CarteirinhaPage() {
                   ) : (
                     <button
                       type="button"
-                      onClick={openCard}
+                      onClick={toggleCard}
                       className="group w-full rounded-4xl border border-slate-200 overflow-hidden"
                     >
                       <img
@@ -415,7 +423,19 @@ export default function CarteirinhaPage() {
       </main>
 
       {showCard && user?.carteirinhaUrl && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 overflow-hidden">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 overflow-hidden"
+          onClick={closeCard}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              closeCard();
+            }
+          }}
+          aria-label="Fechar visualização da carteirinha"
+        >
           <div className="relative flex-none transition-all duration-700 ease-out flex items-center justify-center"
             style={{
               width: '100vh',
