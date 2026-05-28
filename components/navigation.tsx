@@ -122,7 +122,7 @@ export function Navigation() {
             {menuVisible.map((cat) => (
               <div 
                 key={cat.id}
-                className="relative group py-2"
+                className="relative group pt-2 pb-6"
                 onMouseEnter={() => setOpenDropdown(cat.id)}
                 onMouseLeave={() => setOpenDropdown(null)}
               >
@@ -134,8 +134,8 @@ export function Navigation() {
                   <ChevronDown size={10} className={`transition-transform duration-300 ${openDropdown === cat.id ? 'rotate-180' : ''}`} />
                 </button>
 
-                <div className={`absolute top-full left-0 w-60 border border-[#E8E2DE] shadow-2xl rounded-sm p-6 transition-all duration-300 origin-top-left ${
-                  openDropdown === cat.id ? 'opacity-100 scale-100 visible translate-y-2' : 'opacity-0 scale-95 invisible'
+                <div className={`absolute top-[calc(100%-1px)] left-0 w-60 border border-[#E8E2DE] shadow-2xl rounded-sm p-6 transition-all duration-300 origin-top-left ${
+                  openDropdown === cat.id ? 'opacity-100 scale-100 visible translate-y-0' : 'opacity-0 scale-95 invisible'
                 }`} style={{ backgroundColor: begePapel }}>
                   <div className="space-y-4">
                     {cat.items.map((item) => (
