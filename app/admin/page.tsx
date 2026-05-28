@@ -56,8 +56,8 @@ export default async function DashboardPage() {
     { label: 'Comunidade', value: stats.comunidade, color: 'border-l-[#967BB6]', icon: Users, href: '/admin/colaboradores', desc: 'Membros ativos' },
     { label: 'Empreendedoras', value: stats.empreendedoras, color: 'border-l-[#D4A373]', icon: Briefcase, href: '/admin/empreendedoras', desc: 'Feminino & Negócios' },
     { label: 'Escritoras', value: stats.escritoras, color: 'border-l-[#6B705C]', icon: PenTool, href: '/admin/escritoras', desc: 'Autoras catalogadas' },
-    { label: 'Resenhas', value: stats.resenhas, color: 'border-l-[#A5A5A5]', icon: BookOpen, href: '/admin/livro-do-mes', desc: 'Registros literários' },
-    { label: 'Leitoras', value: stats.leitoras, color: 'border-l-[#B04D4A]', icon: Book, href: '/admin/leitoras', desc: 'Leitoras' },
+    { label: 'Resenhas', value: stats.resenhas, color: 'border-l-[#A5A5A5]', icon: BookOpen, href: '/admin/resenhas', desc: 'Registros literários' },
+    { label: 'Leitoras', value: stats.leitoras, color: 'border-l-[#B04D4A]', icon: Book, href: '/admin/colaboradores', desc: 'Leitoras' },
     { label: 'Solicitações', value: stats.solicitacoes, color: 'border-l-[#B04D4A]', icon: Calendar, href: '/admin/solicitacoes', desc: 'Solicitações de curadoria' },
     
   ];
