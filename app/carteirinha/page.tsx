@@ -399,33 +399,31 @@ export default function CarteirinhaPage() {
       </main>
 
       {showCard && user?.carteirinhaUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6">
-          <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] bg-white shadow-2xl transition-all duration-700 ease-out"
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 overflow-hidden">
+          <div className="relative flex-none transition-all duration-700 ease-out flex items-center justify-center"
             style={{
-              transform: cardExpanded ? 'rotate(90deg) scale(1)' : 'rotate(0deg) scale(0.8)',
+              width: '100vh',
+              height: '100vw',
+              transform: cardExpanded ? 'rotate(90deg) scale(1.05)' : 'rotate(0deg) scale(0.5)',
               transformOrigin: 'center center',
               opacity: cardExpanded ? 1 : 0,
             }}
           >
+            <img 
+               src={user.carteirinhaUrl} 
+               alt="Carteirinha da leitora" 
+               className="w-[95%] h-[95%] max-w-none object-contain rounded-xl shadow-2xl" 
+            />
+            
             <button
               type="button"
               onClick={closeCard}
-              className="absolute right-5 top-5 z-20 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm text-slate-700 hover:bg-slate-100"
+              className="absolute left-8 top-8 z-50 inline-flex h-14 w-14 items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white/30 transition-colors"
               aria-label="Fechar"
+              style={{ transform: 'rotate(-90deg)' }}
             >
-              <X size={18} />
+              <X size={28} />
             </button>
-            <div className="p-6">
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm uppercase tracking-[0.25em] text-slate-500">Apresente ao segurança</p>
-                  <h2 className="text-2xl font-semibold text-slate-900">Carteirinha</h2>
-                </div>
-              </div>
-              <div className="rounded-[2.5rem] overflow-hidden border border-slate-200 bg-slate-100">
-                <img src={user.carteirinhaUrl} alt="Carteirinha da leitora" className="w-full h-auto object-cover" />
-              </div>
-            </div>
           </div>
         </div>
       )}
