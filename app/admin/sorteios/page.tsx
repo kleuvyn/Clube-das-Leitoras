@@ -11,7 +11,12 @@ import { normalizeDateValue, getCurrentMonthReference } from '@/lib/utils';
 import { uploadFile } from '@/lib/upload-client';
 type Participante = { id?: string; nome: string };
 type SorteioHistorico = { id?: string; nome: string; premio: string; dataSorteio?: string };
-type SorteioPremio = { id: string; premio: string; mesBase: string };
+type SorteioPremio = { id: string; premio: string; fotoUrl?: string | null; mesBase: string };
+
+type PremioForm = {
+  nome: string;
+  fotoUrl?: string | null;
+};
 
 export default function AdminSorteiosPage() {
   const [loading, setLoading] = useState(true);
@@ -19,17 +24,20 @@ export default function AdminSorteiosPage() {
   
   // States - Dados
   const [premios, setPremios] = useState<SorteioPremio[]>([]);
+  const [premioFotoUrl, setPremioFotoUrl] = useState<string | null>(null);
+  const [uploadingPremioFoto, setUploadingPremioFoto] = useState(false);
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [historico, setHistorico] = useState<SorteioHistorico[]>([]);
   const [urnaAberta, setUrnaAberta] = useState(true);
-  const [sorteioFotoUrl, setSorteioFotoUrl] = useState<string>('');
-  const [uploadingFoto, setUploadingFoto] = useState(false);
   const [resetandoUrna, setResetandoUrna] = useState(false);
 
   // States - Interação UI
   const [busca, setBusca] = useState('');
   const [premioText, setPremioText] = useState('');
   const [savingPremio, setSavingPremio] = useState(false);
+  const [editingPremioId, setEditingPremioId] = useState<string | null>(null);
+  const [editingPremioText, setEditingPremioText] = useState('');
+  const [savingPremioEdit, setSavingPremioEdit] = useState(false);
 
   // States - Sorteio
   const [sorteando, setSorteando] = useState(false);
@@ -46,11 +54,13 @@ export default function AdminSorteiosPage() {
       const data = await res.json();
       
       setMesAtualRef(data.activeMesBase ?? getCurrentMonthReference());
-      setPremios(data.premios || []);
+      setPremios((data.premios || []).map((item: any) => ({
+        ...item,
+        fotoUrl: item.fotoUrl ?? item.foto_url ?? null,
+      })));
       setParticipantes(data.participantes || []);
       setHistorico(data.historico || []);
       setUrnaAberta(data.urnaAberta ?? true);
-      setSorteioFotoUrl(data.sorteioFotoUrl || '');
     } catch (err) {
       console.error(err);
       toast.error('Erro ao carregar dados do Sorteio da base.');
@@ -81,17 +91,95 @@ export default function AdminSorteiosPage() {
       const res = await fetch('/api/sorteios', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'addPremio', payload: { premio: value, mesBase: mesAtualRef } }),
+        body: JSON.stringify({ action: 'addPremio', payload: { premio: value, fotoUrl: premioFotoUrl, mesBase: mesAtualRef } }),
       });
       if (!res.ok) throw new Error('Erro ao adicionar prêmio.');
       const data = await res.json();
       setPremios(prev => [...prev, data]);
       setPremioText('');
+      setPremioFotoUrl(null);
       toast.success('Prêmio adicionado com sucesso!');
     } catch (err: any) {
       toast.error(err.message);
     } finally {
       setSavingPremio(false);
+    }
+  };
+
+  const handleStartEditingPremio = (id: string, premio: string) => {
+    setEditingPremioId(id);
+    setEditingPremioText(premio);
+  };
+
+  const handleCancelEditingPremio = () => {
+    setEditingPremioId(null);
+    setEditingPremioText('');
+  };
+
+  const handleSaveEditedPremio = async (id: string) => {
+    const value = editingPremioText.trim();
+    if (!value) {
+      toast.error('O nome do prêmio não pode ficar vazio.');
+      return;
+    }
+
+    setSavingPremioEdit(true);
+    try {
+      const res = await fetch('/api/sorteios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updatePremio', payload: { id, premio: value } }),
+      });
+      if (!res.ok) throw new Error('Erro ao atualizar o prêmio.');
+      setPremios(prev => prev.map(p => p.id === id ? { ...p, premio: value } : p));
+      setEditingPremioId(null);
+      setEditingPremioText('');
+      toast.success('Prêmio atualizado com sucesso!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao atualizar o prêmio.');
+    } finally {
+      setSavingPremioEdit(false);
+    }
+  };
+
+  const handleUploadPremioFoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPremioFoto(true);
+    try {
+      const url = await uploadFile(file);
+      setPremioFotoUrl(url);
+      toast.success('Foto do prêmio carregada!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao enviar foto do prêmio.');
+    } finally {
+      setUploadingPremioFoto(false);
+    }
+  };
+
+  const handleUploadPremioFotoForId = async (event: ChangeEvent<HTMLInputElement>, premioId: string) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPremioFoto(true);
+    try {
+      const url = await uploadFile(file);
+      const res = await fetch('/api/sorteios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'updatePremioFoto', payload: { id: premioId, fotoUrl: url } }),
+      });
+      if (!res.ok) throw new Error('Erro ao atualizar foto do prêmio.');
+      setPremios(prev => prev.map(p => p.id === premioId ? { ...p, fotoUrl: url } : p));
+      toast.success('Foto do prêmio atualizada com sucesso!');
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err?.message || 'Erro ao atualizar foto do prêmio.');
+    } finally {
+      setUploadingPremioFoto(false);
     }
   };
 
@@ -173,32 +261,6 @@ export default function AdminSorteiosPage() {
     }
   };
 
-  const handleUploadSorteioFoto = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setUploadingFoto(true);
-    try {
-      const url = await uploadFile(file);
-      const res = await fetch('/api/sorteios', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'setSorteioFoto', payload: { fotoUrl: url } }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data?.error || 'Erro ao salvar a foto do sorteio.');
-      }
-      setSorteioFotoUrl(url);
-      toast.success('Foto do sorteio atualizada com sucesso!');
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err?.message || 'Erro ao enviar a foto do sorteio.');
-    } finally {
-      setUploadingFoto(false);
-    }
-  };
-
   // ================= 4. Controle de Sorteio =================
   const sortearIndice = (total: number) => {
     const array = new Uint32Array(1);
@@ -230,8 +292,10 @@ export default function AdminSorteiosPage() {
     setVencedoresAtuais([]);
 
     const participantesDisponiveis = [...participantes];
-    const premiosDisponiveis = premios.length > 0 ? [...premios.map(p => p.premio)] : Array(count).fill('Surpresa especial do mês');
-    const resultados: SorteioHistorico[] = [];
+    const premiosDisponiveis = premios.length > 0
+      ? [...premios.map((p) => ({ premio: p.premio, fotoUrl: p.fotoUrl || null }))]
+      : Array(count).fill({ premio: 'Surpresa especial do mês', fotoUrl: null });
+    const resultados: Array<SorteioHistorico & { fotoUrl?: string | null }> = [];
 
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -242,7 +306,12 @@ export default function AdminSorteiosPage() {
         const indicePremio = sortearIndice(premiosDisponiveis.length);
         const premioSorteado = premiosDisponiveis.splice(indicePremio, 1)[0];
 
-        resultados.push({ nome: ganhadora.nome, premio: premioSorteado, dataSorteio: new Date().toISOString() });
+        resultados.push({
+          nome: ganhadora.nome,
+          premio: premioSorteado.premio,
+          fotoUrl: premioSorteado.fotoUrl,
+          dataSorteio: new Date().toISOString(),
+        });
         setVencedoresAtuais([...resultados]);
         await delay(700);
       }
@@ -253,7 +322,7 @@ export default function AdminSorteiosPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'salvarHistorico',
-            payload: { nome: item.nome, premio: item.premio, mesBase: mesAtualRef },
+            payload: { nome: item.nome, premio: item.premio, fotoUrl: item.fotoUrl, mesBase: mesAtualRef },
           }),
         })
       ));
@@ -410,30 +479,6 @@ export default function AdminSorteiosPage() {
               {mesAtualRef}
             </h3>
 
-            <div className="mb-6">
-              <label className="text-[10px] uppercase tracking-[0.25em] text-slate-500 font-bold">Foto do Sorteio</label>
-              <div className="mt-3 rounded-3xl bg-[#FAFAF5] border border-[#EDEBE6] p-4">
-                {sorteioFotoUrl ? (
-                  <div className="space-y-3">
-                    <div className="overflow-hidden rounded-3xl border border-[#D8D2C5] max-w-[24rem] mx-auto">
-                      <img src={sorteioFotoUrl} alt="Foto do sorteio" className="w-full h-40 object-cover" />
-                    </div>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                      <label className="cursor-pointer rounded-full bg-[#B06543] px-4 py-2 text-xs uppercase tracking-[0.2em] text-white">
-                        <input type="file" accept="image/*" onChange={handleUploadSorteioFoto} className="hidden" />
-                        {uploadingFoto ? 'Enviando...' : 'Substituir foto'}
-                      </label>
-                      <span className="text-[10px] text-slate-500">Tamanho máximo 2MB.</span>
-                    </div>
-                  </div>
-                ) : (
-                  <label className="flex items-center justify-center rounded-3xl border border-dashed border-[#D8D2C5] h-40 cursor-pointer text-slate-500 bg-white">
-                    <input type="file" accept="image/*" onChange={handleUploadSorteioFoto} className="hidden" />
-                    {uploadingFoto ? 'Enviando foto...' : 'Clique para enviar a foto do sorteio'}
-                  </label>
-                )}
-              </div>
-            </div>
 
             {/* Resultado do Sorteio */}
             <div className="bg-[#FAFAF5] border border-[#EDEBE6] rounded-xl min-h-48 flex flex-col items-center justify-center p-6 text-center shadow-inner mb-6 relative">
@@ -551,14 +596,20 @@ export default function AdminSorteiosPage() {
               </span>
             </h2>
 
-            <div className="flex gap-2 mb-6">
-              <input
-                value={premioText}
-                onChange={(e) => setPremioText(e.target.value)}
-                placeholder="Ex: Livro do mês..."
-                className="flex-1 rounded-md border px-3 py-2 text-sm bg-slate-50 outline-none focus:border-[#B06543]"
-                style={{ borderColor: '#E5E1DA' }}
-              />
+            <div className="grid gap-3 mb-6 sm:grid-cols-[1fr_auto]">
+              <div className="grid gap-3">
+                <input
+                  value={premioText}
+                  onChange={(e) => setPremioText(e.target.value)}
+                  placeholder="Ex: Livro do mês..."
+                  className="w-full rounded-md border px-3 py-2 text-sm bg-slate-50 outline-none focus:border-[#B06543]"
+                  style={{ borderColor: '#E5E1DA' }}
+                />
+                <label className="flex items-center gap-2 rounded-md border border-dashed border-[#E5E1DA] p-3 bg-[#FAFAF5] text-sm text-slate-600 cursor-pointer">
+                  <input type="file" accept="image/*" onChange={handleUploadPremioFoto} className="hidden" />
+                  {uploadingPremioFoto ? 'Enviando foto...' : premioFotoUrl ? 'Foto carregada' : 'Enviar foto do prêmio'}
+                </label>
+              </div>
               <Button
                 onClick={handleAddPremio}
                 disabled={savingPremio}
@@ -576,8 +627,65 @@ export default function AdminSorteiosPage() {
             ) : (
               <ul className="space-y-2 max-h-48 overflow-y-auto">
                 {premios.map(p => (
-                  <li key={p.id} className="flex justify-between items-center text-sm border-b pb-2 last:border-b-0" style={{ borderColor: '#E5E1E0' }}>
-                    <span className="italic font-serif truncate pr-4 text-slate-800">{p.premio}</span>
+                  <li key={p.id} className="flex justify-between items-start gap-3 text-sm border-b pb-2 last:border-b-0" style={{ borderColor: '#E5E1E0' }}>
+                    <div className="flex items-center gap-3 min-w-0">
+                      {p.fotoUrl ? (
+                        <img src={p.fotoUrl} alt={p.premio} className="h-12 w-12 rounded-md object-cover border border-[#E5E1E0]" />
+                      ) : (
+                        <div className="h-12 w-12 rounded-md bg-[#F3ECE4] border border-[#E5E1E0]" />
+                      )}
+                      <div className="min-w-0">
+                        {editingPremioId === p.id ? (
+                          <div className="flex flex-col gap-2">
+                            <input
+                              value={editingPremioText}
+                              onChange={(e) => setEditingPremioText(e.target.value)}
+                              className="w-full rounded-md border px-3 py-2 text-sm bg-slate-50 outline-none focus:border-[#B06543]"
+                              style={{ borderColor: '#E5E1DA' }}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleSaveEditedPremio(p.id)}
+                                disabled={savingPremioEdit}
+                                className="rounded-md bg-[#B06543] px-3 py-1 text-[10px] uppercase font-bold tracking-[0.3em] text-white"
+                              >
+                                {savingPremioEdit ? 'Salvando...' : 'Salvar'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleCancelEditingPremio}
+                                className="rounded-md border border-[#B06543] px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[#B06543]"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="italic font-serif truncate pr-4 text-slate-800 block">{p.premio}</span>
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditingPremio(p.id, p.premio)}
+                                className="rounded-md border border-[#B06543] bg-white px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[#B06543] hover:bg-[#B06543]/10"
+                              >
+                                Editar prêmio
+                              </button>
+                              <label className="inline-flex items-center gap-2 rounded-md border border-[#B06543] bg-white px-3 py-1 text-[10px] uppercase tracking-[0.3em] text-[#B06543] cursor-pointer hover:bg-[#B06543]/10">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handleUploadPremioFotoForId(e, p.id)}
+                                  className="hidden"
+                                />
+                                {uploadingPremioFoto ? 'Enviando...' : 'Editar foto'}
+                              </label>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
                     <button 
                       onClick={() => handleRemovePremio(p.id)}
                       className="text-[#A41C1C] opacity-70 hover:opacity-100 hover:bg-red-50 p-1.5 rounded transition-all"

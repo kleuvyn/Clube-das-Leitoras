@@ -14,6 +14,12 @@ type SorteioHistorico = {
   foto_url?: string | null;
 };
 
+type Premio = {
+  id?: string;
+  premio: string;
+  fotoUrl?: string | null;
+};
+
 type Participante = {
   id?: string;
   nome: string;
@@ -27,7 +33,7 @@ const verdeMusgo = "#4F5E46";
 export default function SorteiosPage() {
   const [mesBase, setMesBase] = useState(getCurrentMonthReference());
   const [nome, setNome] = useState("");
-  const [premios, setPremios] = useState<string[]>([]);
+  const [premios, setPremios] = useState<Premio[]>([]);
   const [participantes, setParticipantes] = useState<Participante[]>([]);
   const [historico, setHistorico] = useState<SorteioHistorico[]>([]);
   const [urnaAberta, setUrnaAberta] = useState(true);
@@ -35,10 +41,11 @@ export default function SorteiosPage() {
   const [nomeAnimado, setNomeAnimado] = useState<string | null>(null);
   const [vencedora, setVencedora] = useState<string | null>(null);
   const [premioAtual, setPremioAtual] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [rodaStatus, setRodaStatus] = useState('ativa');
+  const [premioAtualFotoUrl, setPremioAtualFotoUrl] = useState<string | null>(null);
   const [sorteioFotoUrl, setSorteioFotoUrl] = useState('');
   const [sorteioZoomAberto, setSorteioZoomAberto] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [rodaStatus, setRodaStatus] = useState('ativa');
 
   const carregarDados = async () => {
     try {
@@ -50,9 +57,15 @@ export default function SorteiosPage() {
       if (data.roda?.status) setRodaStatus(data.roda.status);
       if (data.activeMesBase) setMesBase(data.activeMesBase);
       if (data.premios) {
-        setPremios(data.premios.map((item: any) => item.premio));
+        setPremios(data.premios.map((item: any) => ({
+          id: item.id,
+          premio: item.premio,
+          fotoUrl: item.fotoUrl ?? item.foto_url ?? null,
+        })));
       }
-      if (data.sorteioFotoUrl) setSorteioFotoUrl(data.sorteioFotoUrl);
+      if (data.sorteioFotoUrl ?? data.sorteio_foto_url) {
+        setSorteioFotoUrl(data.sorteioFotoUrl ?? data.sorteio_foto_url ?? '');
+      }
     } catch (err) {
       console.error(err);
       toast.error("Erro ao carregar dados dos sorteios.");
@@ -155,7 +168,7 @@ export default function SorteiosPage() {
     const duracaoMs = 2400;
     const intervaloMs = 100;
     const fim = Date.now() + duracaoMs;
-    const premiosDoMes = premios.length > 0 ? premios : ['Um presente especial'];
+    const premiosDoMes = premios.length > 0 ? premios : [{ premio: 'Um presente especial', fotoUrl: null }];
 
     const ticker = window.setInterval(async () => {
       const i = sortearIndice(participantes.length);
@@ -170,7 +183,8 @@ export default function SorteiosPage() {
 
         setNomeAnimado(null);
         setVencedora(vencedoraFinal.nome);
-        setPremioAtual(premioFinal);
+        setPremioAtual(premioFinal.premio);
+        setPremioAtualFotoUrl(premioFinal.fotoUrl || null);
         setSorteando(false);
 
         try {
@@ -179,7 +193,7 @@ export default function SorteiosPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               action: 'salvarHistorico',
-              payload: { nome: vencedoraFinal.nome, premio: premioFinal, mesBase, id: vencedoraFinal.id },
+              payload: { nome: vencedoraFinal.nome, premio: premioFinal.premio, fotoUrl: premioFinal.fotoUrl, mesBase, id: vencedoraFinal.id },
             }),
           });
           toast.success(`Parabéns, ${vencedoraFinal.nome}! Uma nova página se inicia.`);
@@ -194,10 +208,12 @@ export default function SorteiosPage() {
   function resetarResultado() {
     setVencedora(null);
     setPremioAtual(null);
+    setPremioAtualFotoUrl(null);
     setNomeAnimado(null);
   }
 
-  const premioPreview = premioAtual ?? (premios.length > 0 ? premios[0] : "Em breve novos presentes!");
+  const premioPreview = premioAtual ?? (premios.length > 0 ? premios[0].premio : "Em breve novos presentes!");
+  const premioPreviewFotoUrl = premioAtualFotoUrl ?? (premios.length > 0 ? premios[0].fotoUrl : null);
 
   return (
     <div
@@ -232,76 +248,61 @@ export default function SorteiosPage() {
             Nome na urna, sorteio transparente e novo ciclo a cada mês.
           </p>
         </div>
-        {sorteioFotoUrl && (
-          <>
-            <div
-              className="mx-auto mt-10 grid gap-6 max-w-5xl min-w-0 md:grid-cols-[minmax(16rem,22rem)_1fr] items-center"
-            >
-              <div className="relative mx-auto w-full max-w-[24rem] cursor-zoom-in group rotate-[-2deg] transition-transform hover:rotate-0 hover:scale-105 duration-500" title="Clique para ampliar a imagem" onClick={() => setSorteioZoomAberto(true)}>
-                <div className="rounded-xl bg-white p-4 pb-16 shadow-[2px_12px_36px_rgba(0,0,0,0.15)] border border-[#e5d6c5]/90 relative">
-                  <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 w-24 h-6 bg-white/50 border border-white/60 shadow-sm backdrop-blur-sm transform rotate-1 opacity-80" style={{ backgroundImage: `url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}></div>
-                  <div className="overflow-hidden border border-[#d4c0af]/50 bg-[#f7f1e7] rounded-sm">
-                    <img
-                      src={sorteioFotoUrl}
-                      alt="Foto do sorteio"
-                      className="w-full h-[22rem] object-cover transition-transform duration-700 group-hover:scale-105"
-                      style={{ display: 'block' }}
-                    />
+        <>
+          <div className="mx-auto mt-10">
+            <div className="grid gap-6 min-w-0 md:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto justify-center items-start">
+              {premios.length === 0 ? (
+                <div className="col-span-full bg-white p-4 pb-12 shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-[#e5d6c5]/50 max-w-[20rem] mx-auto w-full transition-transform hover:-translate-y-2 hover:-rotate-1 duration-500 rounded-[2px] relative before:absolute before:inset-0 before:-z-10 before:shadow-[0_20px_40px_rgba(0,0,0,0.1)] before:rotate-[1deg] before:opacity-0 hover:before:opacity-100 before:transition-opacity">
+                  <div className="relative w-[calc(100%-1.5rem)] overflow-hidden border border-[#e5d6c5] bg-[#f7f1e7] rounded-sm mx-auto" style={{ aspectRatio: '1 / 1' }}>
+                    {premioPreviewFotoUrl ? (
+                      <img src={premioPreviewFotoUrl} alt={premioAtual ?? premioPreview} className="absolute inset-0 w-full h-full object-cover" />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-500 font-serif italic">
+                        Foto em breve
+                      </div>
+                    )}
                   </div>
-                  <p className="absolute bottom-5 left-0 w-full text-center font-alice text-xl opacity-75" style={{ color: corTexto }}>Mimo do Mês</p>
+                  <div className="mt-8 text-center px-4 font-serif">
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-[#8c7b6e] mb-3 opacity-80">
+                      Mimo do mês
+                    </p>
+                    <h2 className="text-lg italic leading-tight text-[#4A443F]">
+                      {premioAtual ?? premioPreview}
+                    </h2>
+                    <p className="mt-3 text-[12px] leading-relaxed opacity-70 text-[#4A443F] max-w-[85%] mx-auto">
+                      Em breve os prêmios disponíveis serão revelados aqui.
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              <div className="rounded-[1.75rem] border border-[#c8b7aa]/30 bg-white/95 p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)] w-full max-w-full min-w-0">
-              <span className="text-[10px] uppercase tracking-[0.35em] text-[#8c7b6e] mb-4 block">
-                Prêmio em destaque
-              </span>
-              <h2 className="text-3xl font-serif italic leading-tight break-words" style={{ color: corTexto }}>
-                O que vai ser sorteado
-              </h2>
-              <p className="mt-4 text-sm leading-relaxed opacity-80 text-[#4A443F] break-words">
-                Essa imagem mostra o presente em destaque. Clique nela para ver em tamanho real.
-              </p>
-              <div className="mt-6 rounded-[1.25rem] bg-[#f8f3ea] border border-[#c8b7aa]/20 p-5">
-                <p className="text-[10px] uppercase tracking-[0.35em] text-[#7e6d60] mb-2">
-                  Sorteio
-                </p>
-                <p className="text-lg font-alice" style={{ color: corDestaque }}>
-                  {premioAtual ?? premioPreview}
-                </p>
-              </div>
+              ) : (
+                premios.map((premio, index) => (
+                  <div key={`${premio.id ?? premio.premio}-${index}`} className="bg-white p-4 pb-12 shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-[#e5d6c5]/50 max-w-[20rem] mx-auto w-full transition-transform hover:-translate-y-2 hover:rotate-1 duration-500 rounded-[2px] relative before:absolute before:inset-0 before:-z-10 before:shadow-[0_20px_40px_rgba(0,0,0,0.1)] before:rotate-[-1deg] before:opacity-0 hover:before:opacity-100 before:transition-opacity">
+                    <div className="relative w-[calc(100%-1rem)] mx-auto overflow-hidden border border-[#d4c0af]/30 bg-[#fbf7f1] rounded-[2px]" style={{ aspectRatio: '1 / 1' }}>
+                      {premio.fotoUrl ? (
+                        <img src={premio.fotoUrl} alt={premio.premio} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-sm text-slate-500 font-serif italic">
+                          Em breve
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-8 text-center px-4 font-serif">
+                      <p className="text-[9px] uppercase tracking-[0.4em] text-[#A69B91] mb-2 opacity-80">
+                        Mimo do mês
+                      </p>
+                      <h2 className="text-[17px] italic leading-tight text-[#4A443F]">
+                        {premio.premio}
+                      </h2>
+                      <p className="mt-2.5 text-[12px] leading-relaxed opacity-75 text-[#4A443F] max-w-[90%] mx-auto">
+                        Um presente especial e pensado com carinho para quem compartilha essa leitura.
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>
-        )}
-
-        {sorteioZoomAberto && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-6"
-            onClick={() => setSorteioZoomAberto(false)}
-          >
-            <div
-              className="relative max-h-[90vh] max-w-[90vw] overflow-hidden rounded-[2rem] bg-[#faf5f2] p-4"
-              onClick={(event) => event.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSorteioZoomAberto(false);
-                }}
-                className="absolute right-4 top-4 z-[60] rounded-full border border-white/80 bg-black/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white transition hover:bg-black cursor-pointer shadow-md"
-              >
-                Fechar
-              </button>
-              <img
-                src={sorteioFotoUrl}
-                alt="Foto do sorteio ampliada"
-                className="max-h-[82vh] max-w-[86vw] object-contain"
-              />
-            </div>
-          </div>
-        )}
       </header>
 
       <main className="max-w-6xl mx-auto px-6 md:px-12 grid lg:grid-cols-12 gap-12 items-start relative z-10 min-w-0">
@@ -420,20 +421,29 @@ export default function SorteiosPage() {
             <div className="bg-white/95 border rounded-[1.5rem] p-8 md:p-10 shadow-[0_10px_25px_rgba(0,0,0,0.06)] relative z-10" style={{ borderColor: `${corDestaque}30` }}>
               {premios.length > 0 && (
                 <div className="mb-7 text-left">
-                      <h2 className="text-[10px] font-semibold uppercase tracking-[0.35em] mb-4" style={{ color: corDestaque }}>
-                        Prêmios do Mês
-                      </h2>
-                      <ul className="space-y-3 text-sm opacity-85">
-                        {premios.map((premio, index) => (
-                          <li key={`${premio}-${index}`} className="flex items-start gap-3">
-                            <span className="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-[#c8b7aa]" />
-                            <span>{premio}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
+                  <h2 className="text-[10px] font-semibold uppercase tracking-[0.35em] mb-4" style={{ color: corDestaque }}>
+                    Prêmios do Mês
+                  </h2>
+                  <ul className="space-y-3 text-sm opacity-85">
+                    {premios.map((premio, index) => (
+                      <li key={`${premio.id ?? premio.premio}-${index}`} className="flex items-center gap-3">
+                        {premio.fotoUrl ? (
+                          <img
+                            src={premio.fotoUrl}
+                            alt={premio.premio}
+                            className="h-10 w-10 rounded-xl object-cover border border-[#E5E1DA]"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-xl bg-[#F3ECE4] border border-[#E5E1DA] flex items-center justify-center text-[10px] uppercase tracking-[0.2em] text-slate-500">
+                            Foto
+                          </div>
+                        )}
+                        <span className="truncate">{premio.premio}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="mb-6 border-b pb-4" style={{ borderColor: `${corDestaque}20` }}>
                 <h2 className="text-[10px] font-bold uppercase tracking-[0.35em]" style={{ color: corDestaque }}>
                   Últimas Ganhadoras

@@ -29,6 +29,7 @@ async function ensureTableExists() {
       CREATE TABLE IF NOT EXISTS sorteios_premios (
         id text PRIMARY KEY NOT NULL,
         premio text NOT NULL,
+        foto_url text,
         mes_base text NOT NULL,
         created_at integer DEFAULT (cast(strftime('%s', 'now') as int)) NOT NULL
       )
@@ -53,6 +54,12 @@ async function ensureTableExists() {
     const hasHistoricoFotoUrl = historicoColumns.rows.some((row: any) => row?.name === 'foto_url' || row?.[0] === 'foto_url');
     if (!hasHistoricoFotoUrl) {
       await client.execute('ALTER TABLE sorteios_historico ADD COLUMN foto_url text');
+    }
+
+    const premiosColumns = await client.execute("PRAGMA table_info('sorteios_premios')");
+    const hasPremioFotoUrl = premiosColumns.rows.some((row: any) => row?.name === 'foto_url' || row?.[0] === 'foto_url');
+    if (!hasPremioFotoUrl) {
+      await client.execute('ALTER TABLE sorteios_premios ADD COLUMN foto_url text');
     }
   } catch (err) {
     console.error('Erro ao verificar/criar tabelas de sorteios:', err);
@@ -108,12 +115,18 @@ export async function GET() {
     const urnaAberta = configRow ? configRow.urnaAberta === 1 : true;
     return NextResponse.json({
       participantes,
-      historico,
-      premios,
+      historico: historico.map((item) => ({
+        ...item,
+        fotoUrl: item.fotoUrl ?? item.foto_url ?? null,
+      })),
+      premios: premios.map((item) => ({
+        ...item,
+        fotoUrl: item.fotoUrl ?? item.foto_url ?? null,
+      })),
       urnaAberta,
       roda: { status: urnaAberta ? 'ativa' : 'pausada' },
       activeMesBase: mesAtualRef,
-      sorteioFotoUrl: configRow?.fotoUrl || null,
+      sorteioFotoUrl: configRow?.fotoUrl ?? configRow?.foto_url ?? null,
     });
   } catch (error: any) {
     console.error("Erro interno GET sorteios:", error);
@@ -126,7 +139,7 @@ export async function POST(req: Request) {
     await ensureTableExists();
     const { action, payload } = await req.json();
 
-    if (['salvarHistorico', 'addPremio', 'setUrnaStatus', 'removePremio', 'setSorteioFoto', 'resetUrna'].includes(action)) {
+    if (['salvarHistorico', 'addPremio', 'updatePremio', 'setUrnaStatus', 'removePremio', 'setSorteioFoto', 'updatePremioFoto', 'resetUrna'].includes(action)) {
       await requireAdmin();
     }
 
@@ -186,7 +199,7 @@ export async function POST(req: Request) {
         nome: payload.nome,
         premio: payload.premio,
         mesBase: activeMesBase,
-        fotoUrl: configRow?.fotoUrl || null,
+        fotoUrl: payload.fotoUrl ?? null,
       }).returning();
 
       // Remove apenas o vencedor atual da urna, assim ele não pode ser sorteado novamente
@@ -207,9 +220,26 @@ export async function POST(req: Request) {
     if (action === 'addPremio') {
       const result = await dbWrite.insert(sorteiosPremios).values({
         premio: payload.premio,
+        fotoUrl: payload.fotoUrl || null,
         mesBase: activeMesBase,
       }).returning();
       return NextResponse.json(result[0]);
+    }
+
+    if (action === 'updatePremioFoto') {
+      const updated = await dbWrite.update(sorteiosPremios)
+        .set({ fotoUrl: payload.fotoUrl || null })
+        .where(eq(sorteiosPremios.id, payload.id))
+        .returning();
+      return NextResponse.json(updated[0] || { success: true });
+    }
+
+    if (action === 'updatePremio') {
+      const updated = await dbWrite.update(sorteiosPremios)
+        .set({ premio: payload.premio })
+        .where(eq(sorteiosPremios.id, payload.id))
+        .returning();
+      return NextResponse.json(updated[0] || { success: true });
     }
 
     if (action === 'setUrnaStatus') {
