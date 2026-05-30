@@ -83,7 +83,14 @@ export default function AdminCarteirinhaPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar');
 
-      toast.success(status === 'aprovada' ? 'Solicitação aprovada.' : 'Solicitação rejeitada.', { id: loadingToast });
+      toast.success(
+        status === 'aprovada'
+          ? 'Solicitação aprovada.'
+          : status === 'rejeitada'
+          ? 'Solicitação rejeitada.'
+          : 'Solicitação reativada.',
+        { id: loadingToast }
+      );
       await load(page);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao atualizar.', { id: loadingToast });
@@ -425,6 +432,15 @@ export default function AdminCarteirinhaPage() {
                         >
                           {removingCardIds[item.id] ? 'Removendo...' : 'Excluir carteirinha'}
                         </Button>
+                        {item.status === 'excluida' && (
+                          <Button
+                            type="button"
+                            onClick={() => atualizarStatus(item.id, 'pendente')}
+                            className="w-full bg-amber-600 text-white hover:bg-amber-700 rounded-2xl h-11 text-xs font-semibold uppercase tracking-[0.2em]"
+                          >
+                            Reativar solicitação
+                          </Button>
+                        )}
                         {item.status !== 'aprovada' && item.status !== 'excluida' && (
                           <Button
                             type="button"
