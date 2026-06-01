@@ -316,7 +316,7 @@ export async function GET(request: Request) {
         };
 
     const [rows, countResult] = await Promise.all([
-      db.select(selectFields).from(solicitacoes).where(whereClause).orderBy(asc(solicitacoes.createdAt)).limit(limit).offset(offset),
+      db.select(selectFields).from(solicitacoes).where(whereClause).orderBy(desc(solicitacoes.createdAt)).limit(limit).offset(offset),
       db.select({ count: sql<number>`cast(count(*) as integer)` }).from(solicitacoes).where(whereClause),
     ]);
 
