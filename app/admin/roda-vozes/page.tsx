@@ -68,7 +68,7 @@ export default function AdminRodaVozesPage() {
     if (!rodaId) return;
 
     const confirmacao = window.confirm(
-      'Tem certeza que deseja limpar todos os participantes desta roda? Esta ação não pode ser desfeita.'
+      'Tem certeza que deseja limpar a lista anterior desta roda? Esta ação não pode ser desfeita.'
     );
 
     if (!confirmacao) return;
@@ -82,15 +82,15 @@ export default function AdminRodaVozesPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error || 'Falha ao limpar participantes.');
+        throw new Error(data?.error || 'Falha ao limpar a lista anterior.');
       }
 
       setParticipantes([]);
-      toast.success('Participantes removidos com sucesso.');
+      toast.success('Lista anterior limpa com sucesso.');
       carregarRoda();
     } catch (err: any) {
       console.error('Erro ao limpar participantes:', err);
-      toast.error(err?.message || 'Erro ao limpar participantes.');
+      toast.error(err?.message || 'Erro ao limpar a lista anterior.');
     }
   };
 
@@ -119,7 +119,7 @@ export default function AdminRodaVozesPage() {
             {status === 'ativa' ? 'Desativar Roda' : 'Ativar Roda'}
           </Button>
           <Button onClick={handleLimparParticipantes} variant="destructive" className="flex items-center gap-2">
-            Limpar Participantes
+            Limpar Lista Anterior
           </Button>
         </div>
       </header>
