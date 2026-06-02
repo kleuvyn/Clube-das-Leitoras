@@ -64,6 +64,36 @@ export default function AdminRodaVozesPage() {
     }
   };
 
+  const handleLimparParticipantes = async () => {
+    if (!rodaId) return;
+
+    const confirmacao = window.confirm(
+      'Tem certeza que deseja limpar todos os participantes desta roda? Esta ação não pode ser desfeita.'
+    );
+
+    if (!confirmacao) return;
+
+    try {
+      const res = await fetch('/api/roda-vozes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: rodaId }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || 'Falha ao limpar participantes.');
+      }
+
+      setParticipantes([]);
+      toast.success('Participantes removidos com sucesso.');
+      carregarRoda();
+    } catch (err: any) {
+      console.error('Erro ao limpar participantes:', err);
+      toast.error(err?.message || 'Erro ao limpar participantes.');
+    }
+  };
+
   useEffect(() => {
     carregarRoda();
   }, []);
@@ -87,6 +117,9 @@ export default function AdminRodaVozesPage() {
           </Button>
           <Button onClick={handleToggleRodaStatus} className="flex items-center gap-2 bg-rosa-gabi text-white hover:bg-[#8B3A37]">
             {status === 'ativa' ? 'Desativar Roda' : 'Ativar Roda'}
+          </Button>
+          <Button onClick={handleLimparParticipantes} variant="destructive" className="flex items-center gap-2">
+            Limpar Participantes
           </Button>
         </div>
       </header>

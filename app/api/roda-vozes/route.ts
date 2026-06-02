@@ -230,3 +230,42 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    await ensureRodaVozesSchema();
+    await requireAdmin(request);
+
+    const body = await request.json();
+    const { id } = body;
+
+    if (!id || typeof id !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'ID da roda é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    const participantes = await db
+      .delete(participantesRodaVozes)
+      .where(eq(participantesRodaVozes.rodaId, id))
+      .returning({ id: participantesRodaVozes.id });
+
+    return NextResponse.json({
+      success: true,
+      removedCount: participantes.length,
+    });
+  } catch (error: any) {
+    console.error('Erro ao limpar participantes da roda:', error);
+    if (error?.status && error?.message) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: error.status }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: 'Erro ao limpar participantes da roda' },
+      { status: 500 }
+    );
+  }
+}

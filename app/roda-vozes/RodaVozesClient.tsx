@@ -35,10 +35,15 @@ export default function RodaDeVozes({ activeBook }: { activeBook: ActiveBook | n
   const [rodaStatus, setRodaStatus] = useState<'ativa' | 'pausada' | 'encerrada'>('ativa');
   const [novoNome, setNovoNome] = useState('');
   const [falando, setFalando] = useState<number | null>(null);
+  const [falandoAvulso, setFalandoAvulso] = useState<string | null>(null);
+  const [nomeMaoLevantada, setNomeMaoLevantada] = useState('');
+  const [filaMaoLevantada, setFilaMaoLevantada] = useState<string[]>([]);
   const [tempo, setTempo] = useState(120); // 2 minutos
   const [rodando, setRodando] = useState(false);
   const [minutosAdicionais, setMinutosAdicionais] = useState(0);
   const falandoRef = useRef<number | null>(null);
+  const falandoAvulsoRef = useRef<string | null>(null);
+  const filaMaoLevantadaRef = useRef<string[]>([]);
   const minutosAdicionaisRef = useRef(0);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
@@ -47,6 +52,14 @@ export default function RodaDeVozes({ activeBook }: { activeBook: ActiveBook | n
     setParticipantes((prev) => {
       const updated = typeof next === 'function' ? next(prev) : next;
       participantesRef.current = updated;
+      return updated;
+    });
+  };
+
+  const setFilaMaoLevantadaState = (next: string[] | ((prev: string[]) => string[])) => {
+    setFilaMaoLevantada((prev) => {
+      const updated = typeof next === 'function' ? next(prev) : next;
+      filaMaoLevantadaRef.current = updated;
       return updated;
     });
   };
@@ -120,20 +133,33 @@ export default function RodaDeVozes({ activeBook }: { activeBook: ActiveBook | n
           setRodando(false);
           const usedTime = 120 + minutosAdicionaisRef.current * 60;
           const currentIndex = falandoRef.current;
+          const currentAvulso = falandoAvulsoRef.current;
           if (currentIndex !== null) {
             marcarComoFalou(currentIndex, usedTime);
           }
+
+          if (currentAvulso) {
+            setFalandoAvulso(null);
+            falandoAvulsoRef.current = null;
+          }
+
           setFalando(null);
           falandoRef.current = null;
           setTempo(120);
           setMinutosAdicionais(0);
           minutosAdicionaisRef.current = 0;
 
-          const nextIndex = participantes.findIndex(
-            (participant, idx) => idx !== currentIndex && !participant.falou,
-          );
-          if (nextIndex >= 0) {
-            iniciarFala(nextIndex);
+          const nextQueue = filaMaoLevantadaRef.current[0];
+          if (nextQueue) {
+            setFilaMaoLevantadaState((prevList) => prevList.slice(1));
+            iniciarFalaAvulsa(nextQueue);
+          } else {
+            const nextIndex = participantesRef.current.findIndex(
+              (participant, idx) => idx !== currentIndex && !participant.falou,
+            );
+            if (nextIndex >= 0) {
+              iniciarFala(nextIndex);
+            }
           }
 
           // Emitir aviso sonoro leve
@@ -200,6 +226,8 @@ export default function RodaDeVozes({ activeBook }: { activeBook: ActiveBook | n
   };
 
   const iniciarFala = (index: number) => {
+    setFalandoAvulso(null);
+    falandoAvulsoRef.current = null;
     setFalando(index);
     falandoRef.current = index;
     setTempo(120);
@@ -208,8 +236,62 @@ export default function RodaDeVozes({ activeBook }: { activeBook: ActiveBook | n
     setRodando(false);
   };
 
+  const iniciarFalaAvulsa = (nome: string) => {
+    const nomeLimpo = nome.trim();
+    if (!nomeLimpo) return;
+
+    setFalando(null);
+    falandoRef.current = null;
+    setFalandoAvulso(nomeLimpo);
+    falandoAvulsoRef.current = nomeLimpo;
+    setTempo(120);
+    setMinutosAdicionais(0);
+    minutosAdicionaisRef.current = 0;
+    setRodando(false);
+  };
+
+  const adicionarMaoLevantada = () => {
+    const nomeLimpo = nomeMaoLevantada.trim();
+    if (!nomeLimpo) return;
+    setFilaMaoLevantadaState((prev) => [...prev, nomeLimpo]);
+    setNomeMaoLevantada('');
+  };
+
+  const chamarProximaMaoLevantada = () => {
+    const proxima = filaMaoLevantadaRef.current[0];
+    if (!proxima) return;
+    setFilaMaoLevantadaState((prev) => prev.slice(1));
+    iniciarFalaAvulsa(proxima);
+  };
+
   const proximaParticipante = () => {
+    if (falandoAvulso) {
+      setFalandoAvulso(null);
+      falandoAvulsoRef.current = null;
+      setTempo(120);
+      setMinutosAdicionais(0);
+      minutosAdicionaisRef.current = 0;
+
+      const nextQueue = filaMaoLevantadaRef.current[0];
+      if (nextQueue) {
+        chamarProximaMaoLevantada();
+        return;
+      }
+
+      const nextParticipant = participantesRef.current.findIndex((participant) => !participant.falou);
+      if (nextParticipant >= 0) {
+        iniciarFala(nextParticipant);
+      }
+      return;
+    }
+
     if (falando === null) {
+      const nextQueue = filaMaoLevantadaRef.current[0];
+      if (nextQueue) {
+        chamarProximaMaoLevantada();
+        return;
+      }
+
       const nextIndex = participantes.findIndex((participant) => !participant.falou);
       if (nextIndex >= 0) {
         iniciarFala(nextIndex);
@@ -477,7 +559,7 @@ export default function RodaDeVozes({ activeBook }: { activeBook: ActiveBook | n
               <button
                 onClick={proximaParticipante}
                 disabled={carregando || participantes.every((participant) => participant.falou)}
-                className="w-full mt-6 px-6 py-5 rounded-[1.5rem] mt-8 font-medium flex items-center justify-center gap-3 hover:scale-[1.02] transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed border border-black/5"
+                className="w-full mt-8 px-6 py-5 rounded-[1.5rem] font-medium flex items-center justify-center gap-3 hover:scale-[1.02] transition shadow-md disabled:opacity-50 disabled:cursor-not-allowed border border-black/5"
                 style={{ backgroundColor: '#FAF6F2', color: palette.text }}
               >
                 <ChevronRight size={22} />
@@ -497,16 +579,66 @@ export default function RodaDeVozes({ activeBook }: { activeBook: ActiveBook | n
               Cronômetro
             </h2>
 
-            {falando !== null && participantes[falando] && (
+            {((falando !== null && participantes[falando]) || falandoAvulso) && (
               <div className="text-center space-y-4 pb-8 pt-6 border-b border-black/10">
                 <p className="text-sm font-sans tracking-[0.3em] uppercase font-bold opacity-40">
                   falando agora
                 </p>
                 <p className="text-4xl text-[#2C3E50] tracking-tight">
-                  {participantes[falando].nome}
+                  {falandoAvulso || participantes[falando!]?.nome}
+                </p>
+                <p className="text-[10px] uppercase tracking-[0.3em] opacity-40">
+                  {falandoAvulso ? 'mão levantada na hora' : 'lista de inscrição'}
                 </p>
               </div>
             )}
+
+            <div className="pt-2 space-y-4">
+              <p className="text-[10px] font-bold uppercase tracking-[0.35em] opacity-40" style={{ color: palette.accent }}>
+                Fila de mãos levantadas
+              </p>
+
+              <div className="flex gap-3 flex-col sm:flex-row">
+                <input
+                  type="text"
+                  placeholder="nome de quem levantou a mão"
+                  value={nomeMaoLevantada}
+                  onChange={(e) => setNomeMaoLevantada(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && adicionarMaoLevantada()}
+                  className="flex-1 px-5 py-3 rounded-2xl border border-black/10 focus:outline-none focus:ring-2 focus:ring-black/10"
+                  style={{ backgroundColor: '#fff', color: palette.text }}
+                />
+                <button
+                  onClick={adicionarMaoLevantada}
+                  className="px-5 py-3 rounded-2xl text-xs uppercase tracking-[0.2em] font-bold border border-black/10 bg-white hover:bg-black/5 transition"
+                >
+                  adicionar
+                </button>
+                <button
+                  onClick={chamarProximaMaoLevantada}
+                  disabled={filaMaoLevantada.length === 0}
+                  className="px-5 py-3 rounded-2xl text-xs uppercase tracking-[0.2em] font-bold border border-black/10 bg-white hover:bg-black/5 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  chamar próxima
+                </button>
+              </div>
+
+              {filaMaoLevantada.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {filaMaoLevantada.map((nome, idx) => (
+                    <span
+                      key={`${nome}-${idx}`}
+                      className="inline-flex items-center rounded-full bg-white px-3 py-1 text-[10px] uppercase tracking-[0.2em] border border-black/10"
+                      style={{ color: palette.textSoft }}
+                    >
+                      {idx + 1}. {nome}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs opacity-50">Nenhuma mão levantada na fila.</p>
+              )}
+            </div>
 
             <div
               className={`p-10 lg:p-16 rounded-[3rem] border text-center ${tamanhoTexto} font-mono font-bold transition-all shadow-inner relative overflow-hidden ${tempo === 0 ? 'animate-pulse ring-4 ring-red-200 border-red-300' : 'border-black/5'}`}
