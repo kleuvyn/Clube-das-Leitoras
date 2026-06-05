@@ -277,15 +277,23 @@ export async function GET(request: Request) {
             SELECT CASE
               WHEN lower(c.status) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
               WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+              WHEN c.active = 0 THEN 'bloqueada'
               WHEN lower(c.status) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
               WHEN lower(c.status) = 'pendente' THEN 'pendente'
               WHEN lower(c.status) = 'rejeitada' THEN 'rejeitada'
-              WHEN c.active = 0 THEN 'bloqueada'
-              WHEN c.active = 1 THEN 'aprovada'
               ELSE lower(c.status)
             END
             FROM ${colaboradoras} c
-            WHERE lower(c.email) = lower(${solicitacoes.email})
+            WHERE lower(trim(c.email)) = lower(trim(${solicitacoes.email}))
+            ORDER BY
+              CASE
+                WHEN lower(c.status) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 0
+                WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 1
+                WHEN c.active = 0 THEN 2
+                WHEN lower(c.status) IN ('ativa', 'aprovada', 'aprovado') THEN 3
+                ELSE 4
+              END ASC,
+              c.created_at DESC
             LIMIT 1
           ),
           CASE
