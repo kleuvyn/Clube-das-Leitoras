@@ -41,6 +41,29 @@ function normalizePhone(value?: string | null) {
   return value?.toString().replace(/\D/g, '').trim() || '';
 }
 
+function normalizeSolicitacaoStatus(value?: string | null) {
+  if (!value) return '';
+  const normalized = value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  const aliases: Record<string, string> = {
+    aprovada: 'aprovada',
+    rejeitada: 'rejeitada',
+    pendente: 'pendente',
+    bloqueada: 'bloqueada',
+    bloqueado: 'bloqueada',
+    bloqueda: 'bloqueada',
+    excluida: 'excluida',
+    excluido: 'excluida',
+  };
+
+  return aliases[normalized] || '';
+}
+
 function isDataImageUrl(value?: string | null) {
   if (!value) return false;
   return /^data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=\r\n]+$/i.test(value.trim());
@@ -236,7 +259,7 @@ export async function GET(request: Request) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '10')));
     const offset = (page - 1) * limit;
-    const status = searchParams.get('status')?.toLowerCase();
+    const status = normalizeSolicitacaoStatus(searchParams.get('status'));
     const tipo = searchParams.get('tipo')?.toLowerCase();
     const search = searchParams.get('search')?.trim().toLowerCase();
 
@@ -245,9 +268,16 @@ export async function GET(request: Request) {
         COALESCE(
           (
             SELECT CASE
-              WHEN lower(c.status) = 'ativa' THEN 'aprovada'
-              WHEN lower(c.status) = 'bloqueada' THEN 'bloqueada'
-              WHEN lower(c.status) = 'excluida' THEN 'excluida'
+              WHEN lower(c.status) IN ('ativa', 'aprovada') THEN 'aprovada'
+              WHEN lower(c.status) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
+              WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+              WHEN lower(c.status) = 'pendente' THEN 'pendente'
+              WHEN lower(c.status) = 'rejeitada' THEN 'rejeitada'
+              WHEN c.active = 1 THEN 'aprovada'
+              WHEN c.active = 0 THEN CASE
+                WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+                ELSE 'bloqueada'
+              END
               ELSE lower(c.status)
             END
             FROM ${colaboradoras} c
@@ -256,7 +286,12 @@ export async function GET(request: Request) {
           ),
           lower(${solicitacoes.status})
         )
-      ELSE lower(${solicitacoes.status})
+      ELSE CASE
+        WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
+        WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+        WHEN lower(${solicitacoes.status}) IN ('aprovada', 'rejeitada', 'pendente') THEN lower(${solicitacoes.status})
+        ELSE lower(${solicitacoes.status})
+      END
     END`;
 
     const filters = [] as any[];
@@ -687,7 +722,8 @@ export async function PATCH(request: Request) {
   try {
     await requireSolicitacoesAdmin(request);
     const body = await request.json();
-    const { id, status, carteirinhaUrl, resendEmail } = body;
+    const { id, status: rawStatus, carteirinhaUrl, resendEmail } = body;
+    const status = normalizeSolicitacaoStatus(rawStatus);
     const removeCarteirinha = body.removeCarteirinha === true;
     const isResend = resendEmail === true;
     const rawFotoUrl = typeof body.fotoUrl === 'string' ? body.fotoUrl : '';
@@ -700,7 +736,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'ID e status, URL da carteirinha, URL da foto, removeCarteirinha ou resendEmail são obrigatórios.' }, { status: 400 });
     }
 
-    if (status && !['aprovada', 'rejeitada', 'pendente', 'bloqueada', 'excluida'].includes(status)) {
+    if (rawStatus && !status) {
       return NextResponse.json({ error: 'Status inválido.' }, { status: 400 });
     }
 

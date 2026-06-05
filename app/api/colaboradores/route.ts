@@ -7,6 +7,29 @@ import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
+function normalizeCollaboratorStatus(value?: string | null) {
+  if (!value) return '';
+  const normalized = value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  const aliases: Record<string, string> = {
+    ativa: 'ativa',
+    aprovado: 'ativa',
+    aprovada: 'ativa',
+    bloqueada: 'bloqueada',
+    bloqueado: 'bloqueada',
+    bloqueda: 'bloqueada',
+    excluida: 'excluida',
+    excluido: 'excluida',
+  };
+
+  return aliases[normalized] || '';
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -161,8 +184,8 @@ export async function PATCH(request: Request) {
     let newStatus = user.status;
     let newActive = user.active;
     if (typeof status === 'string') {
-      const normalized = status.toLowerCase();
-      if (['ativa', 'bloqueada', 'excluida'].includes(normalized)) {
+      const normalized = normalizeCollaboratorStatus(status);
+      if (normalized) {
         newStatus = normalized;
         newActive = normalized === 'ativa';
       }
