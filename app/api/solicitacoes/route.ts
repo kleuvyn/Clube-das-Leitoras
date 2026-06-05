@@ -271,21 +271,17 @@ export async function GET(request: Request) {
             WHEN lower(${solicitacoes.status}) IN ('pendente', 'rejeitada') THEN lower(${solicitacoes.status})
             WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
             WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-            WHEN lower(${solicitacoes.status}) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
             ELSE null
           END,
           (
             SELECT CASE
-              WHEN lower(c.status) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
               WHEN lower(c.status) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
               WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+              WHEN lower(c.status) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
               WHEN lower(c.status) = 'pendente' THEN 'pendente'
               WHEN lower(c.status) = 'rejeitada' THEN 'rejeitada'
+              WHEN c.active = 0 THEN 'bloqueada'
               WHEN c.active = 1 THEN 'aprovada'
-              WHEN c.active = 0 THEN CASE
-                WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-                ELSE 'bloqueada'
-              END
               ELSE lower(c.status)
             END
             FROM ${colaboradoras} c
