@@ -146,9 +146,14 @@ export default function AdminRodaVozesPage() {
             <h2 className="text-xl font-semibold text-slate-900">Lista de Participantes</h2>
             <p className="text-sm text-slate-500">Ordem de fala atual e histórico de presença.</p>
           </div>
-          <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-slate-600">
-            <Users size={14} /> {participantes.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-slate-600">
+              <Users size={14} /> {participantes.length}
+            </span>
+            <Button onClick={handleAbrirNovaRoda} variant="destructive" className="h-9 px-4 text-[11px] uppercase tracking-[0.2em]">
+              Limpar Lista Anterior
+            </Button>
+          </div>
         </div>
 
         {loading ? (

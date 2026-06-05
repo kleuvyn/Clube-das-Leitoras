@@ -240,8 +240,27 @@ export async function GET(request: Request) {
     const tipo = searchParams.get('tipo')?.toLowerCase();
     const search = searchParams.get('search')?.trim().toLowerCase();
 
+    const statusEfetivoExpr = sql<string>`CASE
+      WHEN lower(${solicitacoes.tipo}) = 'leitora' THEN
+        COALESCE(
+          (
+            SELECT CASE
+              WHEN lower(c.status) = 'ativa' THEN 'aprovada'
+              WHEN lower(c.status) = 'bloqueada' THEN 'bloqueada'
+              WHEN lower(c.status) = 'excluida' THEN 'excluida'
+              ELSE lower(c.status)
+            END
+            FROM ${colaboradoras} c
+            WHERE lower(c.email) = lower(${solicitacoes.email})
+            LIMIT 1
+          ),
+          lower(${solicitacoes.status})
+        )
+      ELSE lower(${solicitacoes.status})
+    END`;
+
     const filters = [] as any[];
-    if (status && status !== 'todos') filters.push(eq(solicitacoes.status, status));
+    if (status && status !== 'todos') filters.push(sql`${statusEfetivoExpr} = ${status}`);
     if (tipo && tipo !== 'todas') filters.push(eq(solicitacoes.tipo, tipo));
     if (search) {
       const likePattern = `%${search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
@@ -293,7 +312,7 @@ export async function GET(request: Request) {
           enderecoCompleto: solicitacoes.enderecoCompleto,
           fotoUrl: solicitacoes.fotoUrl,
           carteirinhaUrl: carteirinhaUrlField.as('carteirinhaUrl'),
-          status: solicitacoes.status,
+          status: statusEfetivoExpr.as('status'),
           createdAt: solicitacoes.createdAt,
           approvedAt: solicitacoes.approvedAt,
         }
@@ -310,7 +329,7 @@ export async function GET(request: Request) {
           enderecoCompleto: solicitacoes.enderecoCompleto,
           fotoUrl: solicitacoes.fotoUrl,
           carteirinhaUrl: carteirinhaUrlField.as('carteirinhaUrl'),
-          status: solicitacoes.status,
+          status: statusEfetivoExpr.as('status'),
           createdAt: solicitacoes.createdAt,
           approvedAt: sql<null>`null`.as('approvedAt'),
         };
