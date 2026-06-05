@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Mic, RefreshCw, Users } from 'lucide-react';
+import { Mic, RefreshCw, Trash2, Users } from 'lucide-react';
 
 interface Participante {
   id: string;
@@ -119,9 +119,14 @@ export default function AdminRodaVozesPage() {
           <Button onClick={handleToggleRodaStatus} className="flex items-center gap-2 bg-rosa-gabi text-white hover:bg-[#8B3A37]">
             {status === 'ativa' ? 'Desativar Roda' : 'Ativar Roda'}
           </Button>
-          <Button onClick={handleAbrirNovaRoda} variant="destructive" className="flex items-center gap-2">
-            Abrir Nova Roda
-          </Button>
+          <button
+            onClick={handleAbrirNovaRoda}
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-sm transition-colors"
+            style={{ backgroundColor: '#B04D4A', color: '#FFFFFF', border: '1px solid #8B3A37' }}
+          >
+            <Trash2 size={14} /> Abrir Nova Roda
+          </button>
         </div>
       </header>
 
@@ -146,13 +151,18 @@ export default function AdminRodaVozesPage() {
             <h2 className="text-xl font-semibold text-slate-900">Lista de Participantes</h2>
             <p className="text-sm text-slate-500">Ordem de fala atual e histórico de presença.</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 justify-start sm:justify-end">
             <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] uppercase tracking-[0.25em] text-slate-600">
               <Users size={14} /> {participantes.length}
             </span>
-            <Button onClick={handleAbrirNovaRoda} variant="destructive" className="h-9 px-4 text-[11px] uppercase tracking-[0.2em]">
-              Limpar Lista Anterior
-            </Button>
+            <button
+              onClick={handleAbrirNovaRoda}
+              type="button"
+              className="inline-flex h-9 items-center gap-2 rounded-md px-4 text-[11px] font-medium uppercase tracking-[0.2em] shadow-sm transition-colors"
+              style={{ backgroundColor: '#B04D4A', color: '#FFFFFF', border: '1px solid #8B3A37' }}
+            >
+              <Trash2 size={13} /> Limpar Lista Anterior
+            </button>
           </div>
         </div>
 

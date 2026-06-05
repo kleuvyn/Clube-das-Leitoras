@@ -369,19 +369,19 @@ export default function LeitorasAdmin() {
 
             <div className="divide-y divide-slate-50">
               {filteredList.map((u) => (
-                <div key={u.id} className={`flex items-center justify-between p-4 hover:bg-slate-50 transition-all group rounded-2xl ${editing?.id === u.id ? 'bg-violet-50' : ''}`}>
-                  <div className="flex items-center gap-4">
+                <div key={u.id} className={`flex flex-col gap-4 p-4 hover:bg-slate-50 transition-all group rounded-2xl md:flex-row md:items-center md:justify-between ${editing?.id === u.id ? 'bg-violet-50' : ''}`}>
+                  <div className="flex items-center gap-4 min-w-0">
                     <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center font-serif italic text-slate-400 border-2 border-white shadow-sm overflow-hidden">
                       {u.avatarUrl ? <img src={u.avatarUrl} className="w-full h-full object-cover" alt={u.name} /> : (u.name?.[0] ?? '?')}
                     </div>
-                    <div>
-                      <h4 className="font-serif text-lg italic text-slate-800 leading-none">{u.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-widest">{u.email}</p>
+                    <div className="min-w-0">
+                      <h4 className="font-serif text-lg italic text-slate-800 leading-none wrap-break-word">{u.name}</h4>
+                      <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-widest break-all">{u.email}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
+                  <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
+                    <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${
                       u.role === 'admin' ? 'bg-amber-50 text-slate-900' :
                       u.role === 'colaboradora' ? 'bg-violet-50 text-violet-500' :
                       'bg-slate-100 text-slate-500'
@@ -393,11 +393,11 @@ export default function LeitorasAdmin() {
                       <span className="px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-rose-50 text-rose-400">Pendente</span>
                     )}
                     {u.active && u.status !== 'ativa' && (
-                      <span className="px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-amber-50 text-slate-900">{u.status || 'ativa'}</span>
+                      <span className="px-2 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-amber-50 text-slate-900 whitespace-nowrap">{u.status || 'ativa'}</span>
                     )}
 
                     {u.email !== 'clubedasleitorasbsb@gmail.com' && (
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity ml-auto md:ml-0">
                         {u.status !== 'ativa' && (
                           <button
                             onClick={() => handleUnblock(u)}
