@@ -267,10 +267,7 @@ export async function GET(request: Request) {
       WHEN lower(${solicitacoes.tipo}) = 'leitora' THEN
         COALESCE(
           CASE
-            WHEN lower(${solicitacoes.status}) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
-            WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
-            WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-            WHEN lower(${solicitacoes.status}) IN ('pendente', 'rejeitada') THEN lower(${solicitacoes.status})
+            WHEN lower(${solicitacoes.status}) IN ('pendente', 'rejeitada', 'bloqueada', 'bloqueado', 'bloqueda', 'excluida', 'excluída', 'excluido') THEN lower(${solicitacoes.status})
             ELSE null
           END,
           (
@@ -291,7 +288,12 @@ export async function GET(request: Request) {
             WHERE lower(c.email) = lower(${solicitacoes.email})
             LIMIT 1
           ),
-          lower(${solicitacoes.status})
+          CASE
+            WHEN lower(${solicitacoes.status}) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
+            WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
+            WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+            ELSE lower(${solicitacoes.status})
+          END
         )
       ELSE
         CASE
