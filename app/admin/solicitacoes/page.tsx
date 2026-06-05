@@ -186,11 +186,11 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
     }
   };
 
-  const updateLeitoraStatus = async (email: string, status: string) => {
-    if (!confirm(`Alterar status da leitora com e-mail ${email} para ${status}?`)) return;
+  const updateLeitoraStatus = async (item: Solicitacao, status: string) => {
+    if (!confirm(`Alterar status da leitora com e-mail ${item.email} para ${status}?`)) return;
     const loadingToast = toast.loading('Atualizando status da leitora...');
     try {
-      const searchRes = await fetch(`/api/colaboradores?email=${encodeURIComponent(email)}`, {
+      const searchRes = await fetch(`/api/colaboradores?email=${encodeURIComponent(item.email)}`, {
         credentials: 'include',
       });
       const searchData = await searchRes.json();
@@ -206,6 +206,27 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Falha ao atualizar status da leitora');
+
+      const statusSolicitacaoMap: Record<string, string> = {
+        ativa: 'aprovada',
+        bloqueada: 'bloqueada',
+        excluida: 'excluida',
+      };
+
+      const statusSolicitacao = statusSolicitacaoMap[status.toLowerCase()];
+      if (statusSolicitacao) {
+        const solicitacaoRes = await fetch('/api/solicitacoes', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: item.id, status: statusSolicitacao }),
+        });
+        const solicitacaoData = await solicitacaoRes.json();
+        if (!solicitacaoRes.ok) {
+          throw new Error(solicitacaoData?.error || 'Falha ao sincronizar status da solicitação.');
+        }
+      }
+
       toast.success('Status da leitora atualizado.', { id: loadingToast });
       await load(page);
     } catch (err: any) {
@@ -266,7 +287,7 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
       </div>
 
       <div className="flex flex-wrap gap-2 p-1 bg-slate-100 rounded-xl w-fit">
-        {['todos', 'pendente', 'aprovada', 'rejeitada'].map(status => (
+        {['todos', 'pendente', 'aprovada', 'rejeitada', 'bloqueada', 'excluida'].map(status => (
           <button
             key={status}
             onClick={() => setStatusFiltro(status)}
@@ -274,7 +295,17 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
               statusFiltro === status ? 'bg-white shadow-sm text-rosa-gabi' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
-            {status === 'todos' ? 'Todos' : status === 'pendente' ? 'Pendentes' : status === 'aprovada' ? 'Aprovadas' : 'Rejeitadas'}
+            {status === 'todos'
+              ? 'Todos'
+              : status === 'pendente'
+                ? 'Pendentes'
+                : status === 'aprovada'
+                  ? 'Aprovadas'
+                  : status === 'rejeitada'
+                    ? 'Rejeitadas'
+                    : status === 'bloqueada'
+                      ? 'Bloqueadas'
+                      : 'Excluídas'}
           </button>
         ))}
       </div>
@@ -332,7 +363,8 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
               {/* Tag de Status Lateral */}
               <div className={`absolute top-0 right-0 px-6 py-1 text-[9px] font-bold uppercase tracking-widest rounded-bl-2xl ${
                 item.status === 'pendente' ? 'bg-amber-100 text-slate-900' : 
-                item.status === 'aprovada' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
+                item.status === 'aprovada' ? 'bg-emerald-100 text-emerald-700' :
+                item.status === 'bloqueada' ? 'bg-orange-100 text-orange-700' : 'bg-rose-100 text-rose-700'
               }`}>
                 {item.status}
               </div>
@@ -422,9 +454,9 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
                       )}
                       {item.status === 'aprovada' && item.tipo === 'leitora' && (
                         <div className="mt-3 space-y-2">
-                          <Button onClick={() => updateLeitoraStatus(item.email, 'bloqueada')} className="w-full bg-orange-500 hover:bg-orange-600 rounded-2xl h-10 text-xs" >Bloquear</Button>
-                          <Button onClick={() => updateLeitoraStatus(item.email, 'ativa')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-10 text-xs" >Reativar</Button>
-                          <Button onClick={() => updateLeitoraStatus(item.email, 'excluida')} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs" >Excluir</Button>
+                          <Button onClick={() => updateLeitoraStatus(item, 'bloqueada')} className="w-full bg-orange-500 hover:bg-orange-600 rounded-2xl h-10 text-xs" >Bloquear</Button>
+                          <Button onClick={() => updateLeitoraStatus(item, 'ativa')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-10 text-xs" >Reativar</Button>
+                          <Button onClick={() => updateLeitoraStatus(item, 'excluida')} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs" >Excluir</Button>
                         </div>
                       )}
                       {item.status !== 'pendente' && item.status !== 'rejeitada' && item.status !== 'aprovada' && (

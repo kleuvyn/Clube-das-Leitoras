@@ -681,7 +681,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'ID e status, URL da carteirinha, URL da foto, removeCarteirinha ou resendEmail são obrigatórios.' }, { status: 400 });
     }
 
-    if (status && !['aprovada', 'rejeitada', 'pendente'].includes(status)) {
+    if (status && !['aprovada', 'rejeitada', 'pendente', 'bloqueada', 'excluida'].includes(status)) {
       return NextResponse.json({ error: 'Status inválido.' }, { status: 400 });
     }
 
