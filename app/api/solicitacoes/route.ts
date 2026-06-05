@@ -264,34 +264,11 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')?.trim().toLowerCase();
 
     const statusEfetivoExpr = sql<string>`CASE
-      WHEN lower(${solicitacoes.tipo}) = 'leitora' THEN
-        COALESCE(
-          (
-            SELECT CASE
-              WHEN lower(c.status) IN ('ativa', 'aprovada') THEN 'aprovada'
-              WHEN lower(c.status) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
-              WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-              WHEN lower(c.status) = 'pendente' THEN 'pendente'
-              WHEN lower(c.status) = 'rejeitada' THEN 'rejeitada'
-              WHEN c.active = 1 THEN 'aprovada'
-              WHEN c.active = 0 THEN CASE
-                WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-                ELSE 'bloqueada'
-              END
-              ELSE lower(c.status)
-            END
-            FROM ${colaboradoras} c
-            WHERE lower(c.email) = lower(${solicitacoes.email})
-            LIMIT 1
-          ),
-          lower(${solicitacoes.status})
-        )
-      ELSE CASE
-        WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
-        WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-        WHEN lower(${solicitacoes.status}) IN ('aprovada', 'rejeitada', 'pendente') THEN lower(${solicitacoes.status})
-        ELSE lower(${solicitacoes.status})
-      END
+      WHEN lower(${solicitacoes.status}) IN ('ativa', 'aprovada') THEN 'aprovada'
+      WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
+      WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+      WHEN lower(${solicitacoes.status}) IN ('pendente', 'rejeitada') THEN lower(${solicitacoes.status})
+      ELSE lower(${solicitacoes.status})
     END`;
 
     const filters = [] as any[];
