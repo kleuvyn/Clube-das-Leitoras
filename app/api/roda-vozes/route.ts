@@ -246,14 +246,34 @@ export async function DELETE(request: Request) {
       );
     }
 
+    const [roda] = await db
+      .select({ id: rodaVozes.id })
+      .from(rodaVozes)
+      .where(eq(rodaVozes.id, id))
+      .limit(1);
+
+    if (!roda) {
+      return NextResponse.json(
+        { success: false, error: 'Roda não encontrada' },
+        { status: 404 }
+      );
+    }
+
     const participantes = await db
       .delete(participantesRodaVozes)
       .where(eq(participantesRodaVozes.rodaId, id))
       .returning({ id: participantesRodaVozes.id });
 
+    const updated = await db
+      .update(rodaVozes)
+      .set({ status: 'ativa', updatedAt: new Date() })
+      .where(eq(rodaVozes.id, id))
+      .returning();
+
     return NextResponse.json({
       success: true,
       removedCount: participantes.length,
+      roda: updated[0] ?? null,
     });
   } catch (error: any) {
     console.error('Erro ao limpar participantes da roda:', error);

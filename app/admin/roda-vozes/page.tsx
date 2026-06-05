@@ -64,11 +64,11 @@ export default function AdminRodaVozesPage() {
     }
   };
 
-  const handleLimparParticipantes = async () => {
+  const handleAbrirNovaRoda = async () => {
     if (!rodaId) return;
 
     const confirmacao = window.confirm(
-      'Tem certeza que deseja limpar a lista anterior desta roda? Esta ação não pode ser desfeita.'
+      'Deseja abrir uma nova roda agora? Vamos limpar a lista atual de nomes e reativar a roda.'
     );
 
     if (!confirmacao) return;
@@ -86,7 +86,8 @@ export default function AdminRodaVozesPage() {
       }
 
       setParticipantes([]);
-      toast.success('Lista anterior limpa com sucesso.');
+      setStatus(data?.roda?.status || 'ativa');
+      toast.success(`Nova roda aberta. ${data?.removedCount ?? 0} nome(s) removido(s).`);
       carregarRoda();
     } catch (err: any) {
       console.error('Erro ao limpar participantes:', err);
@@ -118,8 +119,8 @@ export default function AdminRodaVozesPage() {
           <Button onClick={handleToggleRodaStatus} className="flex items-center gap-2 bg-rosa-gabi text-white hover:bg-[#8B3A37]">
             {status === 'ativa' ? 'Desativar Roda' : 'Ativar Roda'}
           </Button>
-          <Button onClick={handleLimparParticipantes} variant="destructive" className="flex items-center gap-2">
-            Limpar Lista Anterior
+          <Button onClick={handleAbrirNovaRoda} variant="destructive" className="flex items-center gap-2">
+            Abrir Nova Roda
           </Button>
         </div>
       </header>
