@@ -266,44 +266,29 @@ export async function GET(request: Request) {
 
     const statusEfetivoExpr = sql<string>`CASE
       WHEN lower(${solicitacoes.tipo}) = 'leitora' THEN
-        COALESCE(
-          CASE
-            WHEN lower(${solicitacoes.status}) IN ('pendente', 'rejeitada') THEN lower(${solicitacoes.status})
-            WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
-            WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-            ELSE null
-          END,
-          (
-            SELECT CASE
-              WHEN lower(c.status) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
-              WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-              WHEN c.active = 0 THEN 'bloqueada'
-              WHEN lower(c.status) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
-              WHEN lower(c.status) = 'pendente' THEN 'pendente'
-              WHEN lower(c.status) = 'rejeitada' THEN 'rejeitada'
-              ELSE lower(c.status)
-            END
-            FROM ${colaboradoras} c
-            WHERE lower(trim(c.email)) = lower(trim(${solicitacoes.email}))
-            ORDER BY
-              CASE
-                WHEN lower(c.status) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 0
-                WHEN lower(c.status) IN ('excluida', 'excluída', 'excluido') THEN 1
-                WHEN c.active = 0 THEN 2
-                WHEN lower(c.status) IN ('ativa', 'aprovada', 'aprovado') THEN 3
-                ELSE 4
-              END ASC,
-              c.created_at DESC
-            LIMIT 1
-          ),
-          CASE
-            WHEN lower(${solicitacoes.status}) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
-            WHEN lower(${solicitacoes.status}) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
-            WHEN lower(${solicitacoes.status}) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
-            WHEN lower(${solicitacoes.status}) IN ('pendente', 'rejeitada') THEN lower(${solicitacoes.status})
-            ELSE lower(${solicitacoes.status})
-          END
-        )
+        CASE
+          WHEN lower(trim(${solicitacoes.status})) IN ('pendente', 'rejeitada') THEN lower(trim(${solicitacoes.status}))
+          WHEN lower(trim(${solicitacoes.status})) IN ('bloqueada', 'bloqueado', 'bloqueda') THEN 'bloqueada'
+          WHEN lower(trim(${solicitacoes.status})) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+          WHEN lower(trim(${solicitacoes.status})) IN ('ativa', 'aprovada', 'aprovado') THEN COALESCE(
+            (
+              SELECT CASE
+                WHEN lower(trim(c.status)) IN ('bloqueada', 'bloqueado', 'bloqueda') OR c.active = 0 THEN 'bloqueada'
+                WHEN lower(trim(c.status)) IN ('excluida', 'excluída', 'excluido') THEN 'excluida'
+                WHEN lower(trim(c.status)) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
+                WHEN lower(trim(c.status)) = 'pendente' THEN 'pendente'
+                WHEN lower(trim(c.status)) = 'rejeitada' THEN 'rejeitada'
+                ELSE lower(trim(c.status))
+              END
+              FROM ${colaboradoras} c
+              WHERE lower(trim(c.email)) = lower(trim(${solicitacoes.email}))
+              ORDER BY c.created_at DESC
+              LIMIT 1
+            ),
+            'aprovada'
+          )
+          ELSE lower(trim(${solicitacoes.status}))
+        END
       ELSE
         CASE
           WHEN lower(${solicitacoes.status}) IN ('ativa', 'aprovada', 'aprovado') THEN 'aprovada'
@@ -1070,6 +1055,12 @@ export async function PATCH(request: Request) {
                 } else {
                   throw insertError;
                 }
+              }
+            } else if (existingUser.status?.toLowerCase() !== 'excluida') {
+              const shouldReactivate = existingUser.active === false || existingUser.status?.toLowerCase() !== 'ativa';
+              if (shouldReactivate) {
+                await dbWrite.update(colaboradoras).set({ active: true, status: 'ativa' }).where(eq(colaboradoras.id, existingUser.id));
+                existingUser = { ...existingUser, active: true, status: 'ativa' };
               }
             }
 
