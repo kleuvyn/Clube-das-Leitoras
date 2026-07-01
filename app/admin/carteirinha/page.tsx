@@ -287,7 +287,7 @@ export default function AdminCarteirinhaPage() {
                 {item.status}
               </div>
 
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className={`grid gap-8 ${hasDetails ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr]' : 'grid-cols-1 md:grid-cols-[1.7fr_1fr]'}`}>
                 <div className="space-y-4">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-tighter text-rosa-gabi block mb-1">{item.tipo}</span>
@@ -324,7 +324,7 @@ export default function AdminCarteirinhaPage() {
                 </div>
 
                 {hasDetails && (
-                  <div className="md:col-span-1 bg-slate-50 p-6 rounded-3xl border border-black/3">
+                  <div className="bg-slate-50 p-6 rounded-3xl border border-black/3 min-w-0">
                     {item.enderecoCompleto && (
                       <p className="text-sm text-slate-700 mb-2 wrap-break-word"><strong>Endereço:</strong> {item.enderecoCompleto}</p>
                     )}
@@ -334,7 +334,7 @@ export default function AdminCarteirinhaPage() {
                   </div>
                 )}
 
-                <div className="flex flex-col justify-center gap-3">
+                <div className="flex flex-col justify-center gap-3 min-w-0">
                   {item.status === 'pendente' ? (
                     <>
                       <Button
@@ -419,7 +419,7 @@ export default function AdminCarteirinhaPage() {
                           type="button"
                           onClick={() => handleReenviarEmail(item.id)}
                           disabled={resendingIds[item.id]}
-                          className="w-full bg-slate-900 text-white hover:bg-slate-800 rounded-2xl h-11 text-xs font-semibold uppercase tracking-[0.2em]"
+                          className="w-full bg-slate-900 text-white hover:bg-slate-800 rounded-2xl h-10 text-[10px] font-semibold uppercase tracking-[0.2em]"
                         >
                           {resendingIds[item.id] ? 'Reenviando...' : 'Reenviar'}
                         </Button>
@@ -428,7 +428,7 @@ export default function AdminCarteirinhaPage() {
                           variant="outline"
                           onClick={() => handleRemoverCarteirinha(item.id)}
                           disabled={removingCardIds[item.id]}
-                          className="w-full rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 h-11 text-xs font-semibold uppercase tracking-[0.2em]"
+                          className="w-full rounded-2xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:border-rose-300 h-10 text-[10px] font-semibold uppercase tracking-[0.2em]"
                         >
                           {removingCardIds[item.id] ? 'Removendo...' : 'Excluir carteirinha'}
                         </Button>
@@ -436,7 +436,7 @@ export default function AdminCarteirinhaPage() {
                           <Button
                             type="button"
                             onClick={() => atualizarStatus(item.id, 'pendente')}
-                            className="w-full bg-amber-600 text-white hover:bg-amber-700 rounded-2xl h-11 text-xs font-semibold uppercase tracking-[0.2em]"
+                            className="w-full bg-amber-600 text-white hover:bg-amber-700 rounded-2xl h-10 text-[10px] font-semibold uppercase tracking-[0.2em]"
                           >
                             Reativar solicitação
                           </Button>
@@ -447,7 +447,7 @@ export default function AdminCarteirinhaPage() {
                             onClick={() => handleExcluir(item.id)}
                             disabled={deletingIds[item.id]}
                             variant="destructive"
-                            className="w-full h-11 text-xs font-semibold uppercase tracking-[0.2em]"
+                            className="w-full h-10 text-[10px] font-semibold uppercase tracking-[0.2em]"
                           >
                             {deletingIds[item.id] ? 'Excluindo...' : 'Excluir solicitação'}
                           </Button>

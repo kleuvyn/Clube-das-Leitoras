@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     
-    await client.execute(`
+    await client.execute(sql`
       INSERT INTO evento_confirmacoes (evento_id, usuario_email, status)
       VALUES (${eventoId}, ${email}, ${status})
       ON CONFLICT (evento_id, usuario_email)

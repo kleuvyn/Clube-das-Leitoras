@@ -361,9 +361,9 @@ export default function AdminSorteiosPage() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto py-10 px-6 font-alice pb-24 space-y-10 text-slate-900 overflow-x-hidden">
+    <main className="max-w-full xl:max-w-6xl mx-auto py-10 px-6 font-alice pb-24 space-y-10 text-slate-900 overflow-x-hidden">
       {/* 1. Cabeçalho Seguro */}
-      <header className="flex flex-col gap-2 pb-6 border-b border-[#E5E1DA]">
+      <header className="flex flex-col gap-2 pb-6 border-b border-[#E5E1DA] min-w-0">
         <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.35em]" style={{ color: corDestaque }}>
           <ShieldCheck size={16} /> Admin • Sorteios do Clube
         </div>
@@ -375,10 +375,10 @@ export default function AdminSorteiosPage() {
         </p>
       </header>
 
-      <div className="grid lg:grid-cols-[1.5fr_1fr] xl:grid-cols-[2fr_1.5fr] gap-8">
+      <div className="grid lg:grid-cols-[1.5fr_1fr] xl:grid-cols-[2fr_1.5fr] gap-8 min-w-0">
         
         {/* COLUNA ESQUERDA: Participantes e Histórico */}
-        <div className="space-y-8">
+        <div className="space-y-8 min-w-0">
           
           {/* 2. Lista de Participantes */}
           <section className="bg-white border shadow-sm rounded-xl p-6" style={{ borderColor: '#E5E1DA' }}>
@@ -389,8 +389,8 @@ export default function AdminSorteiosPage() {
                 </h2>
                 <p className="text-xs text-slate-500 italic mt-1">Total na urna: {participantes.length} nomes - 1 entrada por participante</p>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="relative w-full sm:w-64">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full min-w-0">
+                <div className="relative w-full sm:w-64 min-w-0">
                   <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
@@ -469,7 +469,7 @@ export default function AdminSorteiosPage() {
         </div>
 
         {/* COLUNA DIREITA: Controle de Sorteio e Prêmios */}
-        <div className="space-y-8">
+        <div className="space-y-8 min-w-0">
           
           {/* 4. Controle de Sorteio & 5. Resultado */}
           <section className="bg-white border shadow-sm rounded-xl p-6 relative overflow-hidden" style={{ borderColor: '#E5E1DA' }}>
@@ -522,8 +522,8 @@ export default function AdminSorteiosPage() {
             </div>
 
             {/* Botões do Sorteio */}
-            <div className="mb-4 grid gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="mb-4 grid gap-3 min-w-0">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0">
                 <div>
                   <label className="text-xs uppercase tracking-[0.35em] text-slate-500 font-bold">
                     Quantas pessoas sortear?
@@ -598,8 +598,8 @@ export default function AdminSorteiosPage() {
               </span>
             </h2>
 
-            <div className="grid gap-3 mb-6 sm:grid-cols-[1fr_auto]">
-              <div className="grid gap-3">
+            <div className="grid gap-3 mb-6 sm:grid-cols-[1fr_auto] min-w-0">
+              <div className="grid gap-3 min-w-0">
                 <input
                   value={premioText}
                   onChange={(e) => setPremioText(e.target.value)}

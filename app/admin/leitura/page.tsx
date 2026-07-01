@@ -405,56 +405,61 @@ export default function LeituraAtivaAdmin() {
                 <Plus size={14} style={{ color: vermelhoTerracota }} /> Novo Encontro
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#FDFBF9] p-8 rounded-[2.5rem] border border-red-50">
-                {[
-                  { label: 'Data/Hora', key: 'data', placeholder: 'ex: 15/04 às 19:30' },
-                  { label: 'Capítulo / Tema', key: 'tema', placeholder: 'ex: Cap 1 - La Loba' },
-                  { label: 'Link do Meet', key: 'linkMeet', placeholder: 'Link da reunião ao vivo' },
-                  { label: 'Link Drive (PDF/Pasta)', key: 'linkDrive', placeholder: 'Link do Drive' },
-                  { label: 'Link da Live / Gravação', key: 'linkLive', placeholder: 'Link da live gravada' },
-                ].map(({ label, key, placeholder }) => (
-                  <div key={key} className="space-y-1">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase ml-2">{label}</label>
-                    <input
-                      value={(novoEncontro as any)[key]}
-                      onChange={e => setNovoEncontro({ ...novoEncontro, [key]: e.target.value })}
-                      placeholder={placeholder}
-                      className="w-full p-4 bg-white rounded-2xl text-sm outline-none border border-slate-100"
-                    />
-                  </div>
-                ))}
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_auto] gap-6 bg-[#FDFBF9] p-8 rounded-[2.5rem] border border-red-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    { label: 'Data/Hora', key: 'data', placeholder: 'ex: 15/04 às 19:30' },
+                    { label: 'Capítulo / Tema', key: 'tema', placeholder: 'ex: Cap 1 - La Loba' },
+                    { label: 'Link do Meet', key: 'linkMeet', placeholder: 'Link da reunião ao vivo' },
+                    { label: 'Link Drive (PDF/Pasta)', key: 'linkDrive', placeholder: 'Link do Drive' },
+                    { label: 'Link da Live / Gravação', key: 'linkLive', placeholder: 'Link da live gravada' },
+                  ].map(({ label, key, placeholder }) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-[9px] font-bold text-slate-400 uppercase ml-2">{label}</label>
+                      <input
+                        value={(novoEncontro as any)[key]}
+                        onChange={e => setNovoEncontro({ ...novoEncontro, [key]: e.target.value })}
+                        placeholder={placeholder}
+                        className="w-full p-4 bg-white rounded-2xl text-sm outline-none border border-slate-100"
+                      />
+                    </div>
+                  ))}
 
-                <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 flex items-center gap-1">
-                    <ImageIcon size={10}/> Imagem da Capa
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      value={novoEncontro.imagem}
-                      onChange={e => setNovoEncontro({ ...novoEncontro, imagem: e.target.value })}
-                      placeholder="URL ou faça upload"
-                      className="flex-1 p-4 bg-white rounded-2xl text-sm outline-none border border-slate-100"
-                    />
-                    <label className="cursor-pointer flex items-center justify-center gap-1 px-4 py-4 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors text-slate-400 text-[10px] font-bold uppercase whitespace-normal min-w-0">
-                      {uploadingImg ? <Loader2 size={12} className="animate-spin"/> : <Upload size={12}/>}
-
-                      <span className="hidden md:inline">Upload</span>
-                      <input type="file" accept="image/*" className="hidden" ref={imgRef}
-                        onChange={e => e.target.files?.[0] && handleUploadImagem(e.target.files[0])} />
+                  <div className="space-y-1">
+                    <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 flex items-center gap-1">
+                      <ImageIcon size={10}/> Imagem da Capa
                     </label>
+                    <div className="flex flex-col sm:flex-row gap-2 min-w-0">
+                      <input
+                        value={novoEncontro.imagem}
+                        onChange={e => setNovoEncontro({ ...novoEncontro, imagem: e.target.value })}
+                        placeholder="URL ou faça upload"
+                        className="flex-1 min-w-0 p-4 bg-white rounded-2xl text-sm outline-none border border-slate-100"
+                      />
+                      <label className="cursor-pointer shrink-0 w-full sm:w-auto flex items-center justify-center gap-1 px-4 py-4 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors text-slate-400 text-[10px] font-bold uppercase whitespace-normal min-w-0">
+                        {uploadingImg ? <Loader2 size={12} className="animate-spin"/> : <Upload size={12}/>}
+
+
+                        <span className="hidden md:inline">Upload</span>
+                        <input type="file" accept="image/*" className="hidden" ref={imgRef}
+                          onChange={e => e.target.files?.[0] && handleUploadImagem(e.target.files[0])} />
+                      </label>
+                    </div>
+                    {novoEncontro.imagem && (
+                      <img src={novoEncontro.imagem} alt="preview" className="mt-2 h-20 object-cover rounded-2xl"/>
+                    )}
                   </div>
-                  {novoEncontro.imagem && (
-                    <img src={novoEncontro.imagem} alt="preview" className="mt-2 h-20 object-cover rounded-2xl"/>
-                  )}
                 </div>
 
-                <Button
-                  onClick={handleAddEncontro}
-                  className="md:col-span-2 h-14 rounded-2xl text-white font-bold uppercase text-[10px] tracking-widest border-none shadow-lg mt-2"
-                  style={{ backgroundColor: vermelhoTerracota }}
-                >
-                  <Save size={16} className="mr-2"/> Publicar Encontro
-                </Button>
+                <div className="flex items-end">
+                  <Button
+                    onClick={handleAddEncontro}
+                    className="w-full h-14 rounded-2xl text-white font-bold uppercase text-[10px] tracking-widest border-none shadow-lg"
+                    style={{ backgroundColor: vermelhoTerracota }}
+                  >
+                    <Save size={16} className="mr-2"/> Publicar Encontro
+                  </Button>
+                </div>
               </div>
 
               
