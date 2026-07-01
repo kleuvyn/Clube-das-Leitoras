@@ -304,7 +304,7 @@ export async function GET(request: Request) {
     if (tipo && tipo !== 'todas') filters.push(eq(solicitacoes.tipo, tipo));
     if (search) {
       const likePattern = `%${search.replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
-      filters.push(sql`(lower(${solicitacoes.nome}) LIKE ${likePattern} OR lower(${solicitacoes.email}) LIKE ${likePattern})`);
+      filters.push(sql`(lower(${solicitacoes.nome}) LIKE ${likePattern} OR lower(${solicitacoes.email}) LIKE ${likePattern} OR lower(${solicitacoes.telefone}) LIKE ${likePattern} OR lower(${solicitacoes.whatsapp}) LIKE ${likePattern})`);
     }
 
     const whereClause = filters.length === 0

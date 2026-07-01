@@ -318,12 +318,12 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             onKeyDown={(event) => event.key === 'Enter' && load(1)}
-            placeholder="Procurar por nome ou e-mail"
+            placeholder="Procurar por nome, e-mail ou telefone"
             className="flex-1 bg-transparent outline-none text-sm text-slate-700 placeholder:text-slate-400"
           />
           <Button
             onClick={() => load(1)}
-            className="rounded-2xl bg-[#8C7B6E] px-5 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white shadow-sm shadow-[#8C7B6E]/20 transition-colors hover:bg-[#7a6a5a]"
+            className="rounded-2xl bg-[#8C7B6E] px-4 py-2.5 sm:px-5 sm:py-3 text-sm font-semibold uppercase tracking-[0.18em] text-white shadow-sm shadow-[#8C7B6E]/20 transition-colors hover:bg-[#7a6a5a]"
           >
             Procurar
           </Button>
@@ -369,7 +369,7 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
                 {item.status}
               </div>
 
-              <div className="grid md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
                 {/* Coluna 1: Perfil */}
                 <div className="space-y-4">
@@ -411,7 +411,7 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
                 {(item.enderecoCompleto || item.mensagem) && (
                   <div className="md:col-span-1 bg-slate-50 p-6 rounded-3xl border border-black/3">
                     {item.enderecoCompleto && (
-                      <p className="text-sm text-slate-700 mb-2 wrap-break-word">
+                      <p className="text-sm text-slate-700 mb-2 break-words whitespace-normal">
                         <strong>Endereço:</strong> {item.enderecoCompleto}
                       </p>
                     )}
@@ -429,14 +429,14 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
                     <>
                       <Button 
                         onClick={() => atualizarStatus(item.id, 'aprovada', item)} 
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-2xl h-12 text-xs font-bold uppercase tracking-widest"
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 rounded-2xl h-12 sm:h-14 text-sm sm:text-sm font-bold uppercase tracking-[0.16em]"
                       >
                         Aprovar Cadastro
                       </Button>
                       <Button 
                         onClick={() => atualizarStatus(item.id, 'rejeitada', item)} 
                         variant="outline"
-                        className="w-full border-rose-200 text-rose-600 hover:bg-rose-50 rounded-2xl h-12 text-xs font-bold uppercase tracking-widest"
+                        className="w-full border-rose-200 text-rose-600 hover:bg-rose-50 rounded-2xl h-12 sm:h-14 text-sm sm:text-sm font-bold uppercase tracking-[0.16em]"
                       >
                         Recusar
                       </Button>
@@ -448,15 +448,15 @@ const atualizarStatus = async (id: string, status: string, item?: Solicitacao) =
                       )}
                       {item.status === 'rejeitada' && (
                         <div className="mt-3 space-y-2">
-                          <Button onClick={() => atualizarStatus(item.id, 'aprovada')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-10 text-xs">Aceitar agora</Button>
-                          <Button onClick={() => excluirSolicitacao(item.id)} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs">Excluir solicitação</Button>
+                          <Button onClick={() => atualizarStatus(item.id, 'aprovada')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-12 sm:h-14 text-sm">Aceitar agora</Button>
+                          <Button onClick={() => excluirSolicitacao(item.id)} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-12 sm:h-14 text-sm">Excluir solicitação</Button>
                         </div>
                       )}
                       {item.status === 'aprovada' && item.tipo === 'leitora' && (
                         <div className="mt-3 space-y-2">
-                          <Button onClick={() => updateLeitoraStatus(item, 'bloqueada')} className="w-full bg-orange-500 hover:bg-orange-600 rounded-2xl h-10 text-xs" >Bloquear</Button>
-                          <Button onClick={() => updateLeitoraStatus(item, 'ativa')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-10 text-xs" >Reativar</Button>
-                          <Button onClick={() => updateLeitoraStatus(item, 'excluida')} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-10 text-xs" >Excluir</Button>
+                          <Button onClick={() => updateLeitoraStatus(item, 'bloqueada')} className="w-full bg-orange-500 hover:bg-orange-600 rounded-2xl h-12 sm:h-14 text-sm" >Bloquear</Button>
+                          <Button onClick={() => updateLeitoraStatus(item, 'ativa')} className="w-full bg-emerald-500 hover:bg-emerald-600 rounded-2xl h-12 sm:h-14 text-sm" >Reativar</Button>
+                          <Button onClick={() => updateLeitoraStatus(item, 'excluida')} className="w-full bg-rose-500 hover:bg-rose-600 rounded-2xl h-12 sm:h-14 text-sm" >Excluir</Button>
                         </div>
                       )}
                       {item.status !== 'pendente' && item.status !== 'rejeitada' && item.status !== 'aprovada' && (
