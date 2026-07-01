@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { client, db, dbWrite, isWriteBlockedError } from '@/lib/db';
 import { solicitacoes, colaboradoras, carteirinhas, empreendedoras, escritoras, parcerias } from '@/lib/db/schema';
 import { and, asc, eq, desc, inArray, or, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+import { requireAdminOrColaboradora } from '@/lib/auth';
 
 // Se possível use o remetente já configurado na conta Resend (mesmo que já esteja validado no DNS)
 function getFromAddress() {
@@ -212,32 +212,13 @@ async function upsertEscritoraFromSolicitacao(solicitacao: any, fallbackFotoUrl?
 }
 
 async function requireSolicitacoesAdmin(request: Request) {
-  const cookieStore = await cookies();
-  const adminToken = cookieStore.get('clube-admin-token')?.value;
-  const convidadaToken = cookieStore.get('clube-sessao')?.value;
-  let tokenValue = adminToken ?? convidadaToken;
-
-  if (!tokenValue) {
-    const rawCookie = request.headers.get('cookie');
-    const parsed = parseCookieHeader(rawCookie);
-    tokenValue = parsed['clube-admin-token'] ?? parsed['clube-sessao'];
-  }
-
-  if (!tokenValue) {
-    throw new Error('Não autorizado');
-  }
-
-  let tokenData: any;
   try {
-    tokenData = typeof tokenValue === 'string' ? JSON.parse(tokenValue) : tokenValue;
-  } catch {
-    throw new Error('Token inválido');
+    return await requireAdminOrColaboradora(request);
+  } catch (err: any) {
+    if (err?.status === 401) throw new Error('Não autorizado');
+    if (err?.status === 403) throw new Error('Permissão insuficiente');
+    throw err;
   }
-
-  const [user] = await db.select().from(colaboradoras).where(sql`LOWER(${colaboradoras.email}) = LOWER(${tokenData.email})`);
-  if (!user || user.active === false) throw new Error('Não autorizado');
-  if (user.role !== 'admin' && user.role !== 'colaboradora') throw new Error('Permissão insuficiente');
-  return user;
 }
 
 async function hasApprovedAtColumn() {
