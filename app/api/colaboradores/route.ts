@@ -75,7 +75,7 @@ export async function GET(request: Request) {
 
     if (search) {
       const likePattern = `%${search}%`;
-      leitorasQuery = leitorasQuery.where(sql`(lower(${colaboradoras.name}) LIKE ${likePattern} OR lower(${colaboradoras.email}) LIKE ${likePattern})`);
+      leitorasQuery = leitorasQuery.where(sql`(lower(${colaboradoras.name}) LIKE ${likePattern} OR lower(${colaboradoras.email}) LIKE ${likePattern} OR lower(${colaboradoras.phone}) LIKE ${likePattern})`);
     }
 
     if (!emailSearch) {
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
     if (statusSearch && statusSearch !== 'todas') countFilters.push(sql`LOWER(${colaboradoras.status}) = ${statusSearch}`);
     if (search) {
       const likePattern = `%${search}%`;
-      countFilters.push(sql`(lower(${colaboradoras.name}) LIKE ${likePattern} OR lower(${colaboradoras.email}) LIKE ${likePattern})`);
+      countFilters.push(sql`(lower(${colaboradoras.name}) LIKE ${likePattern} OR lower(${colaboradoras.email}) LIKE ${likePattern} OR lower(${colaboradoras.phone}) LIKE ${likePattern})`);
     }
 
     const countQuery = db.select({ count: sql<number>`cast(count(*) as integer)` }).from(colaboradoras);

@@ -49,7 +49,10 @@ export default function LeitorasAdmin() {
   const scrollTop = () => document.getElementById('admin-scroll')?.scrollTo({ top: 0, behavior: 'smooth' });
 
   const filteredList = lista
-    .filter(u => (u.name ?? '').toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(u => {
+      const lowerTerm = searchTerm.toLowerCase();
+      return [u.name, u.email, u.phone].some(value => (value ?? '').toLowerCase().includes(lowerTerm));
+    })
     .filter(u => {
       if (statusFilter === 'todas') return true;
       return (u.status ?? 'ativa').toLowerCase() === statusFilter;
@@ -344,7 +347,7 @@ export default function LeitorasAdmin() {
               <div className="relative w-full max-w-xs">
                 <Search className="absolute left-4 top-3 text-slate-300" size={14} />
                 <input 
-                  placeholder="Buscar por nome..." 
+                  placeholder="Buscar por nome, e-mail ou telefone..." 
                   className="w-full pl-10 p-2.5 bg-slate-50 rounded-xl text-xs outline-none"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -369,8 +372,8 @@ export default function LeitorasAdmin() {
 
             <div className="divide-y divide-slate-50">
               {filteredList.map((u) => (
-                <div key={u.id} className={`flex flex-col gap-4 p-4 hover:bg-slate-50 transition-all group rounded-2xl md:flex-row md:items-center md:justify-between ${editing?.id === u.id ? 'bg-violet-50' : ''}`}>
-                  <div className="flex items-center gap-4 min-w-0">
+                <div key={u.id} className={`flex flex-col gap-4 p-4 hover:bg-slate-50 transition-all group rounded-2xl lg:flex-row lg:items-center lg:justify-between ${editing?.id === u.id ? 'bg-violet-50' : ''}`}>
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4 min-w-0">
                     <div className="h-12 w-12 bg-slate-100 rounded-full flex items-center justify-center font-serif italic text-slate-400 border-2 border-white shadow-sm overflow-hidden">
                       {u.avatarUrl ? <img src={u.avatarUrl} className="w-full h-full object-cover" alt={u.name} /> : (u.name?.[0] ?? '?')}
                     </div>
@@ -380,7 +383,7 @@ export default function LeitorasAdmin() {
                     </div>
                   </div>
 
-                  <div className="flex w-full flex-wrap items-center gap-2 md:w-auto md:justify-end">
+                  <div className="flex w-full flex-wrap items-center gap-2 justify-start lg:w-auto lg:justify-end">
                     <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest whitespace-nowrap ${
                       u.role === 'admin' ? 'bg-amber-50 text-slate-900' :
                       u.role === 'colaboradora' ? 'bg-violet-50 text-violet-500' :
@@ -397,7 +400,7 @@ export default function LeitorasAdmin() {
                     )}
 
                     {u.email !== 'clubedasleitorasbsb@gmail.com' && (
-                      <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity ml-auto md:ml-0">
+                      <div className="w-full flex flex-wrap gap-1 opacity-100 transition-opacity justify-start lg:w-auto lg:justify-end lg:ml-0">
                         {u.status !== 'ativa' && (
                           <button
                             onClick={() => handleUnblock(u)}

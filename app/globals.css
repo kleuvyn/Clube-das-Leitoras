@@ -16,7 +16,13 @@
 }
 
 @layer base {
+  html {
+    min-height: 100%;
+  }
+
   body {
+    min-height: 100dvh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     background-color: #F9F7F2;
     color: #000000;
     overflow-x: hidden;
