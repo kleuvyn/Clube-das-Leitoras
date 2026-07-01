@@ -95,6 +95,26 @@ function AdminContent() {
       const url = await uploadFile(selectedFile);
       setConfigGeral(prev => ({ ...prev, calendarioImagem: url }));
       setSelectedFile(null);
+
+      if (currentId) {
+        const payload = {
+          title: configGeral.livroDoMes,
+          notes: JSON.stringify(agenda),
+          imageUrl: url,
+          ano: configGeral.ano,
+          status: 'ativo',
+        };
+        const res = await fetch(`/api/cronograma?id=${currentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.error || `Erro ${res.status}`);
+        }
+      }
+
       toast.success("Imagem salva com sucesso!");
     } catch (err: any) {
       toast.error(err.message || "Erro ao fazer upload da imagem.");
@@ -104,18 +124,29 @@ function AdminContent() {
   };
 
   const handleSalvarLista = () => {
-    if (!editandoMes.livro) return toast.error("O nome da leitura é obrigatório.");
+    const livroTrim = editandoMes.livro.trim();
+    if (!livroTrim) return toast.error("O nome da leitura é obrigatório.");
+
+    const item = { mes: editandoMes.mes, dia: editandoMes.dia, livro: livroTrim };
     if (editandoMes.index > -1) {
-      const novaAgenda = [...agenda];
-      novaAgenda[editandoMes.index] = { mes: editandoMes.mes, dia: editandoMes.dia, livro: editandoMes.livro };
-      setAgenda(novaAgenda);
+      setAgenda((prev) => {
+        const novaAgenda = [...prev];
+        novaAgenda[editandoMes.index] = item;
+        return novaAgenda;
+      });
     } else {
-      setAgenda([...agenda, { mes: editandoMes.mes, dia: editandoMes.dia, livro: editandoMes.livro }]);
+      setAgenda((prev) => [...prev, item]);
     }
+
     setEditandoMes({ index: -1, mes: 'Janeiro', dia: '01', livro: '' });
   };
 
   const handlePublicarNoBanco = async () => {
+    if (editandoMes.livro.trim()) {
+      toast.error("Há uma leitura em edição. Clique em 'Adicionar' antes de publicar.");
+      return;
+    }
+
     setIsSaving(true);
 
     let imageUrl = configGeral.calendarioImagem;
