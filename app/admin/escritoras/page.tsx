@@ -79,7 +79,7 @@ export default function EscritorasAdmin() {
   const loadDados = async (pageNum = page) => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/escritoras?page=${pageNum}&limit=${limit}`);
+      const res = await fetch(`/api/escritoras?page=${pageNum}&limit=${limit}`, { cache: 'no-store' });
       if (!res.ok) throw new Error();
       const data = await res.json();
       setLista(Array.isArray(data.data) ? data.data : []);
