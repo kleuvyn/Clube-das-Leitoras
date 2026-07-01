@@ -252,8 +252,8 @@ function AdminContent() {
           <section className="bg-white p-10 rounded-5xl border border-slate-100 shadow-sm space-y-8">
             <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Cronograma de Encontros</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_2fr_auto] gap-4 bg-[#FDFBF9] p-6 rounded-4xl border border-rose-50">
-              <select value={editandoMes.mes} onChange={e => setEditandoMes({...editandoMes, mes: e.target.value})} className="p-3 bg-white rounded-xl text-sm outline-none border border-slate-100">
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_2fr_auto] gap-4 bg-[#FDFBF9] p-6 rounded-4xl border border-rose-50">
+              <select value={editandoMes.mes} onChange={e => setEditandoMes({...editandoMes, mes: e.target.value})} className="p-3 bg-white rounded-xl text-sm outline-none border border-slate-100 min-w-0">
                 {MESES.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
               <select value={editandoMes.dia} onChange={e => setEditandoMes({...editandoMes, dia: e.target.value})} className="p-3 bg-white rounded-xl text-sm outline-none border border-slate-100">

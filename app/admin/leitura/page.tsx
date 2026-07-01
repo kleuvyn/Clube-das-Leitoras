@@ -83,14 +83,14 @@ function EncontroCard({
           ))}
           <div className="space-y-1">
             <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Imagem</label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 value={editData?.imagem ?? ''}
                 onChange={e => setEditData(p => ({ ...p, imagem: e.target.value }))}
                 placeholder="URL ou faça upload"
                 className="flex-1 p-3 bg-slate-50 rounded-xl text-sm outline-none border border-slate-100"
               />
-              <label className="cursor-pointer p-3 bg-white border border-slate-100 rounded-xl hover:bg-slate-50">
+              <label className="cursor-pointer p-3 bg-white border border-slate-100 rounded-xl hover:bg-slate-50 flex items-center justify-center min-w-0">
                 {uploadingImg ? <Loader2 size={13} className="animate-spin text-slate-400"/> : <Upload size={13} className="text-slate-400"/>}
                 <input type="file" accept="image/*" className="hidden"
                   onChange={e => e.target.files?.[0] && handleUploadImagem(e.target.files[0], true)} />
@@ -428,15 +428,16 @@ export default function LeituraAtivaAdmin() {
                   <label className="text-[9px] font-bold text-slate-400 uppercase ml-2 flex items-center gap-1">
                     <ImageIcon size={10}/> Imagem da Capa
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       value={novoEncontro.imagem}
                       onChange={e => setNovoEncontro({ ...novoEncontro, imagem: e.target.value })}
                       placeholder="URL ou faça upload"
                       className="flex-1 p-4 bg-white rounded-2xl text-sm outline-none border border-slate-100"
                     />
-                    <label className="cursor-pointer flex items-center gap-1 px-4 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors text-slate-400 text-[10px] font-bold uppercase whitespace-nowrap">
+                    <label className="cursor-pointer flex items-center justify-center gap-1 px-4 py-4 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 transition-colors text-slate-400 text-[10px] font-bold uppercase whitespace-normal min-w-0">
                       {uploadingImg ? <Loader2 size={12} className="animate-spin"/> : <Upload size={12}/>}
+
                       <span className="hidden md:inline">Upload</span>
                       <input type="file" accept="image/*" className="hidden" ref={imgRef}
                         onChange={e => e.target.files?.[0] && handleUploadImagem(e.target.files[0])} />

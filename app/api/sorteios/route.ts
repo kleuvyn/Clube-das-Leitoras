@@ -83,17 +83,6 @@ async function getActiveSorteioMonthRef() {
     return { mesBase: currentMonthRef, configRow: currentConfigRows[0] };
   }
 
-  const openConfigRows = await db
-    .select()
-    .from(sorteiosConfig)
-    .where(eq(sorteiosConfig.urnaAberta, 1))
-    .orderBy(desc(sorteiosConfig.updatedAt))
-    .limit(1);
-
-  if (openConfigRows.length > 0) {
-    return { mesBase: openConfigRows[0].mesBase, configRow: openConfigRows[0] };
-  }
-
   return { mesBase: currentMonthRef, configRow: null };
 }
 

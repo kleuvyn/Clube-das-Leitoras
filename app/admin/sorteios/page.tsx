@@ -241,6 +241,8 @@ export default function AdminSorteiosPage() {
     if (!confirm('Deseja iniciar uma nova urna e limpar os nomes atuais?')) return;
 
     setResetandoUrna(true);
+    setParticipantes([]);
+    setVencedoresAtuais([]);
     try {
       const res = await fetch('/api/sorteios', {
         method: 'POST',
@@ -359,7 +361,7 @@ export default function AdminSorteiosPage() {
   }
 
   return (
-    <main className="max-w-6xl mx-auto py-10 px-6 font-alice pb-24 space-y-10 text-slate-900">
+    <main className="max-w-6xl mx-auto py-10 px-6 font-alice pb-24 space-y-10 text-slate-900 overflow-x-hidden">
       {/* 1. Cabeçalho Seguro */}
       <header className="flex flex-col gap-2 pb-6 border-b border-[#E5E1DA]">
         <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.35em]" style={{ color: corDestaque }}>
@@ -605,7 +607,7 @@ export default function AdminSorteiosPage() {
                   className="w-full rounded-md border px-3 py-2 text-sm bg-slate-50 outline-none focus:border-[#B06543]"
                   style={{ borderColor: '#E5E1DA' }}
                 />
-                <label className="flex items-center gap-2 rounded-md border border-dashed border-[#E5E1DA] p-3 bg-[#FAFAF5] text-sm text-slate-600 cursor-pointer">
+                <label className="flex flex-col sm:flex-row items-center gap-2 rounded-md border border-dashed border-[#E5E1DA] p-3 bg-[#FAFAF5] text-sm text-slate-600 cursor-pointer">
                   <input type="file" accept="image/*" onChange={handleUploadPremioFoto} className="hidden" />
                   {uploadingPremioFoto ? 'Enviando foto...' : premioFotoUrl ? 'Foto carregada' : 'Enviar foto do prêmio'}
                 </label>
