@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, dbWrite, client, isWriteBlockedError } from '@/lib/db';
 import { colaboradoras } from '@/lib/db/schema';
 import { sql, eq } from 'drizzle-orm';
-import bcrypt from 'bcryptjs';
+import * as bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 
 async function ensureTempPasswordExpiresAtColumn() {
@@ -15,9 +15,16 @@ async function ensureTempPasswordExpiresAtColumn() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const email = body.email?.toLowerCase().trim();
-    const password = body.password;
+    let body: any;
+    try {
+      body = await request.json();
+    } catch (err) {
+      console.error('Erro ao parsear JSON no login:', err);
+      return NextResponse.json({ error: 'Requisição inválida' }, { status: 400 });
+    }
+
+    const email = String(body.email ?? '').toLowerCase().trim();
+    const password = String(body.password ?? '');
 
     if (!email || !password) {
       return NextResponse.json({ error: 'E-mail e senha são obrigatórios' }, { status: 400 });
@@ -31,7 +38,7 @@ export async function POST(request: Request) {
       .where(sql`LOWER(${colaboradoras.email}) = ${email}`)
       .limit(1);
 
-    if (!user || user.active === false) {
+    if (!user || user.active === false || !user.password) {
       return NextResponse.json({ error: 'Credenciais inválidas ou conta desativada' }, { status: 401 });
     }
 
@@ -56,17 +63,26 @@ export async function POST(request: Request) {
       }
     }
 
+    let passwordMatch = false;
+    try {
+      passwordMatch = await bcrypt.compare(password, user.password);
+    } catch (err) {
+      console.warn('Falha ao comparar senha no login:', err);
+    }
 
-    const passwordMatch = await bcrypt.compare(password, user.password!);
     if (!passwordMatch) {
       return NextResponse.json({ error: 'Credenciais inválidas ou expirada' }, { status: 401 });
     }
 
-    if (user.mustChangePassword && user.tempPasswordExpiresAt && new Date(user.tempPasswordExpiresAt) < new Date()) {
+    const currentTime = new Date();
+    const expiresAt = user.tempPasswordExpiresAt ? new Date(user.tempPasswordExpiresAt) : null;
+    const expiresAtValid = expiresAt && !Number.isNaN(expiresAt.getTime());
+
+    if (user.mustChangePassword && expiresAtValid && expiresAt! < currentTime) {
       return NextResponse.json({ error: 'Credenciais inválidas ou expirada' }, { status: 401 });
     }
 
-    if (user.mustChangePassword && user.tempPasswordExpiresAt && new Date(user.tempPasswordExpiresAt) >= new Date()) {
+    if (user.mustChangePassword && expiresAtValid && expiresAt! >= currentTime) {
       try {
         await dbWrite.update(colaboradoras).set({ tempPasswordExpiresAt: new Date(0) }).where(eq(colaboradoras.id, user.id));
       } catch (err) {
