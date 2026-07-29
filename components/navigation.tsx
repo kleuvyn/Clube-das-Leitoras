@@ -297,7 +297,7 @@ export function Navigation() {
               </div>
             ))}
 
-            <div className="pt-4">
+            <div className="pt-4 flex flex-col gap-4">
               {isLogged ? (
                 <div className="space-y-3">
                   {userName && (
@@ -312,6 +312,14 @@ export function Navigation() {
                   >
                     <User size={14} /> Meu Perfil
                   </Link>
+                  <Link
+                    href="/lojinha"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all whitespace-nowrap min-w-max"
+                    style={{ backgroundColor: "#5B7C99" }}
+                  >
+                    <ShoppingBag size={14} /> Lojinha
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-lg whitespace-nowrap"
@@ -321,14 +329,24 @@ export function Navigation() {
                   </button>
                 </div>
               ) : (
-                <Link 
-                  href="/login"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-lg whitespace-nowrap min-w-max"
-                  style={{ backgroundColor: terracotaDoLivro }}
-                >
-                  <User size={14} /> Entrar no Clube
-                </Link>
+                <div className="space-y-3">
+                  <Link
+                    href="/lojinha"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-xl hover:brightness-110 active:scale-95 transition-all whitespace-nowrap min-w-max"
+                    style={{ backgroundColor: "#5B7C99" }}
+                  >
+                    <ShoppingBag size={14} /> LOJINHA
+                  </Link>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="w-full flex items-center justify-center gap-2 font-inter text-[10px] font-bold uppercase tracking-widest text-white py-4 rounded-full shadow-lg whitespace-nowrap min-w-max"
+                    style={{ backgroundColor: terracotaDoLivro }}
+                  >
+                    <User size={14} /> Entrar no Clube
+                  </Link>
+                </div>
               )}
             </div>
 

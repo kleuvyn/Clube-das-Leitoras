@@ -15,6 +15,13 @@
       "when": 1785285310123,
       "tag": "0001_glossy_gorgon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785287901674,
+      "tag": "0002_quick_iron_lad",
+      "breakpoints": true
     }
   ]
 }
