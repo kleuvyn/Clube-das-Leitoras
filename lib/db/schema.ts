@@ -180,6 +180,7 @@ export const votacaoConfig = sqliteTable('votacao_config', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   ativa: integer('ativa', { mode: 'boolean' }).default(false),
   prazo: text('prazo'),
+  permitirSugestoes: integer('permitir_sugestoes', { mode: 'boolean' }).default(true),
   createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
 });
 
@@ -363,6 +364,25 @@ export const configModeracao = sqliteTable('config_moderacao', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   palavrasExtras: text('palavras_extras').default(''),
   palavrasRemovidasBase: text('palavras_removidas_base').default(''),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const produtos = sqliteTable('produtos', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  description: text('description'),
+  price: integer('price').notNull(), // Preço em centavos
+  imageUrl: text('image_url'),
+  category: text('category').notNull(),
+  badge: text('badge'),
+  stock: integer('stock').default(0),
+  active: integer('active', { mode: 'boolean' }).default(true),
+  createdAt: integer('created_at', { mode: 'timestamp' }).defaultNow(),
+});
+
+export const lojinhaConfig = sqliteTable('lojinha_config', {
+  id: integer('id').primaryKey(), // ID 1 fixo
+  emBreve: integer('em_breve', { mode: 'boolean' }).default(true).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).defaultNow(),
 });
 

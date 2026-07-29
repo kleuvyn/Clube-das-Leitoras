@@ -61,6 +61,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         { href: '/admin/colaboradores', label: 'Leitoras / Acessos', icon: Users },
         { href: '/admin/solicitacoes', label: 'Solicitações de Curadoria', icon: Sparkles },
         { href: '/admin/carteirinha', label: 'Carteirinhas', icon: ImageIcon },
+        { href: '/admin/lojinha', label: 'Lojinha / Estoque', icon: ShoppingBag },
       ]
     }
   ];
@@ -91,9 +92,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 p-6 overflow-y-auto space-y-8">
-          {menuSections.filter(s => isAdminOrColab || s.category !== 'Gestão').map((section) => (
+          {menuSections.map((section) => (
             <div key={section.category}>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] mb-4 ml-4 opacity-30 text-slate-800">
+              <p className="text-[9px] font-bold uppercase tracking-[0.5em] mb-4 ml-4 opacity-40 text-slate-500 font-inter">
                 {section.category}
               </p>
               <div className="space-y-1">

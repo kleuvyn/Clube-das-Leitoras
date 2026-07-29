@@ -5,7 +5,7 @@ interface User {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'convidada';
+  role: 'admin' | 'colaboradora' | 'convidada' | 'leitora';
   mustChangePassword?: boolean;
 }
 

@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Navigation } from "@/components/navigation";
 import { Footer } from "@/components/footer";
+import { CartProvider } from "@/hooks/use-cart";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -17,6 +18,7 @@ type BeforeInstallPromptEvent = Event & {
 const laranjaFolha = "#B06543";
 
 const routeColors: Record<string, string> = {
+  "/admin/lojinha": "#5B7C99",
   "/admin": "#B04D4A",
   "/": "#B04D4A",
   "/cronograma": "#967BB6",
@@ -24,6 +26,7 @@ const routeColors: Record<string, string> = {
   "/empreendedoras": "#967BB6",
   "/eventos": "#CC7222",
   "/livro-do-mes": "#8C7A66",
+  "/lojinha": "#5B7C99",
   "/login": "#F4F1EE",
   "/parcerias": "#B04D4A",
   "/podcast": "#C08081",
@@ -56,6 +59,7 @@ export default function RootClient({
 }) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/recuperar-senha" || pathname === "/nova-senha" || pathname?.startsWith("/admin");
+  const isLojinhaPage = pathname === "/lojinha";
   const [pageColor, setPageColor] = useState(laranjaFolha);
   const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
@@ -128,8 +132,9 @@ export default function RootClient({
   };
 
   return (
-    <div
-      className="font-alice antialiased"
+    <CartProvider>
+      <div
+        className="font-alice antialiased"
       style={{
         ["--accent" as any]: pageColor,
         ["--page-color" as any]: pageColor,
@@ -140,11 +145,13 @@ export default function RootClient({
         ["--page-color-30" as any]: hexToRgba(pageColor, 0.30),
         ["--page-color-40" as any]: hexToRgba(pageColor, 0.40),
         ["--page-color-60" as any]: hexToRgba(pageColor, 0.60),
-        background: '#F7F2EE',
+        background: pathname === "/lojinha"
+          ? "#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')"
+          : '#F7F2EE',
         color: '#3D2B1F',
       }}
     >
-      <div className="fixed inset-0 z-[-1] opacity-[0.06] pointer-events-none flex items-center justify-center scale-125">
+      <div className={`fixed inset-0 z-[-1] pointer-events-none flex items-center justify-center scale-125 ${pathname === "/lojinha" ? "opacity-[0.02]" : "opacity-[0.06]"}`}>
         <Image
           src="/logo.png"
           alt="Logo"
@@ -159,13 +166,13 @@ export default function RootClient({
 
       {!isAuthPage && <Navigation />}
 
-      <main className="min-h-screen relative z-10 w-full">
+      <main className="min-h-screen relative w-full">
         {children}
       </main>
 
       {!isAuthPage && <Footer />}
 
-      {showInstallButton && !isAuthPage && (
+      {showInstallButton && !isAuthPage && !isLojinhaPage && (
         <div className="fixed bottom-5 right-5 z-50">
           <button
             onClick={onInstallClick}
@@ -181,5 +188,6 @@ export default function RootClient({
       <Analytics />
       <SpeedInsights />
     </div>
+    </CartProvider>
   );
 }

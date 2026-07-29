@@ -32,6 +32,7 @@ interface VotacaoState {
   prazo: string;
   livros: Livro[];
   historico: Historico[];
+  permitirSugestoes: boolean;
 }
 
 function getVoterKey(): string {
@@ -109,6 +110,9 @@ export default function VotacaoPage() {
   };
 
   const enviarSugestao = async () => {
+    if (!dados?.permitirSugestoes) {
+      return toast.error('Indicações estão fechadas no momento.');
+    }
     if (!sugestao.titulo.trim() || !sugestao.autor.trim()) return toast.error('Preencha os campos.');
     setEnviandoSugestao(true);
     try {
@@ -117,7 +121,10 @@ export default function VotacaoPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...sugestao, isVotacao: true, voterKey: getVoterKey() }),
       });
-      if (!res.ok) throw new Error('Erro ao indicar');
+      if (!res.ok) {
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.error || 'Erro ao indicar');
+      }
       toast.success('📚 Sugestão enviada!');
       setSugestao({ titulo: '', autor: '', capaUrl: '', indicadoPor: '' });
       setShowSugestao(false);
@@ -262,25 +269,33 @@ export default function VotacaoPage() {
         {/* ÁREA DE SUGESTÃO */}
         <section className="space-y-8">
           <div className="bg-white/40 border border-black/5 rounded-[3rem] overflow-hidden">
-            <button onClick={() => !votoAtual && setShowSugestao(!showSugestao)} 
-                    className={`w-full p-10 text-left transition-colors ${votoAtual ? 'cursor-default opacity-50' : 'hover:bg-white/60'}`}>
-              <div className="flex justify-between items-center">
-                <h3 className="text-3xl italic font-light text-black">Alguma sugestão em mente?</h3>
-                {!votoAtual && (showSugestao ? <ChevronUp size={20}/> : <ChevronDown size={20}/>)}
-              </div>
-            </button>
-            {showSugestao && !votoAtual && (
-              <div className="px-10 pb-10 space-y-4 pt-4 animate-in slide-in-from-top-2">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <input placeholder="Título *" className="p-4 rounded-xl border border-black/5 bg-white italic outline-none"
-                         value={sugestao.titulo} onChange={e => setSugestao({...sugestao, titulo: e.target.value})} />
-                  <input placeholder="Autor(a) *" className="p-4 rounded-xl border border-black/5 bg-white outline-none"
-                         value={sugestao.autor} onChange={e => setSugestao({...sugestao, autor: e.target.value})} />
-                </div>
-                <button onClick={enviarSugestao} disabled={enviandoSugestao} 
-                        className="bg-[#CC7222] text-white px-8 py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest">
-                  {enviandoSugestao ? 'Enviando...' : 'Registrar Indicação'}
+            {dados?.permitirSugestoes ? (
+              <>
+                <button onClick={() => !votoAtual && setShowSugestao(!showSugestao)}
+                        className={`w-full p-10 text-left transition-colors ${votoAtual ? 'cursor-default opacity-50' : 'hover:bg-white/60'}`}>
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-3xl italic font-light text-black">Alguma sugestão em mente?</h3>
+                    {!votoAtual && (showSugestao ? <ChevronUp size={20}/> : <ChevronDown size={20}/>)}
+                  </div>
                 </button>
+                {showSugestao && !votoAtual && (
+                  <div className="px-10 pb-10 space-y-4 pt-4 animate-in slide-in-from-top-2">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <input placeholder="Título *" className="p-4 rounded-xl border border-black/5 bg-white italic outline-none"
+                             value={sugestao.titulo} onChange={e => setSugestao({...sugestao, titulo: e.target.value})} />
+                      <input placeholder="Autor(a) *" className="p-4 rounded-xl border border-black/5 bg-white outline-none"
+                             value={sugestao.autor} onChange={e => setSugestao({...sugestao, autor: e.target.value})} />
+                    </div>
+                    <button onClick={enviarSugestao} disabled={enviandoSugestao}
+                            className="bg-[#CC7222] text-white px-8 py-4 rounded-xl text-[10px] font-bold uppercase tracking-widest">
+                      {enviandoSugestao ? 'Enviando...' : 'Registrar Indicação'}
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="p-10 text-center text-sm italic text-slate-500">
+                As sugestões estão temporariamente fechadas. Vote apenas nos livros já selecionados.
               </div>
             )}
           </div>

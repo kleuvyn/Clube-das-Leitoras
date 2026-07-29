@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, dbWrite } from '@/lib/db';
-import { livros, votacoes } from '@/lib/db/schema';
+import { livros, votacoes, votacaoConfig } from '@/lib/db/schema';
 import { eq, desc, and, sql, ne } from 'drizzle-orm';
 import { requireAdminOrColaboradora } from '@/lib/auth';
 
@@ -67,13 +67,17 @@ export async function POST(request: Request) {
 
     
     if (isVotacao && voterKey) {
+      const cfgRows = await db.select().from(votacaoConfig).orderBy(desc(votacaoConfig.createdAt)).limit(1);
+      const cfg = cfgRows[0] ?? null;
+      if (cfg && cfg.permitirSugestoes === 0) {
+        return NextResponse.json({ error: 'As indicações estão fechadas no momento.' }, { status: 403 });
+      }
       const jaVotou = await db.select().from(votacoes).where(eq(votacoes.usuario_email, voterKey)).limit(1);
       if (jaVotou.length > 0) {
         return NextResponse.json({ error: 'Você já votou nesta rodada.' }, { status: 409 });
       }
     }
 
-    
     const [existing] = await db.select()
       .from(livros)
       .where(and(eq(livros.titulo, titulo), eq(livros.autor, autor)));

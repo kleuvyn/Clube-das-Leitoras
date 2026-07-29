@@ -35,7 +35,7 @@ export function Footer() {
                   />
                </div>
                <div className="flex flex-col">
-                 <span className="text-2xl leading-none text-black">
+                 <span className="text-2xl leading-none text-black whitespace-nowrap">
                     Clube das <span className="italic" style={{ color: rosaGabi }}>Leitoras</span>
                  </span>
                </div>

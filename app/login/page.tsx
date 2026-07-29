@@ -61,7 +61,7 @@ export default function LoginCafeFuncional() {
           <header className="space-y-6">
             <div className="flex items-center justify-center lg:justify-start gap-4 opacity-40">
               <Coffee size={18} style={{ color: marromPapel }} className="animate-bounce" />
-              <div className="h-[1px] w-12 bg-[#8C7A66]" />
+              <div className="h-px w-12 bg-[#8C7A66]" />
               <span className="text-[10px] font-bold uppercase tracking-[0.5em] text-[#8C7A66]">Sintonize o Afeto</span>
             </div>
             
@@ -103,7 +103,7 @@ export default function LoginCafeFuncional() {
             
             {/* O Coração que Gira e Pulsa no Hover do Card */}
             <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center border-[6px] border-[#FDFBF9] z-20 
-                            group-hover:rotate-[360deg] group-hover:scale-110 transition-all duration-1000 ease-in-out" 
+                            group-hover:rotate-360 group-hover:scale-110 transition-all duration-1000 ease-in-out" 
                  style={{ background: rosaGabi }}>
                <Heart className="text-white fill-current w-6 h-6 animate-pulse" />
             </div>
@@ -111,7 +111,7 @@ export default function LoginCafeFuncional() {
             <div className="space-y-10 pt-4">
               <div className="text-center space-y-3">
                 <h2 className="text-3xl text-[#2C3E50] italic font-light tracking-tight">Seja bem-vinda</h2>
-                <div className="h-[1px] w-12 bg-[#B04D4A] mx-auto opacity-20 group-hover:w-20 transition-all duration-700" />
+                <div className="h-px w-12 bg-rosa-gabi mx-auto opacity-20 group-hover:w-20 transition-all duration-700" />
                 <p className="text-[9px] font-bold uppercase tracking-[0.4em] text-[#8C7A66]/60">A Próxima Página espera</p>
               </div>
 
@@ -122,7 +122,7 @@ export default function LoginCafeFuncional() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-t-3xl py-6 px-8 outline-none text-sm italic text-[#2C3E50] focus:border-[#B04D4A] focus:bg-white transition-all placeholder:text-[#8C7A66]/30"
+                    className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-t-3xl py-6 px-8 outline-none text-sm italic text-[#2C3E50] focus:border-rosa-gabi focus:bg-white transition-all placeholder:text-[#8C7A66]/30"
                     placeholder="Seu e-mail de leitora"
                   />
                   <input 
@@ -130,13 +130,13 @@ export default function LoginCafeFuncional() {
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
                     required
-                    className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-b-3xl py-6 px-8 outline-none text-sm text-[#2C3E50] focus:border-[#B04D4A] focus:bg-white transition-all placeholder:text-[#8C7A66]/30"
+                    className="w-full bg-[#F4ECE2]/40 border-b border-black/5 rounded-b-3xl py-6 px-8 outline-none text-sm text-[#2C3E50] focus:border-rosa-gabi focus:bg-white transition-all placeholder:text-[#8C7A66]/30"
                     placeholder="Sua senha secreta"
                   />
                 </div>
 
                 {erro && (
-                  <p className="text-[10px] text-center italic text-[#B04D4A] animate-pulse font-bold uppercase tracking-wider">
+                  <p className="text-[10px] text-center italic text-rosa-gabi animate-pulse font-bold uppercase tracking-wider">
                     {erro}
                   </p>
                 )}
@@ -145,7 +145,7 @@ export default function LoginCafeFuncional() {
                   onClick={() => setAceitouTermos(!aceitouTermos)}
                   className="flex items-center gap-4 cursor-pointer group/check px-2"
                 >
-                  <div className={`w-6 h-6 rounded-full border border-black/10 flex items-center justify-center transition-all duration-500 ${aceitouTermos ? 'scale-110 shadow-lg' : 'group-hover/check:border-[#B04D4A]'}`} 
+                  <div className={`w-6 h-6 rounded-full border border-black/10 flex items-center justify-center transition-all duration-500 ${aceitouTermos ? 'scale-110 shadow-lg' : 'group-hover/check:border-rosa-gabi'}`} 
                        style={{ background: aceitouTermos ? rosaGabi : 'transparent' }}>
                     {aceitouTermos && <Sparkles className="w-3 h-3 text-white" />}
                   </div>
@@ -170,7 +170,7 @@ export default function LoginCafeFuncional() {
                 </Button>
 
                 <div className="text-center space-y-2">
-                  <Link href="/recuperar-senha" className="block text-[10px] font-bold uppercase tracking-[0.35em] text-[#8C7A66] hover:text-[#B04D4A] transition-colors">
+                  <Link href="/recuperar-senha" className="block text-[10px] font-bold uppercase tracking-[0.35em] text-[#8C7A66] hover:text-rosa-gabi transition-colors">
                     Esqueci minha senha
                   </Link>
                   <p className="text-[8px] font-bold uppercase tracking-[0.5em] opacity-30 text-[#8C7A66]">
@@ -188,7 +188,7 @@ export default function LoginCafeFuncional() {
               </p>
               <Link 
                 href="/cadastro" 
-                className="group flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.4em] text-[#B04D4A] transition-all hover:opacity-80"
+                className="group flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.4em] text-rosa-gabi transition-all hover:opacity-80"
               >
                 Solicitar Cadastro
                 <Sparkles size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -199,7 +199,7 @@ export default function LoginCafeFuncional() {
 
             <Link 
               href="/" 
-              className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#8C7A66] hover:text-[#B04D4A] transition-colors"
+              className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#8C7A66] hover:text-rosa-gabi transition-colors"
             >
               Voltar para a Home
             </Link>

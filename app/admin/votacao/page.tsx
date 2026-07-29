@@ -19,6 +19,7 @@ export default function VotacoesAdmin() {
   const [historico, setHistorico] = useState<any[]>([]);
   const [ativa, setAtiva] = useState(false);
   const [prazo, setPrazo] = useState('');
+  const [permitirSugestoes, setPermitirSugestoes] = useState(true);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pages: 0, hasMore: false });
@@ -53,6 +54,7 @@ export default function VotacoesAdmin() {
       const data = await res.json();
       setAtiva(data.ativa);
       setPrazo(data.prazo || '');
+      setPermitirSugestoes(data.permitirSugestoes ?? true);
       setLivros(data.livros || []);
       setHistorico(data.historico || []);
       setPagination(data.pagination || { total: 0, pages: 0, hasMore: false });
@@ -83,7 +85,7 @@ export default function VotacoesAdmin() {
       const res = await fetch('/api/votacao', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ativa: !ativa, prazo }),
+        body: JSON.stringify({ ativa: !ativa, prazo, permitirSugestoes }),
       });
       if (!res.ok) throw new Error();
       setAtiva(!ativa);
@@ -101,7 +103,7 @@ export default function VotacoesAdmin() {
       const res = await fetch('/api/votacao', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ativa, prazo }),
+        body: JSON.stringify({ ativa, prazo, permitirSugestoes }),
       });
       if (!res.ok) throw new Error();
       toast.success('Prazo de votação atualizado.');
@@ -222,6 +224,30 @@ export default function VotacoesAdmin() {
             {ativa ? <ToggleRight size={16}/> : <ToggleLeft size={16}/>}
             {ativa ? 'Votação Aberta' : 'Votação Pausada'}
           </button>
+
+          <button
+            onClick={async () => {
+              setProcessando(true);
+              try {
+                const res = await fetch('/api/votacao', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ativa, prazo, permitirSugestoes: !permitirSugestoes }),
+                });
+                if (!res.ok) throw new Error();
+                setPermitirSugestoes(!permitirSugestoes);
+                toast.success(!permitirSugestoes ? 'Sugestões ativadas.' : 'Modo só votar ativado.');
+              } catch {
+                toast.error('Falha ao alterar o modo da votação.');
+              } finally {
+                setProcessando(false);
+              }
+            }}
+            disabled={processando}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-widest border transition-all ${permitirSugestoes ? 'bg-white text-rosa-gabi border-rosa-gabi/20 shadow-sm' : 'bg-[#F5F0EE] text-[#8C5B48] border-[#E5D7CC]'}`}
+          >
+            {permitirSugestoes ? 'Abrir sugestões' : 'Somente votar'}
+          </button>
           
           <Button 
             onClick={handleOpenAdd} 
@@ -336,7 +362,7 @@ export default function VotacoesAdmin() {
           <div className="bg-[#FDFCFB] rounded-[3rem] shadow-2xl max-w-4xl w-full flex flex-col md:flex-row overflow-hidden max-h-[90vh] animate-in fade-in zoom-in duration-300">
             
             <aside className="w-full md:w-72 bg-[#F5F2ED] p-10 flex flex-col items-center justify-center border-r border-slate-100">
-              <div onClick={() => fileInputRef.current?.click()} className="relative w-40 aspect-[3/4] cursor-pointer shadow-2xl group overflow-hidden rounded-2xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center hover:border-[#B04D4A] transition-colors">
+              <div onClick={() => fileInputRef.current?.click()} className="relative w-40 aspect-3/4 cursor-pointer shadow-2xl group overflow-hidden rounded-2xl bg-white border-2 border-dashed border-slate-200 flex items-center justify-center hover:border-rosa-gabi transition-colors">
                 {formLivro.capaUrl ? (
                   <img src={formLivro.capaUrl} className="w-full h-full object-cover" />
                 ) : (

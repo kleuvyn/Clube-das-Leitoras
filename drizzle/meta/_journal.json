@@ -8,6 +8,13 @@
       "when": 1777322828680,
       "tag": "0000_add-sorteios-tables",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1785285310123,
+      "tag": "0001_glossy_gorgon",
+      "breakpoints": true
     }
   ]
 }

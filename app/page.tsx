@@ -121,21 +121,21 @@ export default function HomeJornalClubeLeitoras() {
          style={{ background: `#FDFCFB url('https://www.transparenttextures.com/patterns/fabric-of-squares.png')` }}>
       
       {/* HEADER */}
-      <header className="max-w-7xl mx-auto px-6 md:px-12 pb-10 mb-12 relative z-10 border-b-4 border-[#B04D4A]">
+      <header className="max-w-7xl mx-auto px-6 md:px-12 pb-10 mb-12 relative z-10 border-b-4 border-rosa-gabi">
         <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-[0.4em] mb-8 opacity-60 text-black">
-          <span>Brasília • DF</span>
+          <span>BRASÍLIA · DF</span>
           <span className="hidden md:block">Informativo Mensal de Afeto</span>
           <span>Ano {anoRomano} • {anoAtual}</span>
         </div>
         
-        <h1 className="text-center text-5xl md:text-[80px] leading-tight tracking-tighter mb-8">
-          <span className="text-[#2C3E50]">Clube das</span> <br className="md:hidden" />
-          <span className="italic font-light text-[#B04D4A]"> Leitoras</span>
+        <h1 className="text-center text-4xl md:text-[80px] leading-tight tracking-tighter mb-8 whitespace-nowrap">
+          <span className="text-[#2C3E50]">Clube das</span>
+          <span className="italic font-light text-rosa-gabi"> Leitoras</span>
         </h1>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto pt-8 border-t border-black/10">
           <div className="relative">
-            <Quote className="absolute -left-6 -top-2 w-8 h-8 opacity-20 text-[#B04D4A]" />
+            <Quote className="absolute -left-6 -top-2 w-8 h-8 opacity-20 text-rosa-gabi" />
             <p className="italic text-sm md:text-sm leading-snug pl-4 text-black">
               "Um clube que nasceu do desejo de não ler sozinha. Aqui, a última página é apenas o convite para um café e uma boa conversa."
             </p>
@@ -216,23 +216,23 @@ export default function HomeJornalClubeLeitoras() {
                     <img key={url} src={url} className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${index === indiceAtivo ? 'opacity-100' : 'opacity-0'}`} alt="Encontro" />
                   ))}
                </div>
-              <p className="mt-6 text-center italic text-lg text-[#B04D4A]">Nossa história em fotos.</p>
+              <p className="mt-6 text-center italic text-lg text-rosa-gabi">Nossa história em fotos.</p>
             </div>
             <a href="https://instagram.com/elaeasviagens" target="_blank" rel="noopener noreferrer" className="block w-full">
-              <Button className="w-full rounded-full text-white py-8 h-auto text-[10px] font-bold uppercase tracking-[0.4em] bg-[#B04D4A] hover:bg-[#B04D4A]/90 transition-all shadow-lg">
+              <Button className="w-full rounded-full text-white py-8 h-auto text-[10px] font-bold uppercase tracking-[0.4em] bg-rosa-gabi hover:bg-rosa-gabi/90 transition-all shadow-lg">
                 Quero Participar <ArrowUpRight className="ml-2 w-4 h-4" />
               </Button>
             </a>
           </aside>
 
           <article className="space-y-6 text-justify">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest inline-block px-3 py-1 bg-[#B04D4A]/10 text-[#B04D4A]">Manifesto</h3>
+            <h3 className="text-[10px] font-bold uppercase tracking-widest inline-block px-3 py-1 bg-rosa-gabi/10 text-rosa-gabi">Manifesto</h3>
             <h2 className="text-5xl md:text-6xl leading-[0.9] tracking-tighter mb-8 text-[#2C3E50]">
-              Onde a última página é o <span className="italic text-[#B04D4A]">começo.</span>
+              Onde a última página é o <span className="italic text-rosa-gabi">começo.</span>
             </h2>
             
             <div className="text-base md:text-lg leading-snug space-y-4 text-black">
-              <p className="first-letter:text-7xl first-letter:font-bold first-letter:mr-3 first-letter:float-left first-letter:leading-none text-[#B04D4A]">
+              <p className="first-letter:text-7xl first-letter:font-bold first-letter:mr-3 first-letter:float-left first-letter:leading-none text-rosa-gabi">
                 O Clube nasceu de um gesto simples: terminar um livro e perceber que o silêncio não bastava.
               </p>
               
@@ -244,11 +244,11 @@ export default function HomeJornalClubeLeitoras() {
 
               {/* CAIXINHA DE COMENTÁRIO */}
               <div className="relative my-8 max-w-sm">
-                <div className="bg-white border-2 border-[#B04D4A]/20 p-4 rounded-2xl rounded-bl-none shadow-sm italic text-[#B04D4A] font-bold text-lg relative z-10 flex items-start gap-3">
+                <div className="bg-white border-2 border-rosa-gabi/20 p-4 rounded-2xl rounded-bl-none shadow-sm italic text-rosa-gabi font-bold text-lg relative z-10 flex items-start gap-3">
                   <MessageCircle className="w-6 h-6 mt-1 opacity-40 shrink-0" />
                   “Cria um clube, Gabi.”
                 </div>
-                <div className="absolute -bottom-4 left-0 w-8 h-8 bg-white border-l-2 border-b-2 border-[#B04D4A]/20 transform -skew-x-45 z-0"></div>
+                <div className="absolute -bottom-4 left-0 w-8 h-8 bg-white border-l-2 border-b-2 border-rosa-gabi/20 transform -skew-x-45 z-0"></div>
               </div>
 
               <p>Mas um clube não nasce pronto. Ele precisa ser imaginado, sonhado, pensado. Foram cinco meses refletindo sobre como seria esse espaço. E quando finalmente nasceu, nasceu do jeito mais bonito possível: organicamente.</p>
@@ -269,7 +269,7 @@ export default function HomeJornalClubeLeitoras() {
 
               <p>Mas cada página virada traz algo que cresce dentro de nós:</p>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[10px] uppercase font-bold tracking-widest text-[#B04D4A] py-6 border-b border-black/5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[10px] uppercase font-bold tracking-widest text-rosa-gabi py-6 border-b border-black/5">
                 <div className="flex items-center gap-2"><ArrowRight size={12}/> Senso Crítico</div>
                 <div className="flex items-center gap-2"><ArrowRight size={12}/> Conexões</div>
                 <div className="flex items-center gap-2"><ArrowRight size={12}/> Imaginação</div>
@@ -278,7 +278,7 @@ export default function HomeJornalClubeLeitoras() {
 
               <p className="pt-6">Porque quem lê não apenas acumula histórias — expande a forma de ver o mundo.</p>
 
-              <p className="font-bold italic text-xl md:text-2xl mt-8 pt-6 border-t border-black/10 text-[#B04D4A]">
+              <p className="font-bold italic text-xl md:text-2xl mt-8 pt-6 border-t border-black/10 text-rosa-gabi">
                 Então pode vir, 2026. O livro deste mês já está escolhido. Novas parcerias estão chegando. E novas histórias também.
               </p>
             </div>
@@ -289,7 +289,7 @@ export default function HomeJornalClubeLeitoras() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 border-t border-black/10 pt-24">
             <div className="lg:col-span-5 space-y-8">
               <div className="flex items-center gap-3 border-b border-black/10 pb-2">
-                <MapPin size={16} className="text-[#B04D4A]" />
+                <MapPin size={16} className="text-rosa-gabi" />
                 <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-black">Local dos Encontros</h4>
               </div>
               <div className="space-y-4">
@@ -303,7 +303,7 @@ export default function HomeJornalClubeLeitoras() {
 
             <div className="lg:col-span-7 space-y-8">
               <div className="flex items-center gap-3 border-b border-black/10 pb-2">
-                <BookOpen size={16} className="text-[#B04D4A]" />
+                <BookOpen size={16} className="text-rosa-gabi" />
                 <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 text-black">Memória {anoAtual - 1}</h4>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
@@ -325,7 +325,7 @@ export default function HomeJornalClubeLeitoras() {
                   })
                   .map((item, idx) => (
                     <div key={idx} className="group pb-3 border-b border-black/5">
-                      <span className="text-[9px] font-bold uppercase text-[#B04D4A]">{item.mes}</span>
+                      <span className="text-[9px] font-bold uppercase text-rosa-gabi">{item.mes}</span>
                       <p className="text-base md:text-lg leading-tight group-hover:italic transition-all text-black">{item.livro}</p>
                       <p className="text-[10px] uppercase opacity-40 text-black font-bold">{item.autor}</p>
                     </div>
@@ -337,8 +337,8 @@ export default function HomeJornalClubeLeitoras() {
         </div>
       </main>
 
-      <footer className="max-w-7xl mx-auto mt-32 px-6 md:px-12 py-10 border-t-4 border-[#B04D4A] flex flex-col md:flex-row justify-between items-center gap-8">
-          <a href="https://instagram.com/elaeasviagens" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-[#B04D4A] hover:opacity-70 transition-opacity">
+      <footer className="max-w-7xl mx-auto mt-32 px-6 md:px-12 py-10 border-t-4 border-rosa-gabi flex flex-col md:flex-row justify-between items-center gap-8">
+          <a href="https://instagram.com/elaeasviagens" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-rosa-gabi hover:opacity-70 transition-opacity">
             <Instagram size={24} />
             <h4 className="text-2xl italic">@elaeasviagens</h4>
           </a>

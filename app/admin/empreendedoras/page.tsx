@@ -235,7 +235,7 @@ export default function EmpreendedorasAdmin() {
       <hr className="border-slate-100" />
 
       {noLogos && (
-        <div className="rounded-[2rem] border border-rose-200 bg-rose-50 p-6 text-rose-700">
+        <div className="rounded-4xl border border-rose-200 bg-rose-50 p-6 text-rose-700">
           <p className="text-sm font-semibold">Nenhuma logo cadastrada ainda.</p>
           <p className="text-sm leading-relaxed">Os registros existem, mas não há imagens salvas para as marcas. Use o botão editar para enviar o logo manualmente.</p>
         </div>

@@ -20,7 +20,11 @@ export async function GET(request: Request) {
 
     const cfgRows = await db.select().from(votacaoConfig).orderBy(desc(votacaoConfig.createdAt)).limit(1);
     const cfg = cfgRows[0] ?? null;
-    const config = { ativa: Boolean(cfg?.ativa ?? false), prazo: cfg?.prazo ?? '' };
+    const config = {
+      ativa: Boolean(cfg?.ativa ?? false),
+      prazo: cfg?.prazo ?? '',
+      permitirSugestoes: Boolean(cfg?.permitirSugestoes ?? true),
+    };
 
     const [allLivros, countResult] = await Promise.all([
       db.select().from(livros)
@@ -174,10 +178,12 @@ export async function PATCH(request: Request) {
 
     const ativa = body.ativa !== undefined ? Boolean(body.ativa) : undefined;
     const prazo = body.prazo;
+    const permitirSugestoes = body.permitirSugestoes !== undefined ? Boolean(body.permitirSugestoes) : undefined;
     
     await dbWrite.update(votacaoConfig).set({ 
       ...(ativa !== undefined && { ativa }),
-      ...(prazo !== undefined && { prazo })
+      ...(prazo !== undefined && { prazo }),
+      ...(permitirSugestoes !== undefined && { permitirSugestoes }),
     });
 
     return NextResponse.json({ success: true });
